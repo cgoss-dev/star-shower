@@ -119,7 +119,7 @@ body.sparkle-embed .game-container {
 }
 
 body.sparkle-embed .game-container {
-     border: 0;
+     border: var(--panel-border);
      border-radius: 0;
      box-shadow: none;
 }
