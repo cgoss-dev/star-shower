@@ -107,6 +107,7 @@ import {
      startOverlayDuration,
      overlayFadeFrames,
      levelPopupDuration,
+     getLevelIntroText,
      getCurrentLevelNumber,
      getScreenTitleLinesForMode
 } from "./5_GameRules.js";
@@ -487,7 +488,11 @@ function resetLevelProgressState() {
 }
 
 function showLevelPopup(levelNumber) {
-     levelPopupText = `LEVEL ${levelNumber}`;
+     const introText = getLevelIntroText(levelNumber);
+
+     levelPopupText = introText
+          ? `LEVEL ${levelNumber}: ${introText}`
+          : `LEVEL ${levelNumber}`;
      levelPopupTimer = levelPopupDuration;
      levelPopupDurationFrames = levelPopupDuration;
 }

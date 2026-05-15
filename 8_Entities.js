@@ -70,7 +70,9 @@ import {
 } from "./4_Options.js";
 
 import {
-     getCurrentLevelNumber
+     areHealthHazardsUnlockedForCurrentLevel,
+     getCurrentLevelNumber,
+     getUnlockedHarmfulEffectNamesForCurrentLevel
 } from "./5_GameRules.js";
 
 import {
@@ -227,18 +229,25 @@ function getPastelParticleColor(colorIndex = 0) {
      return getCssColor(variableName, "#f5c2e7");
 }
 
-export function getModeParticleColor(colorRole, fallback = "#ffffff", colorIndex = 0) {
-     if (colorLevel === 0) {
-          if (colorRole === "sparkle") {
-               return getCssColor("--tertiary-08", "#08f");
-          }
+function getHighContrastEnemyColor(colorIndex = 0) {
+     const colors = ["#0ff", "#f0f", "#ff0"];
+     const normalizedIndex = Math.abs(Math.round(Number(colorIndex) || 0)) % colors.length;
 
+     return colors[normalizedIndex];
+}
+
+export function getModeParticleColor(colorRole, fallback = "#ffffff", colorIndex = 0) {
+     if (colorLevel !== 3 && colorRole === "sparkle") {
+          return getCssColor("--color-white", "#fff");
+     }
+
+     if (colorLevel === 0) {
           if (colorRole === "hazard") {
-               return getCssColor("--tertiary-01", "#f00");
+               return getHighContrastEnemyColor(colorIndex);
           }
 
           if (colorRole === "effect") {
-               return getCssColor("--tertiary-07", "#0f0");
+               return getHighContrastEnemyColor(colorIndex);
           }
 
           if (colorRole === "trail") {
@@ -799,6 +808,10 @@ function createMatchingHealthHazardFromSparkleSpawn() {
           return;
      }
 
+     if (!areHealthHazardsUnlockedForCurrentLevel()) {
+          return;
+     }
+
      if (Math.random() > hazardSpawnRatio) {
           return;
      }
@@ -932,7 +945,14 @@ export function createHelpfulEffect() {
 }
 
 export function createHarmfulEffect() {
-     createEffectPickup(randomItem(harmfulEffectTypes), "harmful");
+     const unlockedEffectNames = getUnlockedHarmfulEffectNamesForCurrentLevel();
+     const availableEffectTypes = harmfulEffectTypes.filter((type) => unlockedEffectNames.includes(type.name));
+
+     if (availableEffectTypes.length <= 0) {
+          return;
+     }
+
+     createEffectPickup(randomItem(availableEffectTypes), "harmful");
 }
 
 export function maybeCreateEffectPickupsFromSparkleSpawn() {

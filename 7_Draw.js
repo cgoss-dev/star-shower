@@ -117,6 +117,7 @@ import {
      progressUnitsPerCircle,
      getCurrentScreenActionTexts,
      getCurrentPausedActionTexts,
+     getWelcomeInstructionLines,
      getHowToPlayLines,
      getEffectLines,
      getDifficultyOptionLines,
@@ -238,7 +239,8 @@ function getHoverableCanvasButtons() {
           buttons.push(
                screenActionUi.startButton,
                screenActionUi.tipsButton,
-               screenActionUi.menuButton
+               screenActionUi.menuButton,
+               screenActionUi.returnButton
           );
      }
 
@@ -246,7 +248,8 @@ function getHoverableCanvasButtons() {
           buttons.push(
                pausedActionUi.resumeButton,
                pausedActionUi.tipsButton,
-               pausedActionUi.menuButton
+               pausedActionUi.menuButton,
+               pausedActionUi.returnButton
           );
      }
 
@@ -568,21 +571,41 @@ export function drawPanelBox(x, y, width, height, theme, lineWidth = null) {
      }
 
      const { colors, glow, sizes } = theme;
-     const resolvedLineWidth = lineWidth ?? sizes.panelBorderWidth;
+     const resolvedLineWidth = lineWidth ?? sizes.borderWidth;
+     const outerWidth = sizes.borderWidthFocus || sizes.borderWidth || 1;
+     const insetWidth = sizes.panelBorderWidth || outerWidth;
 
      miniGameCtx.shadowColor = getCanvasGlowColor(colors.controlGlow);
      miniGameCtx.shadowBlur = glow.uiStrongGlow;
 
-     drawRoundedRect(x, y, width, height, sizes.controlRadius);
      miniGameCtx.fillStyle = colors.menuPanelFill;
-     miniGameCtx.fill();
+     miniGameCtx.fillRect(x, y, width, height);
 
      miniGameCtx.shadowBlur = 0;
+     miniGameCtx.lineJoin = "miter";
+     miniGameCtx.lineCap = "butt";
+
+     miniGameCtx.strokeStyle = colors.fontColor;
+     miniGameCtx.lineWidth = outerWidth;
+     miniGameCtx.strokeRect(x, y, width, height);
+
+     miniGameCtx.strokeStyle = colors.controlFill;
+     miniGameCtx.lineWidth = insetWidth;
+     miniGameCtx.strokeRect(
+          x + (insetWidth / 2),
+          y + (insetWidth / 2),
+          width - insetWidth,
+          height - insetWidth
+     );
+
      miniGameCtx.strokeStyle = colors.outlineStrong;
      miniGameCtx.lineWidth = resolvedLineWidth;
-
-     drawRoundedRect(x, y, width, height, sizes.controlRadius);
-     miniGameCtx.stroke();
+     miniGameCtx.strokeRect(
+          x + (resolvedLineWidth / 2),
+          y + (resolvedLineWidth / 2),
+          width - resolvedLineWidth,
+          height - resolvedLineWidth
+     );
 }
 
 function getTrailGlowBlur() {
@@ -862,24 +885,26 @@ function drawUnifiedTextButton(button, label, theme, isFocused = false, fontWeig
           return;
      }
 
-     const { colors, sizes, glow } = theme;
+     const { colors } = theme;
      const buttonStyle = getTextStyle(theme, "buttonsOptions");
      const resolvedFontSize = fontSize ?? buttonStyle.fontSize;
      const centerX = button.x + (button.width / 2);
      const centerY = button.y + (button.height / 2);
 
      miniGameCtx.save();
-     miniGameCtx.strokeStyle = isFocused ? colors.fontColor : colors.outlineStrong;
-     miniGameCtx.lineWidth = isFocused ? sizes.borderWidthFocus : sizes.borderWidth;
-     miniGameCtx.shadowColor = getCanvasGlowColor(isFocused ? colors.fontColor : colors.controlGlow);
-     miniGameCtx.shadowBlur = isFocused ? glow.uiStrongGlow : glow.uiSoftGlow;
+     drawPanelBox(button.x, button.y, button.width, button.height, theme);
 
-     drawRoundedRect(button.x, button.y, button.width, button.height, sizes.controlRadius);
+     if (isFocused) {
+          miniGameCtx.strokeStyle = colors.fontColor;
+          miniGameCtx.lineWidth = theme.sizes.borderWidthFocus;
+          miniGameCtx.strokeRect(
+               button.x + (theme.sizes.borderWidthFocus / 2),
+               button.y + (theme.sizes.borderWidthFocus / 2),
+               button.width - theme.sizes.borderWidthFocus,
+               button.height - theme.sizes.borderWidthFocus
+          );
+     }
 
-     miniGameCtx.fillStyle = colors.controlFill;
-     miniGameCtx.fill();
-
-     miniGameCtx.stroke();
      miniGameCtx.restore();
 
      drawGlowingCanvasText(
@@ -920,7 +945,7 @@ export function drawOptionStepper(
           return;
      }
 
-     const { colors, sizes, glow } = theme;
+     const { colors } = theme;
      const optionsStyle = getTextStyle(theme, "buttonsOptions");
      const centerY = row.y + (row.height / 2);
      const canDecrease = levelIndex > 0;
@@ -953,17 +978,19 @@ export function drawOptionStepper(
      }
 
      miniGameCtx.save();
-     miniGameCtx.strokeStyle = isRowFocused ? colors.fontColor : colors.outlineStrong;
-     miniGameCtx.lineWidth = isRowFocused ? sizes.borderWidthFocus : sizes.borderWidth;
-     miniGameCtx.shadowColor = getCanvasGlowColor(isRowFocused ? colors.fontColor : colors.controlGlow);
-     miniGameCtx.shadowBlur = isRowFocused ? glow.uiStrongGlow : glow.uiSoftGlow;
+     drawPanelBox(row.x, row.y, row.width, row.height, theme);
 
-     drawRoundedRect(row.x, row.y, row.width, row.height, sizes.controlRadius);
+     if (isRowFocused) {
+          miniGameCtx.strokeStyle = colors.fontColor;
+          miniGameCtx.lineWidth = theme.sizes.borderWidthFocus;
+          miniGameCtx.strokeRect(
+               row.x + (theme.sizes.borderWidthFocus / 2),
+               row.y + (theme.sizes.borderWidthFocus / 2),
+               row.width - theme.sizes.borderWidthFocus,
+               row.height - theme.sizes.borderWidthFocus
+          );
+     }
 
-     miniGameCtx.fillStyle = colors.controlFill;
-     miniGameCtx.fill();
-
-     miniGameCtx.stroke();
      miniGameCtx.restore();
 
      drawStepperArrow(decreaseButton, -Math.PI / 2, canDecrease, focusedSide === 0);
@@ -1884,7 +1911,8 @@ function drawSharedActionScreen(
      primaryButtonKey,
      selectionMap,
      overlayAlpha = 1,
-     drawOverlayFill = false
+     drawOverlayFill = false,
+     instructionLines = []
 ) {
      if (!miniGameCtx) {
           return;
@@ -1898,6 +1926,9 @@ function drawSharedActionScreen(
      const titleLetterSpacing = titleStyle.letterSpacing ?? 0;
      const titleStackGap = titleStyle.stackGap;
      const titleMenuGap = canvasSpacing.menuPadding;
+     const resolvedInstructionLines = Array.isArray(instructionLines) ? instructionLines.filter(Boolean) : [];
+     const instructionGap = resolvedInstructionLines.length ? canvasSpacing.uiRowGap : 0;
+     const instructionLineHeight = buttonStyle.fontSize * 1.35;
 
      miniGameCtx.save();
      miniGameCtx.globalAlpha = overlayAlpha;
@@ -1932,7 +1963,9 @@ function drawSharedActionScreen(
      const totalTitleBlockHeight =
           titleBlockHeight +
           titleMenuGap +
-          tallestButtonHeight;
+          tallestButtonHeight +
+          instructionGap +
+          (resolvedInstructionLines.length * instructionLineHeight);
 
      const titleCenterY = miniGameHeight / 2;
      const stackTopY =
@@ -2025,8 +2058,31 @@ function drawSharedActionScreen(
                setButtonBounds(actionUi.menuButton, buttonX, buttonY, buttonWidth, buttonHeight);
           }
 
+          if (item.text === "RETURN") {
+               setButtonBounds(actionUi.returnButton, buttonX, buttonY, buttonWidth, buttonHeight);
+          }
+
           currentX += buttonWidth + actionGap;
      });
+
+     if (resolvedInstructionLines.length) {
+          const instructionY = actionY + (tallestButtonHeight / 2) + instructionGap + (buttonStyle.fontSize / 2);
+
+          resolvedInstructionLines.forEach((line, lineIndex) => {
+               drawGlowingCanvasText(
+                    miniGameCtx,
+                    line,
+                    miniGameWidth / 2,
+                    instructionY + (lineIndex * instructionLineHeight),
+                    buttonStyle.color,
+                    getTextFont(theme, "buttonsOptions", 400),
+                    "center",
+                    "middle",
+                    theme,
+                    buttonStyle.glow
+               );
+          });
+     }
 
      miniGameCtx.restore();
 }
@@ -2055,10 +2111,12 @@ function drawGameWelcomeOverlay(theme) {
           {
                "NEW GAME": 0,
                "TIPS": 1,
-               "OPTIONS": 2
+               "OPTIONS": 2,
+               "RETURN": 3
           },
           alpha,
-          !isWelcomeScreen
+          !isWelcomeScreen,
+          isWelcomeScreen ? getWelcomeInstructionLines() : []
      );
 }
 
@@ -2078,7 +2136,8 @@ function drawPausedOverlay(theme) {
           {
                "RESUME": 0,
                "TIPS": 1,
-               "OPTIONS": 2
+               "OPTIONS": 2,
+               "RETURN": 3
           },
           1,
           true

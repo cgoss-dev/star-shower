@@ -2,14 +2,19 @@
 
 :root {
      /* GAME LAYOUT */
+          --game-frame-outset: var(--border-md);
           --game-board-width: min(92vw, 75rem);
+          --game-board-height-available: calc(100dvh - (var(--page-padding) * 2) - (var(--game-frame-outset) * 2));
           --game-board-height-min: calc(var(--game-board-width) * 0.75);
           --game-board-height-preferred: 75dvh;
           --game-board-height-max: calc(var(--game-board-width) * 1.25);
-          --game-board-height: clamp(
-               var(--game-board-height-min),
-               var(--game-board-height-preferred),
-               var(--game-board-height-max)
+          --game-board-height: min(
+               max(var(--game-board-height-available), 20rem),
+               clamp(
+                    var(--game-board-height-min),
+                    var(--game-board-height-preferred),
+                    var(--game-board-height-max)
+               )
           );
           --game-board-top: calc(var(--page-padding) + ((100dvh - (var(--page-padding) * 2) - var(--game-board-height)) / 2));
           --header-top: calc(var(--game-board-top) / 2);
@@ -42,6 +47,7 @@
 
 body {
      background: var(--game-color-bg);
+     overflow: hidden;
 }
 
 .site-header {
@@ -62,13 +68,21 @@ body {
 }
 
 .game-container {
+     position: relative;
+     isolation: isolate;
      width: var(--game-board-width);
      height: var(--game-board-height);
      max-width: 100%;
      margin: 0 auto;
-     border: var(--panel-border);
-     border-radius: var(--panel-radius);
-     box-shadow: var(--glow-panel);
+     border: 0;
+     border-radius: 0;
+     box-shadow:
+          0 calc(var(--border-md) * -1) 0 0 var(--color-white),
+          0 var(--border-md) 0 0 var(--color-white),
+          calc(var(--border-md) * -1) 0 0 0 var(--color-white),
+          var(--border-md) 0 0 0 var(--color-white),
+          0 0 0 var(--border-md) var(--color-black) inset,
+          0 0 0 var(--border-sm) var(--color-gray3) inset;
      background: var(--game-color-bg);
      overflow: hidden;
      display: flex;
@@ -77,11 +91,21 @@ body {
      touch-action: none;
 }
 
+.game-container::after {
+     content: "";
+     position: absolute;
+     inset: 0;
+     z-index: 2;
+     border: var(--border-sm) solid var(--color-gray3);
+     pointer-events: none;
+}
+
 #miniGameCanvas {
+     position: relative;
+     z-index: 1;
      width: 100%;
      height: 100%;
      display: block;
-     border-radius: inherit;
      touch-action: none;
 }
 
@@ -112,14 +136,16 @@ body.sparkle-embed .main-squeeze {
      padding: 0;
 }
 
-body.sparkle-embed .hero-stack,
-body.sparkle-embed .game-container {
+body.sparkle-embed .hero-stack {
      width: 100%;
      height: 100%;
 }
 
 body.sparkle-embed .game-container {
-     border: var(--panel-border);
-     border-radius: 0;
-     box-shadow: none;
+     width: calc(100% - (var(--border-md) * 2));
+     height: calc(100% - (var(--border-md) * 2));
+}
+
+body.sparkle-embed .game-container {
+     margin: var(--border-md) auto;
 }

@@ -174,13 +174,15 @@ export const gameMenuUi = {
 export const screenActionUi = {
      startButton: { x: 0, y: 0, width: 0, height: 0 },
      tipsButton: { x: 0, y: 0, width: 0, height: 0 },
-     menuButton: { x: 0, y: 0, width: 0, height: 0 }
+     menuButton: { x: 0, y: 0, width: 0, height: 0 },
+     returnButton: { x: 0, y: 0, width: 0, height: 0 }
 };
 
 export const pausedActionUi = {
      resumeButton: { x: 0, y: 0, width: 0, height: 0 },
      tipsButton: { x: 0, y: 0, width: 0, height: 0 },
-     menuButton: { x: 0, y: 0, width: 0, height: 0 }
+     menuButton: { x: 0, y: 0, width: 0, height: 0 },
+     returnButton: { x: 0, y: 0, width: 0, height: 0 }
 };
 
 // ==================================================
@@ -628,6 +630,11 @@ export function resetUiActionBounds() {
      screenActionUi.menuButton.width = 0;
      screenActionUi.menuButton.height = 0;
 
+     screenActionUi.returnButton.x = 0;
+     screenActionUi.returnButton.y = 0;
+     screenActionUi.returnButton.width = 0;
+     screenActionUi.returnButton.height = 0;
+
      pausedActionUi.resumeButton.x = 0;
      pausedActionUi.resumeButton.y = 0;
      pausedActionUi.resumeButton.width = 0;
@@ -642,6 +649,11 @@ export function resetUiActionBounds() {
      pausedActionUi.menuButton.y = 0;
      pausedActionUi.menuButton.width = 0;
      pausedActionUi.menuButton.height = 0;
+
+     pausedActionUi.returnButton.x = 0;
+     pausedActionUi.returnButton.y = 0;
+     pausedActionUi.returnButton.width = 0;
+     pausedActionUi.returnButton.height = 0;
 }
 
 export function resetActionButtonBounds(actionUi, primaryButtonKey) {
@@ -659,6 +671,11 @@ export function resetActionButtonBounds(actionUi, primaryButtonKey) {
      actionUi.menuButton.y = 0;
      actionUi.menuButton.width = 0;
      actionUi.menuButton.height = 0;
+
+     actionUi.returnButton.x = 0;
+     actionUi.returnButton.y = 0;
+     actionUi.returnButton.width = 0;
+     actionUi.returnButton.height = 0;
 }
 
 // ==================================================

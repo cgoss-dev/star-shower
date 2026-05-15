@@ -93,6 +93,19 @@ import {
      syncUiBounds
 } from "./7_Draw.js";
 
+const portfolioHomeUrl = "https://cgoss-dev.github.io/";
+
+function returnToWebsite() {
+     if (window.opener && !window.opener.closed) {
+          window.opener.location.href = portfolioHomeUrl;
+          window.opener.focus();
+          window.close();
+          return;
+     }
+
+     window.location.href = portfolioHomeUrl;
+}
+
 // ====================================================================================================
 // NOTE: EXPORTS
 // ====================================================================================================
@@ -374,6 +387,12 @@ function handleWelcomeOrResultPointerDown(x, y) {
           return true;
      }
 
+     if (isScreenWelcomeActive() && isPointInsideBox(x, y, screenActionUi.returnButton)) {
+          setWelcomeSelectionIndex(3);
+          returnToWebsite();
+          return true;
+     }
+
      return true;
 }
 
@@ -398,6 +417,12 @@ function handlePausedOverlayPointerDown(x, y) {
      if (isPointInsideBox(x, y, pausedActionUi.menuButton)) {
           setPausedSelectionIndex(2);
           dismissPausedToOptionsMenu();
+          return true;
+     }
+
+     if (isPointInsideBox(x, y, pausedActionUi.returnButton)) {
+          setPausedSelectionIndex(3);
+          returnToWebsite();
           return true;
      }
 
@@ -740,6 +765,10 @@ function activateWelcomeSelection() {
      if (selection === 2 && isScreenWelcomeActive()) {
           dismissScreenWelcomeToOptionsMenu();
      }
+
+     if (selection === 3 && isScreenWelcomeActive()) {
+          returnToWebsite();
+     }
 }
 
 function activatePausedSelection() {
@@ -754,6 +783,10 @@ function activatePausedSelection() {
 
      if (pausedSelectionIndex === 2) {
           dismissPausedToOptionsMenu();
+     }
+
+     if (pausedSelectionIndex === 3) {
+          returnToWebsite();
      }
 }
 
@@ -861,13 +894,13 @@ function handleWelcomeNavigation(event) {
 
      if (isPreviousMenuKey(event)) {
           event.preventDefault();
-          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex - 1, 0, 2));
+          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex - 1, 0, 3));
           return true;
      }
 
      if (isNextMenuKey(event)) {
           event.preventDefault();
-          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex + 1, 0, 2));
+          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex + 1, 0, 3));
           return true;
      }
 
@@ -894,13 +927,13 @@ function handlePausedNavigation(event) {
 
      if (isPreviousMenuKey(event)) {
           event.preventDefault();
-          setPausedSelectionIndex(clamp(pausedSelectionIndex - 1, 0, 2));
+          setPausedSelectionIndex(clamp(pausedSelectionIndex - 1, 0, 3));
           return true;
      }
 
      if (isNextMenuKey(event)) {
           event.preventDefault();
-          setPausedSelectionIndex(clamp(pausedSelectionIndex + 1, 0, 2));
+          setPausedSelectionIndex(clamp(pausedSelectionIndex + 1, 0, 3));
           return true;
      }
 
