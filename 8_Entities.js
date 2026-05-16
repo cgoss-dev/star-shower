@@ -104,7 +104,7 @@ export const playerFaces = {
 };
 
 export const playerBaseHealth = gameplayStartingHealth;
-export const playerBaseSpeed = 3;
+export const playerBaseSpeed = 1.5;
 export const playerSpeedPerHeart = 0.25;
 export const playerBaseSize = 64;
 export const playerBaseRadius = 30;
@@ -120,8 +120,8 @@ export const starSpawnCap = 50;
 export const strikeSpawnRatio = 0.5;
 export const boostBanePickupCap = 60;
 export const collisionBurstParticleCount = 15;
-export const fallingObjectSpeedMin = 0.5;
-export const fallingObjectSpeedMax = 1;
+export const fallingObjectSpeedMin = 0.25;
+export const fallingObjectSpeedMax = 0.75;
 
 const spawnDensityBaselineArea = 960 * 640;
 const spawnDensityMinScale = 0.45;
@@ -337,12 +337,14 @@ function getPastelParticleColor(colorIndex = 0) {
 }
 
 export function getModeParticleColor(colorRole, fallback = "#ffffff", colorIndex = 0) {
+     if (colorRole === "trail") {
+          return colorLevel === 2
+               ? getCssColor("--color-gray2", "#666")
+               : fallback;
+     }
+
      if (colorLevel === 0) {
           if (colorRole === "star") {
-               return getCssColor("--color-white", "#fff");
-          }
-
-          if (colorRole === "trail") {
                return getCssColor("--color-white", "#fff");
           }
 
@@ -370,9 +372,6 @@ export function getModeParticleColor(colorRole, fallback = "#ffffff", colorIndex
                return getCssColor("--color-white", "#fff");
           }
 
-          if (colorRole === "trail") {
-               return getCssColor("--color-gray2", "#666");
-          }
      }
 
      return fallback;

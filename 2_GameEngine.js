@@ -505,6 +505,10 @@ function updateLevelPopupTimer() {
           return;
      }
 
+     if (gamePaused) {
+          return;
+     }
+
      levelPopupTimer -= 1;
 
      if (levelPopupTimer <= 0) {

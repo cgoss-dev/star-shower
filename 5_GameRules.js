@@ -158,7 +158,7 @@ export function getCurrentPausedActionTexts() {
 export function getHowToPlayLines() {
      return [
           getWinGoalText(),
-          "{iconStar} Stars: gain points.",
+          "{iconStar} Stars: gain speed & points.",
           "{iconStrike} Strikes: deal damage."
      ];
 }
