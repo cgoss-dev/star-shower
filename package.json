@@ -1,10 +1,10 @@
 {
-  "name": "sparkle-seeker",
+  "name": "star-shower",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "python3 -m http.server 8000",
-    "check": "node --check 1_SparkleSeeker.js && node --check 2_GameEngine.js && node --check 10_Audio.js"
+    "check": "node --check 1_StarShower.js && node --check 2_GameEngine.js && node --check 10_Audio.js"
   }
 }

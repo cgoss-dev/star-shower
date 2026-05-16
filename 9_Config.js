@@ -1,11 +1,11 @@
 // NOTE: 9_Config
-// Canvas theme assembly, CSS readers, and canvas-only config knobs for Sparkle Seeker.
+// Canvas theme assembly, CSS readers, and canvas-only config knobs for Star Shower.
 //
 // Owned here:
 // - CSS variable readers
 // - canvas theme creation
 // - small canvas presentation config values
-// - frequently adjusted Sparkle Seeker page/game presentation values
+// - frequently adjusted Star Shower page/game presentation values
 //
 // NOT owned here:
 // - runtime mutable state
@@ -16,9 +16,9 @@
 // - This file should answer "what theme/config values does canvas UI use?"
 // - If code draws, updates entities, or mutates game state, it belongs elsewhere.
 
-export const sparkleSeekerRainbowCycleMs = 240;
+export const starShowerRainbowCycleMs = 240;
 
-export const sparkleSeekerRainbowPalette = [
+export const starShowerRainbowPalette = [
      "#f00",
      "#f80",
      "#ff0",
@@ -37,88 +37,106 @@ export const sparkleSeekerRainbowPalette = [
 
 
 
-export const sparkleSeekerEffectIcons = {
+export const starShowerBoostBaneIcons = {
 
-     // NOTE: HELPFUL EFFECTS
+     // NOTE: BOOSTS
 
-     iconLuck: {
-          category: "helpful",
-          name: "luck",
-          label: "LUCK",
-          particle: "\u2618\uFE0E",
-          effect: "doubleSparkleScore",
-          lastsUntilUsed: false,
-          durationSeconds: 8,
-          scale: 1.5,
+     iconHealth: {
+          category: "boost",
+          name: "health",
+          label: "HEALTH",
+          particle: "\u2795\uFE0E",
+          assetSrc: "./images/icons/health.svg",
+          ability: "increaseHealth",
+          lastsUntilUsed: true,
+          durationSeconds: 0,
           xOffset: 0,
           yOffset: -6
      },
 
      iconMagnet: {
-          category: "helpful",
+          category: "boost",
           name: "magnet",
           label: "MAGNET",
           particle: "\u2316\uFE0E",
-          effect: "expandSparklePickupRange",
+          assetSrc: "./images/icons/magnet.svg",
+          ability: "expandStarPickupRange",
           lastsUntilUsed: false,
           durationSeconds: 5,
-          scale: 1.5,
           xOffset: -3,
           yOffset: -7
      },
 
-     iconSlowmo: {
-          category: "helpful",
-          name: "slowmo",
-          label: "SLOWMO",
-          particle: "\u29D6\uFE0E",
-          effect: "halveObjectFallSpeed",
+     iconDouble: {
+          category: "boost",
+          name: "double",
+          label: "DOUBLE",
+          particle: "\u2605\uFE0E",
+          assetSrc: "./images/icons/double.svg",
+          ability: "doubleStarScore",
           lastsUntilUsed: false,
           durationSeconds: 8,
-          scale: 1.75,
           xOffset: -1,
-          yOffset: -5
+          yOffset: -6
      },
 
-     // NOTE: HARMFUL EFFECTS
+     // NOTE: BANES
 
      iconFreeze: {
-          category: "harmful",
+          category: "bane",
           name: "freeze",
           label: "FREEZE",
           particle: "\u2744\uFE0E",
-          effect: "freezePlayerMovement",
+          assetSrc: "./images/icons/freeze.svg",
+          ability: "freezePlayerMovement",
           lastsUntilUsed: false,
           durationSeconds: 5,
-          scale: 1.75,
           xOffset: 1,
           yOffset: -4
      },
 
      iconDaze: {
-          category: "harmful",
+          category: "bane",
           name: "daze",
           label: "DAZE",
           particle: "\u2300\uFE0E",
-          effect: "reversePlayerMovement",
+          assetSrc: "./images/icons/daze.svg",
+          ability: "reversePlayerMovement",
           lastsUntilUsed: false,
           durationSeconds: 5,
-          scale: 1.5,
           xOffset: 0,
           yOffset: -6
      },
 
      iconFog: {
-          category: "harmful",
+          category: "bane",
           name: "fog",
           label: "FOG",
           particle: "\u224B\uFE0E",
-          effect: "limitVisionAroundPlayer",
+          assetSrc: "./images/icons/fog.svg",
+          ability: "limitVisionAroundPlayer",
           lastsUntilUsed: false,
           durationSeconds: 8,
-          scale: 1.75,
           xOffset: 0,
           yOffset: -4
+     }
+};
+
+export const starShowerGuideIcons = {
+     iconStar: {
+          name: "star",
+          label: "STAR",
+          particle: "\u2726\uFE0E",
+          xOffset: 0,
+          yOffset: -6
+     },
+
+     iconStrike: {
+          name: "strike",
+          label: "STRIKE",
+          particle: "\u2715\uFE0E",
+          xOffset: 0,
+          yOffset: -6
      }
 };
 
@@ -142,8 +160,8 @@ export function getCanvasTheme() {
      const uiFontMd = getCssPixelSize("--font-size-md", 15);
      const uiFontSm = getCssPixelSize("--font-size-sm", 10);
 
-     const menuOverlayFill = "rgba(0, 0, 0, 0.75)";
-     const controlFillFallback = getCssColor("--game-control-fill", getCssColor("--black-25", "rgba(0, 0, 0, 0.25)"));
+     const menuOverlayFill = "rgba(0, 0, 0, 0.85)";
+     const controlFillFallback = getCssColor("--game-control-fill", getCssColor("--white-25", "rgba(255, 255, 255, 0.25)"));
      const outlineFallback = getCssColor("--game-outline-strong", getCssColor("--color-gray3", "#999999"));
 
      const text = {
@@ -154,7 +172,7 @@ export function getCanvasTheme() {
                menuPadding: uiFontMd,
                betweenButtons: uiFontSm,
                bodyLineHeight: uiFontMd,
-               friendsEnemiesIconGutter: uiFontLg
+               guideIconGutter: uiFontLg
           },
 
           marquee: {
@@ -207,7 +225,7 @@ export function getCanvasTheme() {
                letterSpacing: 0,
                color: bodyColor,
                rainbow: false,
-               glow: true
+               glow: false
           },
 
           scoreIcon: {
@@ -238,22 +256,22 @@ export function getCanvasTheme() {
                fontSize: uiFontSm,
                arrowScale: 3,
                letterSpacing: 0,
-               buttonExteriorPadding: uiFontSm,
-               buttonHeight: uiFontMd,
+               buttonPadding: uiFontSm * 0.5,
                backButtonBottomOffset: 0,
                color: bodyColor,
                rainbow: false,
-               glow: true
+               glow: false
           },
 
           pauseButton: {
                font: "body",
-               fontSize: uiFontSm * 2.5,
-               buttonSize: uiFontSm * 4.5,
+               fontSize: uiFontSm * 2,
+               buttonSize: Math.max(44, uiFontSm * 3.6),
+               iconScale: 0.62,
                letterSpacing: 0,
                color: bodyColor,
                rainbow: false,
-               glow: true
+               glow: false
           },
 
           joystick: {
@@ -268,7 +286,10 @@ export function getCanvasTheme() {
                glow: true
           },
 
-          friendsEnemiesIcons: sparkleSeekerEffectIcons
+          guideIcons: {
+               ...starShowerGuideIcons,
+               ...starShowerBoostBaneIcons
+          }
      };
 
      const base = {
@@ -294,7 +315,7 @@ export function getCanvasTheme() {
                fontColor,
                bodyText: bodyColor,
                titleText: titleColor,
-               titleRainbow: sparkleSeekerRainbowPalette,
+               titleRainbow: starShowerRainbowPalette,
                controlText: bodyColor,
                controlGlow: fontColor,
                overlayGlow: fontColor,
@@ -305,6 +326,7 @@ export function getCanvasTheme() {
 
                controlFill: controlFillFallback,
                outlineStrong: outlineFallback,
+               frameInset: getCssColor("--color-black", "#000000"),
 
                touchFill: getCssColor("--game-touch-fill", getCssColor("--ui-touch-fill", controlFillFallback)),
                touchStroke: getCssColor("--game-touch-border-color", getCssColor("--ui-touch-border-color", outlineFallback)),
@@ -347,7 +369,7 @@ export function getCanvasTheme() {
           },
 
           animation: {
-               titleRainbowCycleMs: sparkleSeekerRainbowCycleMs
+               titleRainbowCycleMs: starShowerRainbowCycleMs
           }
      };
 }
@@ -377,6 +399,12 @@ export function getCssString(variableName, fallback = "") {
 
      const value = getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
      return value || fallback;
+}
+
+export function getCssBoolean(variableName, fallback = false) {
+     const value = getCssString(variableName, String(fallback)).toLowerCase();
+
+     return value === "true" || value === "1" || value === "yes" || value === "on";
 }
 
 function resolveCssColorValue(value, fallback = "#ffffff") {

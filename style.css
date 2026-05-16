@@ -1,4 +1,4 @@
-/* NOTE: SPARKLE SEEKER STANDALONE ROOT CSS */
+/* NOTE: STAR SHOWER STANDALONE ROOT CSS */
 
 :root {
      /* COLORS */
@@ -25,7 +25,7 @@
           --tertiary-02: #f40;
           --tertiary-03: #f80;
           --tertiary-04: #fc0;
-          --tertiary-05:    #ff0;
+          --tertiary-05: #ff0;
           --tertiary-06: #8f0;
           --tertiary-07: #0f0;
           --tertiary-08: #08f;
@@ -51,9 +51,9 @@
      /* TYPOGRAPHY */
           --font-body: "Noto Sans Mono", monospace;
           --font-display: "Bungee Shade", monospace;
-          --font-size-lg: clamp(1.5rem, min(6vw, 6dvh), 6rem);
-          --font-size-md: clamp(1rem, min(4vw, 4dvh), 4rem);
-          --font-size-sm: clamp(0.7rem, min(2vw, 2dvh), 1.5rem);
+          --font-size-lg: clamp(1.5rem, min(8vw, 8dvh), 8rem);
+          --font-size-md: clamp(1.25rem, min(4vw, 4dvh), 4rem);
+          --font-size-sm: clamp(0.8rem, min(2vw, 2dvh), 1rem);
           --marquee-font-size: var(--font-size-lg);
           --marquee-font-color: var(--color-gray3);
           --marquee-letter-spacing: 0.25px;

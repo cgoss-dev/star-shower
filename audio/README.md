@@ -1,12 +1,12 @@
-# Sparkle Seeker Audio
+# Star Shower Audio
 
 Drop audio files in this folder using these filenames:
 
 - `music-loop.mp3`
-- `sparkle.wav`
-- `hazard.wav`
-- `helpful-effect.wav`
-- `harmful-effect.wav`
+- `star.wav`
+- `strike.wav`
+- `boost-effect.wav`
+- `bane-effect.wav`
 - `win.wav`
 - `lose.wav`
 - `pause.wav`

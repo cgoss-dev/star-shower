@@ -1,5 +1,5 @@
 // NOTE: 2_GameEngine
-// Main runtime orchestration for Sparkle Seeker.
+// Main runtime orchestration for Star Shower.
 //
 // Owned here:
 // - startup / boot flow
@@ -21,7 +21,7 @@
 // - This file should answer "what happens next?"
 // - If code draws things, it belongs in `9_Config.js`.
 // - If code stores shared mutable data, it belongs in `3_State.js`.
-// - If code updates sparkles/friends/enemies, it belongs in `8_Entities.js`.
+// - If code updates stars/friends/enemies, it belongs in `8_Entities.js`.
 
 import {
      miniGameCanvas,
@@ -37,11 +37,11 @@ import {
      gameOverlayDuration,
      musicLevel,
      soundEffectsLevel,
-     harmfulLevel,
+     baneLevel,
      movementLevel,
      colorLevel,
-     effectPickups,
-     sparkleScore,
+     boostBanePickups,
+     starScore,
      playerHealth,
 
      setGameStarted,
@@ -56,10 +56,11 @@ import {
      setGameOverlayDuration,
      setMusicLevel,
      setSoundEffectsLevel,
-     setHarmfulLevel,
+     setBaneLevel,
      setMovementLevel,
      setColorLevel,
      setMiniGameSize,
+     updateMenuKeyboardFocusTimer,
 
      resetUiActionBounds,
      resetGameState
@@ -70,7 +71,7 @@ import {
      optionLevelValues,
      maxOptionLevelIndex,
      movementOptionLabels,
-     maxMovementOptionIndex,
+     getMaxMovementOptionIndex,
      colorOptionLabels,
      maxColorOptionIndex,
      loadAndApplySavedOptions,
@@ -90,15 +91,15 @@ import {
      updatePlayer,
      updatePlayerFaceState,
      resetEntityColorCycle,
-     updateEffectState,
-     updateSparkleSpawns,
-     updateSparkles,
-     updateHealthHazards,
-     updateEffectPickups,
+     updateBoostBaneState,
+     updateStarSpawns,
+     updateStars,
+     updateStrikes,
+     updateBoostBanePickups,
      updateCollisionBursts,
-     collectSparkles,
-     collectHealthHazards,
-     collectEffectPickups,
+     collectStars,
+     collectStrikes,
+     collectBoostBanePickups,
      updatePlayerTrail
 } from "./8_Entities.js";
 
@@ -238,19 +239,9 @@ export function dismissPausedToOptionsMenu() {
 export function dismissMenuBackToPreviousScreen() {
      if (
           gameMenuView === "tips_how_to_play" ||
-          gameMenuView === "tips_effects"
+          gameMenuView === "tips_boosts"
      ) {
           setMenuViewAndRefresh("tips");
-          return;
-     }
-
-     if (
-          gameMenuView === "options_difficulty" ||
-          gameMenuView === "options_audio" ||
-          gameMenuView === "options_movement" ||
-          gameMenuView === "options_color"
-     ) {
-          setMenuViewAndRefresh("options");
           return;
      }
 
@@ -384,7 +375,7 @@ function getPreviousMovementOptionIndex(levelIndex) {
 }
 
 function getNextMovementOptionIndex(levelIndex) {
-     return Math.min(maxMovementOptionIndex, levelIndex + 1);
+     return Math.min(getMaxMovementOptionIndex(), levelIndex + 1);
 }
 
 function getPreviousColorOptionIndex(levelIndex) {
@@ -395,8 +386,8 @@ function getNextColorOptionIndex(levelIndex) {
      return Math.min(maxColorOptionIndex, levelIndex + 1);
 }
 
-export function getHarmfulToggleLabel() {
-     return getOptionLevelLabel(harmfulLevel);
+export function getBaneToggleLabel() {
+     return getOptionLevelLabel(baneLevel);
 }
 
 export function getMusicToggleLabel() {
@@ -435,19 +426,19 @@ export function increaseSoundEffectsLevel() {
      saveCurrentOptions();
 }
 
-export function decreaseHarmfulLevel() {
-     const nextLevel = getPreviousOptionLevelIndex(harmfulLevel);
-     setHarmfulLevel(nextLevel);
+export function decreaseBaneLevel() {
+     const nextLevel = getPreviousOptionLevelIndex(baneLevel);
+     setBaneLevel(nextLevel);
 
      if (nextLevel === 0) {
-          effectPickups.length = 0;
+          boostBanePickups.length = 0;
      }
 
      saveCurrentOptions();
 }
 
-export function increaseHarmfulLevel() {
-     setHarmfulLevel(getNextOptionLevelIndex(harmfulLevel));
+export function increaseBaneLevel() {
+     setBaneLevel(getNextOptionLevelIndex(baneLevel));
      saveCurrentOptions();
 }
 
@@ -597,6 +588,7 @@ export function updateGame() {
      updatePauseButtonState();
      updateGameOverlayTimer();
      updateLevelPopupTimer();
+     updateMenuKeyboardFocusTimer();
 
      if (screenLayerActive) {
           updateScreenTitleColorState();
@@ -625,17 +617,17 @@ export function updateGame() {
           return;
      }
 
-     updateEffectState();
+     updateBoostBaneState();
      updatePlayer();
-     updateSparkleSpawns();
-     updateSparkles();
-     updateHealthHazards();
-     updateEffectPickups();
+     updateStarSpawns();
+     updateStars();
+     updateStrikes();
+     updateBoostBanePickups();
      updateCollisionBursts();
      updatePlayerTrail();
-     collectSparkles();
-     collectHealthHazards();
-     collectEffectPickups();
+     collectStars();
+     collectStrikes();
+     collectBoostBanePickups();
      syncLevelProgressState();
 
      if (playerHealth <= 0) {
@@ -651,7 +643,7 @@ export function updateGame() {
           return;
      }
 
-     if (sparkleScore >= winScore) {
+     if (starScore >= winScore) {
           setGameWon(true);
           setGameOver(false);
           setGamePaused(true);
@@ -674,7 +666,7 @@ function gameLoop() {
 // STARTUP
 // ==================================================
 
-export function startSparkleSeeker() {
+export function startStarShower() {
      loadAndApplySavedOptions();
 
      resetGameState();
@@ -698,7 +690,7 @@ export function startSparkleSeeker() {
 }
 
 if (!miniGameCanvas || !miniGameCtx) {
-     console.warn("Sparkle Seeker canvas not found.");
+     console.warn("Star Shower canvas not found.");
 } else {
-     startSparkleSeeker();
+     startStarShower();
 }

@@ -1,5 +1,5 @@
 // NOTE: 4_Options
-// Player-facing settings, persistence helpers, and shared tunables for Sparkle Seeker.
+// Player-facing settings, persistence helpers, and shared tunables for Star Shower.
 //
 // Owned here:
 // - saved options / localStorage keys
@@ -26,22 +26,26 @@ import {
      miniGameHeight,
      musicLevel,
      soundEffectsLevel,
-     harmfulLevel,
+     baneLevel,
      movementLevel,
      colorLevel,
      setMusicLevel,
      setSoundEffectsLevel,
-     setHarmfulLevel,
+     setBaneLevel,
      setMovementLevel,
      setColorLevel
 } from "./3_State.js";
+
+import {
+     getCssBoolean
+} from "./9_Config.js";
 
 // ==================================================
 // STORAGE
 // ==================================================
 
 export const configStorageKeys = {
-     options: "sparkle-seeker-options"
+     options: "star-shower-options"
 };
 
 // ==================================================
@@ -66,9 +70,17 @@ export const colorOptionLabels = ["High Contrast", "Vibrant", "Pastel", "Black &
 export const maxColorOptionIndex = colorOptionLabels.length - 1;
 export const defaultColorOptionIndex = 0;
 
+export function isJoystickEnabled() {
+     return getCssBoolean("--game-joystick-enabled", false);
+}
+
+export function getMaxMovementOptionIndex() {
+     return isJoystickEnabled() ? maxMovementOptionIndex : movementOptionIndexes.pointerKeyboard;
+}
+
 export const optionDefinitions = {
-     harmful: {
-          id: "harmful",
+     bane: {
+          id: "bane",
           label: "Difficulty",
           defaultLevel: defaultOptionLevelIndex
      },
@@ -106,8 +118,7 @@ export const optionDefinitions = {
 export const gameplayStartingHealth = 3;
 export const maxPlayerHealth = 10;
 export const maxVisibleHearts = maxPlayerHealth / 2;
-export const sparkleHealthGain = 1;
-export const harmfulHealthDamage = 1;
+export const strikeHealthDamage = 1;
 export const magnetCollisionRadiusMultiplier = 3;
 
 export const touchArriveDistance = 2;
@@ -116,8 +127,8 @@ export const playerTrailMaxPoints = 14;
 export const playerGlowBlurFallback = 18;
 export const particleGlowBlurFallback = 18;
 
-export const sparkleSizeMinFallback = 25;
-export const sparkleSizeMaxFallback = 30;
+export const starSizeMinFallback = 25;
+export const starSizeMaxFallback = 30;
 
 export const statusFlashSeconds = 1.25;
 
@@ -142,7 +153,7 @@ export function clampMovementOptionIndex(value) {
           return defaultMovementOptionIndex;
      }
 
-     return Math.max(0, Math.min(maxMovementOptionIndex, Math.round(numericValue)));
+     return Math.max(0, Math.min(getMaxMovementOptionIndex(), Math.round(numericValue)));
 }
 
 export function clampColorOptionIndex(value) {
@@ -183,7 +194,7 @@ export function getDefaultOptionSnapshot() {
      return {
           music: optionDefinitions.music.defaultLevel,
           soundEffects: optionDefinitions.soundEffects.defaultLevel,
-          harmful: optionDefinitions.harmful.defaultLevel,
+          bane: optionDefinitions.bane.defaultLevel,
           movement: optionDefinitions.movement.defaultLevel,
           color: optionDefinitions.color.defaultLevel
      };
@@ -193,7 +204,7 @@ export function getCurrentOptionSnapshot() {
      return {
           music: musicLevel,
           soundEffects: soundEffectsLevel,
-          harmful: harmfulLevel,
+          bane: baneLevel,
           movement: movementLevel,
           color: colorLevel
      };
@@ -226,7 +237,7 @@ export function measureCanvasTextWidth(text, font) {
 export function getUnifiedButtonWidth(theme, label, fontWeight = 400, fontSize = null, paddingX = null) {
      const { text } = theme;
      const resolvedFontSize = fontSize ?? text.buttonsOptions.fontSize;
-     const resolvedPaddingX = paddingX ?? text.buttonsOptions.buttonExteriorPadding;
+     const resolvedPaddingX = paddingX ?? text.buttonsOptions.buttonPadding;
      const font = getUnifiedButtonFont(theme, fontWeight, resolvedFontSize);
      const textWidth = measureCanvasTextWidth(label, font);
 
@@ -236,7 +247,7 @@ export function getUnifiedButtonWidth(theme, label, fontWeight = 400, fontSize =
 export function getUnifiedButtonHeight(theme, fontSize = null, paddingY = null) {
      const { text } = theme;
      const resolvedFontSize = fontSize ?? text.buttonsOptions.fontSize;
-     const resolvedPaddingY = paddingY ?? text.buttonsOptions.buttonExteriorPadding;
+     const resolvedPaddingY = paddingY ?? text.buttonsOptions.buttonPadding;
 
      return resolvedFontSize + (resolvedPaddingY * 2);
 }
@@ -273,7 +284,7 @@ export function getMenuScreenLayout(theme) {
      const buttonHeight = getUnifiedButtonHeight(
           theme,
           buttons.fontSize,
-          buttons.buttonExteriorPadding
+          buttons.buttonPadding
      );
      const backButtonWidth = getUnifiedButtonWidth(theme, "PREVIOUS", 700);
      const backButtonX = (miniGameWidth - backButtonWidth) / 2;
@@ -306,8 +317,8 @@ export function getMenuScreenLayout(theme) {
 
 export function getMenuLayoutMetrics(theme, panelX, panelWidth) {
      const sharedLayout = getMenuScreenLayout(theme);
-     const buttonX = panelX + sharedLayout.sidePadding;
-     const buttonWidth = panelWidth - (sharedLayout.sidePadding * 2);
+     const buttonWidth = panelWidth - (sharedLayout.sidePadding * 6);
+     const buttonX = panelX + ((panelWidth - buttonWidth) / 2);
 
      return {
           buttonX,
@@ -376,7 +387,7 @@ export function normalizeOptionSnapshot(snapshot = {}) {
      return {
           music: clampOptionLevelIndex(snapshot.music ?? defaults.music),
           soundEffects: clampOptionLevelIndex(snapshot.soundEffects ?? defaults.soundEffects),
-          harmful: clampOptionLevelIndex(snapshot.harmful ?? defaults.harmful),
+          bane: clampOptionLevelIndex(snapshot.bane ?? defaults.bane),
           movement: clampMovementOptionIndex(snapshot.movement ?? defaults.movement),
           color: clampColorOptionIndex(snapshot.color ?? defaults.color)
      };
@@ -439,7 +450,7 @@ export function applyOptionSnapshot(snapshot = loadSavedOptionSnapshot()) {
 
      setMusicLevel(normalizedSnapshot.music);
      setSoundEffectsLevel(normalizedSnapshot.soundEffects);
-     setHarmfulLevel(normalizedSnapshot.harmful);
+     setBaneLevel(normalizedSnapshot.bane);
      setMovementLevel(normalizedSnapshot.movement);
      setColorLevel(normalizedSnapshot.color);
 
@@ -475,8 +486,8 @@ export function setAndPersistSoundEffectsLevel(levelIndex) {
      saveCurrentOptions();
 }
 
-export function setAndPersistHarmfulLevel(levelIndex) {
-     setHarmfulLevel(clampOptionLevelIndex(levelIndex));
+export function setAndPersistBaneLevel(levelIndex) {
+     setBaneLevel(clampOptionLevelIndex(levelIndex));
      saveCurrentOptions();
 }
 

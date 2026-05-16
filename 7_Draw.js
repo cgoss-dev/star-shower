@@ -28,7 +28,7 @@ import {
      miniGameHeight,
      player,
      touchControls,
-     sparkleScore,
+     starScore,
      playerHealth,
      activeStatusUi,
      gameStarted,
@@ -42,7 +42,7 @@ import {
      gameMenuUi,
      musicLevel,
      soundEffectsLevel,
-     harmfulLevel,
+     baneLevel,
      movementLevel,
      colorLevel,
      screenActionUi,
@@ -51,7 +51,9 @@ import {
      pausedSelectionIndex,
      tipsSelectionIndex,
      optionsSelection,
-     isEffectActive,
+     gameMenuScroll,
+     getMenuKeyboardFocusAlpha,
+     isBoostBaneActive,
      hoverCanvasX,
      hoverCanvasY,
      isCanvasPointerInside,
@@ -60,16 +62,18 @@ import {
      setCanvasPointerInside,
      setHoverTrackingAttachedCanvas,
      setButtonBounds,
+     setGameMenuScrollMax,
      isPointInsideRect,
      resetActionButtonBounds
 } from "./3_State.js";
 
 import {
      maxOptionLevelIndex,
-     maxMovementOptionIndex,
+     getMaxMovementOptionIndex,
      maxColorOptionIndex,
      maxVisibleHearts,
      movementOptionIndexes,
+     isJoystickEnabled,
      getOptionLevelLabel,
      getMovementOptionLabel,
      getColorOptionLabel,
@@ -89,9 +93,9 @@ import {
 } from "./9_Config.js";
 
 import {
-     drawSparkles,
-     drawHealthHazards,
-     drawEffectPickups,
+     drawStars,
+     drawStrikes,
+     drawBoostBanePickups,
      drawCollisionBursts,
      playerFaces,
      playerTrail,
@@ -119,7 +123,8 @@ import {
      getCurrentPausedActionTexts,
      getWelcomeInstructionLines,
      getHowToPlayLines,
-     getEffectLines,
+     getBoostLines,
+     getBaneLines,
      getDifficultyOptionLines,
      getAudioOptionLines,
      getMovementOptionLines,
@@ -138,6 +143,13 @@ import {
 } from "./2_GameEngine.js";
 
 const siteTheme = window.SiteTheme;
+const pauseButtonIcon = new Image();
+pauseButtonIcon.src = "./images/icons/not-started.svg";
+const stepperLeftIcon = new Image();
+stepperLeftIcon.src = "./images/icons/chevron-left.svg";
+const stepperRightIcon = new Image();
+stepperRightIcon.src = "./images/icons/chevron-right.svg";
+const richTextIconAssetImages = {};
 
 // Re-export moved player/entity helpers so existing imports from this file keep working.
 export {
@@ -258,48 +270,33 @@ function getHoverableCanvasButtons() {
           buttons.push(gameMenuUi.backButton);
 
           if (gameMenuView === "tips") {
-               buttons.push(
-                    gameMenuUi.tipsHowToPlayButton,
-                    gameMenuUi.tipsEffectsButton
-               );
+               return buttons;
           }
 
           if (gameMenuView === "options") {
-               buttons.push(
-                    gameMenuUi.optionsDifficultyButton,
-                    gameMenuUi.optionsMovementButton,
-                    gameMenuUi.optionsColorButton
-               );
-          }
+               if (baneLevel > 0) {
+                    buttons.push(gameMenuUi.baneDecreaseButton);
+               }
 
-          if (gameMenuView === "options_difficulty") {
-               buttons.push(
-                    gameMenuUi.harmfulDecreaseButton,
-                    gameMenuUi.harmfulIncreaseButton
-               );
-          }
+               if (baneLevel < maxOptionLevelIndex) {
+                    buttons.push(gameMenuUi.baneIncreaseButton);
+               }
 
-          if (gameMenuView === "options_audio") {
-               buttons.push(
-                    gameMenuUi.musicDecreaseButton,
-                    gameMenuUi.musicIncreaseButton,
-                    gameMenuUi.soundEffectsDecreaseButton,
-                    gameMenuUi.soundEffectsIncreaseButton
-               );
-          }
+               if (isJoystickEnabled() && movementLevel > 0) {
+                    buttons.push(gameMenuUi.movementDecreaseButton);
+               }
 
-          if (gameMenuView === "options_movement") {
-               buttons.push(
-                    gameMenuUi.movementDecreaseButton,
-                    gameMenuUi.movementIncreaseButton
-               );
-          }
+               if (isJoystickEnabled() && movementLevel < getMaxMovementOptionIndex()) {
+                    buttons.push(gameMenuUi.movementIncreaseButton);
+               }
 
-          if (gameMenuView === "options_color") {
-               buttons.push(
-                    gameMenuUi.colorDecreaseButton,
-                    gameMenuUi.colorIncreaseButton
-               );
+               if (colorLevel > 0) {
+                    buttons.push(gameMenuUi.colorDecreaseButton);
+               }
+
+               if (colorLevel < maxColorOptionIndex) {
+                    buttons.push(gameMenuUi.colorIncreaseButton);
+               }
           }
      }
 
@@ -369,44 +366,56 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
      );
 
      if (gameMenuView === "tips") {
-          const menuButtons = [
-               { button: gameMenuUi.tipsHowToPlayButton, label: "GUIDE" },
-               { button: gameMenuUi.tipsEffectsButton, label: "EFFECTS" }
-          ];
+          setButtonBounds(gameMenuUi.tipsHowToPlayButton, 0, 0, 0, 0);
+          setButtonBounds(gameMenuUi.tipsBoostsButton, 0, 0, 0, 0);
 
-          menuButtons.forEach((item, index) => {
-               const width = getUnifiedButtonWidth(theme, item.label);
-               const y = layout.contentTopY + (index * (layout.buttonHeight + layout.rowGap));
-               const x = (miniGameWidth - width) / 2;
-
-               setButtonBounds(item.button, x, y, width, layout.buttonHeight);
-          });
-
-          return;
-     }
-
-     if (
-          gameMenuView === "tips_how_to_play" ||
-          gameMenuView === "tips_effects"
-     ) {
           return;
      }
 
      if (gameMenuView === "options") {
-          const optionButtons = [
-               { button: gameMenuUi.optionsDifficultyButton, label: "DIFFICULTY" },
-               { button: gameMenuUi.optionsMovementButton, label: "MOVEMENT" },
-               { button: gameMenuUi.optionsColorButton, label: "COLOR" }
+          const sliderRowHeight = layout.buttonHeight * 2;
+          const showMovementOption = isJoystickEnabled();
+          const optionRows = [
+               {
+                    row: gameMenuUi.baneRow,
+                    decreaseButton: gameMenuUi.baneDecreaseButton,
+                    increaseButton: gameMenuUi.baneIncreaseButton
+               }
           ];
 
+          if (showMovementOption) {
+               optionRows.push({
+                    row: gameMenuUi.movementRow,
+                    decreaseButton: gameMenuUi.movementDecreaseButton,
+                    increaseButton: gameMenuUi.movementIncreaseButton
+               });
+          } else {
+               setButtonBounds(gameMenuUi.movementRow, 0, 0, 0, 0);
+               setButtonBounds(gameMenuUi.movementDecreaseButton, 0, 0, 0, 0);
+               setButtonBounds(gameMenuUi.movementIncreaseButton, 0, 0, 0, 0);
+          }
+
+          optionRows.push({
+               row: gameMenuUi.colorRow,
+               decreaseButton: gameMenuUi.colorDecreaseButton,
+               increaseButton: gameMenuUi.colorIncreaseButton
+          });
+
+          setButtonBounds(gameMenuUi.optionsDifficultyButton, 0, 0, 0, 0);
           setButtonBounds(gameMenuUi.optionsAudioButton, 0, 0, 0, 0);
+          setButtonBounds(gameMenuUi.optionsMovementButton, 0, 0, 0, 0);
+          setButtonBounds(gameMenuUi.optionsColorButton, 0, 0, 0, 0);
 
-          optionButtons.forEach((item, index) => {
-               const width = getUnifiedButtonWidth(theme, item.label);
-               const y = layout.contentTopY + (index * (layout.buttonHeight + layout.rowGap));
-               const x = (miniGameWidth - width) / 2;
-
-               setButtonBounds(item.button, x, y, width, layout.buttonHeight);
+          optionRows.forEach((item, index) => {
+               setOptionRowBounds(
+                    item.row,
+                    item.decreaseButton,
+                    item.increaseButton,
+                    layout.buttonX,
+                    layout.contentTopY + (index * (sliderRowHeight + layout.rowGap)),
+                    layout.buttonWidth,
+                    sliderRowHeight
+               );
           });
 
           return;
@@ -423,9 +432,9 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
 
      if (gameMenuView === "options_difficulty") {
           setOptionRowBounds(
-               gameMenuUi.harmfulRow,
-               gameMenuUi.harmfulDecreaseButton,
-               gameMenuUi.harmfulIncreaseButton,
+               gameMenuUi.baneRow,
+               gameMenuUi.baneDecreaseButton,
+               gameMenuUi.baneIncreaseButton,
                layout.buttonX,
                layout.contentTopY,
                layout.buttonWidth,
@@ -566,23 +575,26 @@ export function drawRoundedRect(x, y, width, height, radius) {
      miniGameCtx.closePath();
 }
 
-export function drawPanelBox(x, y, width, height, theme, lineWidth = null) {
+export function drawPanelBox(x, y, width, height, theme, lineWidth = null, fillStyle = null) {
      if (!miniGameCtx) {
           return;
      }
 
-     const { colors, glow, sizes } = theme;
+     const { colors, sizes } = theme;
      const resolvedLineWidth = lineWidth ?? sizes.borderWidth;
      const outerWidth = sizes.borderWidthFocus || sizes.borderWidth || 1;
      const insetWidth = sizes.panelBorderWidth || outerWidth;
 
-     miniGameCtx.shadowColor = getCanvasGlowColor(colors.controlGlow);
-     miniGameCtx.shadowBlur = glow.uiStrongGlow;
+     miniGameCtx.shadowBlur = 0;
+     miniGameCtx.fillStyle = colors.fontColor;
+     miniGameCtx.fillRect(x, y - outerWidth, width, outerWidth);
+     miniGameCtx.fillRect(x, y + height, width, outerWidth);
+     miniGameCtx.fillRect(x - outerWidth, y, outerWidth, height);
+     miniGameCtx.fillRect(x + width, y, outerWidth, height);
 
-     miniGameCtx.fillStyle = colors.menuPanelFill;
+     miniGameCtx.fillStyle = fillStyle || colors.menuPanelFill;
      miniGameCtx.fillRect(x, y, width, height);
 
-     miniGameCtx.shadowBlur = 0;
      miniGameCtx.lineJoin = "miter";
      miniGameCtx.lineCap = "butt";
 
@@ -590,7 +602,7 @@ export function drawPanelBox(x, y, width, height, theme, lineWidth = null) {
      miniGameCtx.lineWidth = outerWidth;
      miniGameCtx.strokeRect(x, y, width, height);
 
-     miniGameCtx.strokeStyle = colors.controlFill;
+     miniGameCtx.strokeStyle = colors.frameInset;
      miniGameCtx.lineWidth = insetWidth;
      miniGameCtx.strokeRect(
           x + (insetWidth / 2),
@@ -673,7 +685,58 @@ function getTextColor(theme, styleName, letterIndex = 0) {
 }
 
 function getRichTextIcon(theme, tokenName) {
-     return theme.text?.friendsEnemiesIcons?.[tokenName] || null;
+     return theme.text?.guideIcons?.[tokenName] || null;
+}
+
+function getRichTextIconAsset(src) {
+     if (!src) {
+          return null;
+     }
+
+     if (!richTextIconAssetImages[src]) {
+          richTextIconAssetImages[src] = new Image();
+          richTextIconAssetImages[src].src = src;
+     }
+
+     return richTextIconAssetImages[src];
+}
+
+function getRichTextIconSize(icon, iconBaseSize) {
+     return iconBaseSize;
+}
+
+function getRichTextIconWidth(ctx, icon, iconBaseSize, iconFont) {
+     const assetImage = getRichTextIconAsset(icon.assetSrc);
+
+     if (assetImage?.complete && assetImage.naturalWidth > 0) {
+          return getRichTextIconSize(icon, iconBaseSize);
+     }
+
+     ctx.font = iconFont;
+     return ctx.measureText(icon.particle).width;
+}
+
+function drawTintedRichTextIcon(ctx, icon, x, y, size, color) {
+     const assetImage = getRichTextIconAsset(icon.assetSrc);
+
+     if (!assetImage?.complete || assetImage.naturalWidth <= 0) {
+          return false;
+     }
+
+     const tintCanvas = document.createElement("canvas");
+     const tintCtx = tintCanvas.getContext("2d");
+     const drawSize = Math.ceil(size);
+
+     tintCanvas.width = drawSize;
+     tintCanvas.height = drawSize;
+
+     tintCtx.drawImage(assetImage, 0, 0, drawSize, drawSize);
+     tintCtx.globalCompositeOperation = "source-in";
+     tintCtx.fillStyle = color;
+     tintCtx.fillRect(0, 0, drawSize, drawSize);
+
+     ctx.drawImage(tintCanvas, x, y, size, size);
+     return true;
 }
 
 function getRainbowTextColor(theme, style, letterIndex) {
@@ -847,14 +910,18 @@ function getShortOptionLevelLabel(levelIndex) {
      return getOptionLevelLabel(levelIndex).toUpperCase();
 }
 
+function getDifficultyOptionDescription(levelIndex) {
+     return getDifficultyOptionLines()[levelIndex] || getShortOptionLevelLabel(levelIndex);
+}
+
 function getShortMovementOptionLabel(levelIndex) {
-     const labels = ["TOUCHCLICK/WASDARROWS", "JOYSTICKLEFT", "JOYSTICK RIGHT"];
+     const labels = ["Click / Arrows", "Joystick Left", "Joystick Right"];
 
      return labels[levelIndex] || getMovementOptionLabel(levelIndex).toUpperCase();
 }
 
 function getShortColorOptionLabel(levelIndex) {
-     const labels = ["HIGH CONTRAST", "VIBRANT", "PASTEL", "Black & White"];
+     const labels = ["High Contrast", "Vibrant", "Pastel", "Monochrome"];
 
      return labels[levelIndex] || getColorOptionLabel(levelIndex).toUpperCase();
 }
@@ -881,6 +948,29 @@ function getCanvasGlowColor(color) {
           : color;
 }
 
+function getControlCornerRadius(theme, width, height) {
+     return Math.min(theme.sizes.controlRadius || 0, width / 2, height / 2);
+}
+
+function fillRoundedControlRect(x, y, width, height, radius, fillStyle) {
+     miniGameCtx.fillStyle = fillStyle;
+     drawRoundedRect(x, y, width, height, radius);
+     miniGameCtx.fill();
+}
+
+function strokeRoundedControlRect(x, y, width, height, radius, lineWidth, strokeStyle) {
+     miniGameCtx.strokeStyle = strokeStyle;
+     miniGameCtx.lineWidth = lineWidth;
+     drawRoundedRect(
+          x + (lineWidth / 2),
+          y + (lineWidth / 2),
+          width - lineWidth,
+          height - lineWidth,
+          Math.max(0, radius - (lineWidth / 2))
+     );
+     miniGameCtx.stroke();
+}
+
 function drawUnifiedTextButton(button, label, theme, isFocused = false, fontWeight = 400, fontSize = null) {
      if (!miniGameCtx || !button) {
           return;
@@ -891,20 +981,19 @@ function drawUnifiedTextButton(button, label, theme, isFocused = false, fontWeig
      const resolvedFontSize = fontSize ?? buttonStyle.fontSize;
      const centerX = button.x + (button.width / 2);
      const centerY = button.y + (button.height / 2);
+     const cornerRadius = getControlCornerRadius(theme, button.width, button.height);
+     const borderWidth = theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1;
 
      miniGameCtx.save();
-     drawPanelBox(button.x, button.y, button.width, button.height, theme);
 
-     if (isFocused) {
-          miniGameCtx.strokeStyle = colors.fontColor;
-          miniGameCtx.lineWidth = theme.sizes.borderWidthFocus;
-          miniGameCtx.strokeRect(
-               button.x + (theme.sizes.borderWidthFocus / 2),
-               button.y + (theme.sizes.borderWidthFocus / 2),
-               button.width - theme.sizes.borderWidthFocus,
-               button.height - theme.sizes.borderWidthFocus
-          );
+     const focusAlpha = getMenuKeyboardFocusAlpha();
+
+     if (isFocused && focusAlpha > 0) {
+          miniGameCtx.globalAlpha *= focusAlpha;
+          fillRoundedControlRect(button.x, button.y, button.width, button.height, cornerRadius, colors.menuPanelFill);
      }
+
+     strokeRoundedControlRect(button.x, button.y, button.width, button.height, cornerRadius, borderWidth, getCssColor("--color-white", "#ffffff"));
 
      miniGameCtx.restore();
 
@@ -949,58 +1038,65 @@ export function drawOptionStepper(
      const { colors } = theme;
      const optionsStyle = getTextStyle(theme, "buttonsOptions");
      const centerY = row.y + (row.height / 2);
+     const lineGap = optionsStyle.fontSize * 1.1;
+     const titleY = centerY - (lineGap / 2);
+     const valueY = centerY + (lineGap / 2);
      const canDecrease = levelIndex > 0;
      const canIncrease = levelIndex < maxLevelIndex;
      const optionTextColor = optionsStyle.color || colors.controlText;
-     const activeArrowColor = getCssColor("--color-white", "#ffffff");
      const arrowScale = optionsStyle.arrowScale || 1;
-     const arrowFont = getTextFont(theme, "buttonsOptions", 700, null, optionsStyle.fontSize * arrowScale);
+     const arrowIconSize = Math.min(row.height * 0.5, optionsStyle.fontSize * arrowScale);
+     const cornerRadius = getControlCornerRadius(theme, row.width, row.height);
+     const borderWidth = theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1;
 
-     function drawStepperArrow(button, rotation, isEnabled, isFocused) {
+     function drawStepperArrow(button, icon, isEnabled) {
+          if (!isEnabled) {
+               return;
+          }
+
+          const iconX = button.x + ((button.width - arrowIconSize) / 2);
+          const iconY = centerY - (arrowIconSize / 2);
+
           miniGameCtx.save();
-          miniGameCtx.globalAlpha = isEnabled ? 1 : 0.28;
-          miniGameCtx.translate(button.x + (button.width / 2), centerY + 1);
-          miniGameCtx.rotate(rotation);
-
-          drawGlowingCanvasText(
-               miniGameCtx,
-               "\u21E7",
-               0,
-               0,
-               isEnabled ? activeArrowColor : optionTextColor,
-               arrowFont,
-               "center",
-               "middle",
-               theme,
-               isEnabled && isFocused && optionsStyle.glow
-          );
-
+          if (icon.complete && icon.naturalWidth > 0) {
+               miniGameCtx.drawImage(icon, iconX, iconY, arrowIconSize, arrowIconSize);
+          }
           miniGameCtx.restore();
      }
 
      miniGameCtx.save();
-     drawPanelBox(row.x, row.y, row.width, row.height, theme);
 
-     if (isRowFocused) {
-          miniGameCtx.strokeStyle = colors.fontColor;
-          miniGameCtx.lineWidth = theme.sizes.borderWidthFocus;
-          miniGameCtx.strokeRect(
-               row.x + (theme.sizes.borderWidthFocus / 2),
-               row.y + (theme.sizes.borderWidthFocus / 2),
-               row.width - theme.sizes.borderWidthFocus,
-               row.height - theme.sizes.borderWidthFocus
-          );
+     const focusAlpha = getMenuKeyboardFocusAlpha();
+
+     if (isRowFocused && focusAlpha > 0) {
+          miniGameCtx.globalAlpha *= focusAlpha;
+          fillRoundedControlRect(row.x, row.y, row.width, row.height, cornerRadius, colors.menuPanelFill);
      }
+
+     strokeRoundedControlRect(row.x, row.y, row.width, row.height, cornerRadius, borderWidth, getCssColor("--color-white", "#ffffff"));
 
      miniGameCtx.restore();
 
-     drawStepperArrow(decreaseButton, -Math.PI / 2, canDecrease, focusedSide === 0);
+     drawStepperArrow(decreaseButton, stepperLeftIcon, canDecrease);
+
+     drawGlowingCanvasText(
+          miniGameCtx,
+          label,
+          row.x + (row.width / 2),
+          titleY,
+          optionTextColor,
+          getTextFont(theme, "buttonsOptions", 700),
+          "center",
+          "middle",
+          theme,
+          isRowFocused && optionsStyle.glow
+     );
 
      drawGlowingCanvasText(
           miniGameCtx,
           value,
           row.x + (row.width / 2),
-          centerY + 1,
+          valueY,
           optionTextColor,
           getTextFont(theme, "buttonsOptions", 400),
           "center",
@@ -1009,7 +1105,7 @@ export function drawOptionStepper(
           isRowFocused && optionsStyle.glow
      );
 
-     drawStepperArrow(increaseButton, Math.PI / 2, canIncrease, focusedSide === 1);
+     drawStepperArrow(increaseButton, stepperRightIcon, canIncrease);
 }
 
 export function drawControlButton(button, isPressed, theme) {
@@ -1037,6 +1133,36 @@ export function drawControlButton(button, isPressed, theme) {
      miniGameCtx.stroke();
 
      miniGameCtx.restore();
+}
+
+function drawPauseButtonIcon(button, theme) {
+     if (!miniGameCtx || !button) {
+          return;
+     }
+
+     const { colors } = theme;
+     const buttonStyle = getTextStyle(theme, "pauseButton");
+     const iconSize = Math.min(button.width, button.height) * (buttonStyle.iconScale || 0.62);
+     const iconX = button.x + ((button.width - iconSize) / 2);
+     const iconY = button.y + ((button.height - iconSize) / 2);
+
+     if (pauseButtonIcon.complete && pauseButtonIcon.naturalWidth > 0) {
+          miniGameCtx.drawImage(pauseButtonIcon, iconX, iconY, iconSize, iconSize);
+          return;
+     }
+
+     drawGlowingCanvasText(
+          miniGameCtx,
+          "\u23EF\uFE0E",
+          button.x + (button.width / 2),
+          button.y + (button.height / 2) + 1,
+          buttonStyle.color || colors.touchText,
+          getTextFont(theme, "pauseButton", 400),
+          "center",
+          "middle",
+          theme,
+          false
+     );
 }
 
 // ==================================================
@@ -1139,7 +1265,15 @@ export function drawWrappedRichText(ctx, text, x, y, maxWidth, lineHeight, optio
                return font;
           }
 
-          return `400 ${iconBaseSize * icon.scale}px ${iconFontFamily}`;
+          return `400 ${getRichTextIconSize(icon, iconBaseSize)}px ${iconFontFamily}`;
+     }
+
+     function getTokenIcon(token) {
+          if (token.type !== "icon") {
+               return null;
+          }
+
+          return getRichTextIcon(options.theme, token.value);
      }
 
      function getTokenText(token) {
@@ -1150,6 +1284,22 @@ export function drawWrappedRichText(ctx, text, x, y, maxWidth, lineHeight, optio
           const icon = getRichTextIcon(options.theme, token.value);
 
           return icon ? icon.particle : token.value;
+     }
+
+     function getTokenWidth(token) {
+          if (token.type !== "icon") {
+               ctx.font = font;
+               return ctx.measureText(token.value).width;
+          }
+
+          const icon = getTokenIcon(token);
+
+          if (!icon) {
+               ctx.font = font;
+               return ctx.measureText(token.value).width;
+          }
+
+          return getRichTextIconWidth(ctx, icon, iconBaseSize, getTokenFont(token));
      }
 
      function getTokenXOffset(token) {
@@ -1177,10 +1327,9 @@ export function drawWrappedRichText(ctx, text, x, y, maxWidth, lineHeight, optio
                return 0;
           }
 
-          const scaleOffset = -((iconBaseSize * icon.scale - iconBaseSize) * 0.28);
           const customOffset = icon.yOffset || 0;
 
-          return iconYOffset + scaleOffset + customOffset;
+          return iconYOffset + customOffset;
      }
 
      const lines = [];
@@ -1188,10 +1337,7 @@ export function drawWrappedRichText(ctx, text, x, y, maxWidth, lineHeight, optio
      let currentWidth = 0;
 
      tokens.forEach((token) => {
-          ctx.font = getTokenFont(token);
-
-          const tokenText = getTokenText(token);
-          const tokenWidth = ctx.measureText(tokenText).width;
+          const tokenWidth = getTokenWidth(token);
           const shouldWrap = currentWidth + tokenWidth > maxWidth && currentLine.length > 0;
 
           if (shouldWrap) {
@@ -1213,14 +1359,30 @@ export function drawWrappedRichText(ctx, text, x, y, maxWidth, lineHeight, optio
           const currentY = y + (lineIndex * lineHeight);
 
           lineTokens.forEach((token) => {
-               ctx.font = getTokenFont(token);
-
-               const tokenText = getTokenText(token);
+               const icon = getTokenIcon(token);
+               const iconSize = icon ? getRichTextIconSize(icon, iconBaseSize) : 0;
                const tokenXOffset = getTokenXOffset(token);
                const tokenYOffset = getTokenYOffset(token);
+               const tokenWidth = getTokenWidth(token);
 
-               ctx.fillText(tokenText, currentX + tokenXOffset, currentY + tokenYOffset);
-               currentX += ctx.measureText(tokenText).width;
+               if (
+                    icon &&
+                    drawTintedRichTextIcon(
+                         ctx,
+                         icon,
+                         currentX + tokenXOffset,
+                         currentY + tokenYOffset,
+                         iconSize,
+                         options.color || ctx.fillStyle
+                    )
+               ) {
+                    currentX += tokenWidth;
+                    return;
+               }
+
+               ctx.font = getTokenFont(token);
+               ctx.fillText(getTokenText(token), currentX + tokenXOffset, currentY + tokenYOffset);
+               currentX += tokenWidth;
           });
      });
 
@@ -1296,7 +1458,7 @@ export function drawScore(theme) {
      const scoreReadyStyle = getTextStyle(theme, "scoreReady");
      const scoreIconStyle = getTextStyle(theme, "scoreIcon");
      const levelText = "LEVELS";
-     const sparkleText = String(sparkleScore).padStart(3, "0");
+     const starText = String(starScore).padStart(3, "0");
      const levelMeterUnits = getCurrentLevelMeterUnits();
 
      miniGameCtx.save();
@@ -1338,9 +1500,9 @@ export function drawScore(theme) {
           currentX += circleAdvance;
      }
 
-     const sparkleY = meterY + circleInkMetrics.bottom + canvasSpacing.uiRowGap;
+     const starY = meterY + circleInkMetrics.bottom + canvasSpacing.uiRowGap;
      const scoreIconX = leftEdgeX + scoreIconStyle.xOffset;
-     const scoreIconY = sparkleY + scoreIconStyle.yOffset;
+     const scoreIconY = starY + scoreIconStyle.yOffset;
 
      miniGameCtx.font = getTextFont(theme, "scoreIcon", 400);
      const scoreIconWidth = miniGameCtx.measureText(scoreIconStyle.particle).width;
@@ -1360,9 +1522,9 @@ export function drawScore(theme) {
 
      drawGlowingCanvasText(
           miniGameCtx,
-          sparkleText,
+          starText,
           scoreIconX + scoreIconWidth + scoreIconStyle.gap,
-          sparkleY,
+          starY,
           scoreReadyStyle.color || colors.meterFull,
           getTextFont(theme, "scoreReady", 400),
           "left",
@@ -1503,7 +1665,7 @@ export function drawHealth(theme) {
 }
 
 export function drawFogOverlay() {
-     if (!miniGameCtx || !isEffectActive("fog")) {
+     if (!miniGameCtx || !isBoostBaneActive("fog")) {
           return;
      }
 
@@ -1536,33 +1698,19 @@ export function drawTouchButtons(theme) {
           return;
      }
 
-     const { colors } = theme;
-     const buttonStyle = getTextStyle(theme, "pauseButton");
      const button = touchControls.pauseButton;
 
      if (!button) {
           return;
      }
 
-     drawControlButton(button, button.isPressed, theme);
-
-     drawGlowingCanvasText(
-          miniGameCtx,
-          button.label,
-          button.x + (button.width / 2),
-          button.y + (button.height / 2) + 1,
-          buttonStyle.color || colors.touchText,
-          getTextFont(theme, "pauseButton", 400),
-          "center",
-          "middle",
-          theme,
-          button.isPressed && buttonStyle.glow
-     );
+     drawPauseButtonIcon(button, theme);
 }
 
 export function drawJoystick(theme) {
      if (
           !miniGameCtx ||
+          !isJoystickEnabled() ||
           (
                movementLevel !== movementOptionIndexes.joystickLeft &&
                movementLevel !== movementOptionIndexes.joystickRight
@@ -1611,33 +1759,80 @@ function drawTipsMenuScreen(theme) {
 
      const { colors } = theme;
      const layout = getMenuScreenLayout(theme);
-     const focusedIndex = tipsSelectionIndex;
+     const lines = [
+          "TIPS",
+          ...getHowToPlayLines(),
+          "",
+          "BOOSTS",
+          ...getBoostLines(),
+          "",
+          "BANES",
+          ...getBaneLines()
+     ];
 
      miniGameCtx.save();
      miniGameCtx.fillStyle = colors.menuScreenFill;
      miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
 
-     drawMenuScreenTitle("TIPS", theme, layout.titleCenterX, layout.titleY);
-     drawMenuButton(gameMenuUi.tipsHowToPlayButton, "GUIDE", theme, focusedIndex === 0);
-     drawMenuButton(gameMenuUi.tipsEffectsButton, "EFFECTS", theme, focusedIndex === 1);
-     drawMenuBackButton(gameMenuUi.backButton, theme, focusedIndex === 2);
+     const viewportTop = layout.titleY;
+     const viewportBottom = layout.contentBottomY;
+     const viewportHeight = Math.max(0, viewportBottom - viewportTop);
+
+     miniGameCtx.save();
+     miniGameCtx.beginPath();
+     miniGameCtx.rect(0, viewportTop, miniGameWidth, viewportHeight);
+     miniGameCtx.clip();
+
+     const contentStartY = viewportTop - gameMenuScroll.offset;
+     const contentEndY = drawMenuDetailLines(theme, lines, contentStartY, { centerContent: true });
+     const contentHeight = contentEndY - contentStartY;
+
+     miniGameCtx.restore();
+
+     const scrollMax = Math.max(0, contentHeight - viewportHeight);
+
+     setGameMenuScrollMax(scrollMax);
+
+     if (scrollMax > 0 && viewportHeight > 0) {
+          const scrollbarWidth = theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1;
+          const scrollbarX = miniGameWidth - layout.sidePadding + (scrollbarWidth / 2);
+          const thumbHeight = Math.max(viewportHeight * (viewportHeight / contentHeight), viewportHeight * 0.2);
+          const thumbTravel = viewportHeight - thumbHeight;
+          const thumbY = viewportTop + (thumbTravel * (gameMenuScroll.offset / scrollMax));
+
+          miniGameCtx.save();
+          miniGameCtx.globalAlpha = 0.7;
+          miniGameCtx.strokeStyle = colors.fontColor;
+          miniGameCtx.lineWidth = scrollbarWidth;
+          miniGameCtx.beginPath();
+          miniGameCtx.moveTo(scrollbarX, thumbY);
+          miniGameCtx.lineTo(scrollbarX, thumbY + thumbHeight);
+          miniGameCtx.stroke();
+          miniGameCtx.restore();
+     }
+
+     drawMenuBackButton(gameMenuUi.backButton, theme, tipsSelectionIndex === 0);
 
      miniGameCtx.restore();
 }
 
-function drawMenuDetailLines(theme, lines, startY) {
+function drawMenuDetailLines(theme, lines, startY, options = {}) {
      const { colors } = theme;
      const detailStyle = getTextStyle(theme, "buttonsOptions");
+     const titleStyle = getTextStyle(theme, "title");
      const canvasSpacing = getTextStyle(theme, "canvasSpacing");
      const screenLayout = getMenuScreenLayout(theme);
      let textY = startY;
      const fontSize = detailStyle.fontSize;
      const lineHeight = canvasSpacing.bodyLineHeight;
+     const sectionHeadingHeight = titleStyle.fontSize;
      const hasIconGutter = lines.some((line) => line.includes("{icon"));
-     const iconGutterWidth = hasIconGutter ? canvasSpacing.friendsEnemiesIconGutter : 0;
+     const iconGutterWidth = hasIconGutter ? canvasSpacing.guideIconGutter : 0;
      const iconX = screenLayout.sidePadding + (iconGutterWidth * 0.25);
      const detailTextX = screenLayout.sidePadding + iconGutterWidth;
      const detailTextWidth = miniGameWidth - detailTextX - screenLayout.sidePadding;
+     const sectionHeadings = new Set(["TIPS", "BOOSTS", "BANES"]);
+     const shouldCenterContent = Boolean(options.centerContent);
 
      miniGameCtx.fillStyle = detailStyle.color || colors.fontColor;
      miniGameCtx.textAlign = "left";
@@ -1646,7 +1841,74 @@ function drawMenuDetailLines(theme, lines, startY) {
      miniGameCtx.shadowBlur = 0;
      miniGameCtx.font = getTextFont(theme, "buttonsOptions", 400);
 
+     function drawCenteredDetailLine(line, firstSegment, bodyText) {
+          const hasLeadingIcon = firstSegment?.type === "icon";
+          const textFont = getTextFont(theme, "buttonsOptions", 400);
+          let icon = null;
+          let iconFont = textFont;
+          let iconWidth = 0;
+          const iconGap = hasLeadingIcon ? fontSize * 0.45 : 0;
+
+          miniGameCtx.font = textFont;
+          const textWidth = miniGameCtx.measureText(bodyText).width;
+
+          if (hasLeadingIcon) {
+               icon = getRichTextIcon(theme, firstSegment.value);
+
+               if (icon) {
+                    iconFont = getTextFont(theme, "buttonsOptions", 400, "body", getRichTextIconSize(icon, fontSize));
+                    iconWidth = getRichTextIconWidth(miniGameCtx, icon, fontSize, iconFont);
+               }
+          }
+
+          const totalWidth = iconWidth + (icon ? iconGap : 0) + textWidth;
+          let currentX = (miniGameWidth - totalWidth) / 2;
+
+          if (icon) {
+               const iconX = currentX + (icon.xOffset || 0);
+               const iconY =
+                    textY +
+                    (icon.yOffset || 0) -
+                    ((getRichTextIconSize(icon, fontSize) - fontSize) * 0.28);
+
+               if (!drawTintedRichTextIcon(
+                    miniGameCtx,
+                    icon,
+                    iconX,
+                    iconY,
+                    getRichTextIconSize(icon, fontSize),
+                    detailStyle.color || colors.fontColor
+               )) {
+                    miniGameCtx.font = iconFont;
+                    miniGameCtx.fillText(
+                         icon.particle,
+                         iconX,
+                         iconY
+                    );
+               }
+
+               currentX += iconWidth + iconGap;
+          }
+
+          miniGameCtx.font = textFont;
+          miniGameCtx.fillText(bodyText || line, currentX, textY);
+          miniGameCtx.font = textFont;
+
+          return 1;
+     }
+
      lines.forEach((line) => {
+          if (!line.trim()) {
+               textY += lineHeight * 0.5;
+               return;
+          }
+
+          if (sectionHeadings.has(line)) {
+               drawMenuScreenTitle(line, theme, screenLayout.titleCenterX, textY);
+               textY += sectionHeadingHeight + (lineHeight * 0.5);
+               return;
+          }
+
           const richSegments = parseRichTextSegments(line);
           const firstSegment = richSegments[0];
           const hasLeadingIcon = firstSegment?.type === "icon";
@@ -1658,22 +1920,43 @@ function drawMenuDetailLines(theme, lines, startY) {
                     .trimStart()
                : line;
 
+          if (shouldCenterContent) {
+               textY += drawCenteredDetailLine(line, firstSegment, bodyText) * lineHeight;
+               return;
+          }
+
           if (hasLeadingIcon) {
                const icon = getRichTextIcon(theme, firstSegment.value);
 
                if (icon) {
-                    drawGlowingCanvasText(
+                    const iconSize = getRichTextIconSize(icon, fontSize);
+                    const richIconX = iconX + (icon.xOffset || 0);
+                    const richIconY =
+                         textY +
+                         (icon.yOffset || 0) -
+                         ((iconSize - fontSize) * 0.28);
+
+                    if (!drawTintedRichTextIcon(
                          miniGameCtx,
-                         icon.particle,
-                         iconX + (icon.xOffset || 0),
-                         textY + (icon.yOffset || 0) - ((fontSize * icon.scale - fontSize) * 0.28),
-                         detailStyle.color || colors.fontColor,
-                         getTextFont(theme, "buttonsOptions", 400, "body", fontSize * icon.scale),
-                         "left",
-                         "top",
-                         theme,
-                         false
-                    );
+                         icon,
+                         richIconX,
+                         richIconY,
+                         iconSize,
+                         detailStyle.color || colors.fontColor
+                    )) {
+                         drawGlowingCanvasText(
+                              miniGameCtx,
+                              icon.particle,
+                              richIconX,
+                              richIconY,
+                              detailStyle.color || colors.fontColor,
+                              getTextFont(theme, "buttonsOptions", 400, "body", iconSize),
+                              "left",
+                              "top",
+                              theme,
+                              false
+                         );
+                    }
                }
           }
 
@@ -1724,16 +2007,57 @@ function drawOptionsScreen(theme) {
      const { colors } = theme;
      const layout = getMenuScreenLayout(theme);
      const focused = optionsSelection;
+     const showMovementOption = isJoystickEnabled();
+     const colorRowIndex = showMovementOption ? 2 : 1;
+     const backRowIndex = showMovementOption ? 3 : 2;
 
      miniGameCtx.save();
      miniGameCtx.fillStyle = colors.menuScreenFill;
      miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
 
      drawMenuScreenTitle("OPTIONS", theme, layout.titleCenterX, layout.titleY);
-     drawMenuButton(gameMenuUi.optionsDifficultyButton, "DIFFICULTY", theme, focused.row === 0);
-     drawMenuButton(gameMenuUi.optionsMovementButton, "MOVEMENT", theme, focused.row === 1);
-     drawMenuButton(gameMenuUi.optionsColorButton, "COLOR", theme, focused.row === 2);
-     drawMenuBackButton(gameMenuUi.backButton, theme, focused.row === 3);
+
+     drawOptionStepper(
+          gameMenuUi.baneRow,
+          gameMenuUi.baneDecreaseButton,
+          gameMenuUi.baneIncreaseButton,
+          "DIFFICULTY",
+          getDifficultyOptionDescription(baneLevel),
+          baneLevel,
+          theme,
+          focused.row === 0,
+          focused.row === 0 ? focused.col : -1
+     );
+
+     if (showMovementOption) {
+          drawOptionStepper(
+               gameMenuUi.movementRow,
+               gameMenuUi.movementDecreaseButton,
+               gameMenuUi.movementIncreaseButton,
+               "MOVEMENT",
+               getShortMovementOptionLabel(movementLevel),
+               movementLevel,
+               theme,
+               focused.row === 1,
+               focused.row === 1 ? focused.col : -1,
+               getMaxMovementOptionIndex()
+          );
+     }
+
+     drawOptionStepper(
+          gameMenuUi.colorRow,
+          gameMenuUi.colorDecreaseButton,
+          gameMenuUi.colorIncreaseButton,
+          "COLOR",
+          getShortColorOptionLabel(colorLevel),
+          colorLevel,
+          theme,
+          focused.row === colorRowIndex,
+          focused.row === colorRowIndex ? focused.col : -1,
+          maxColorOptionIndex
+     );
+
+     drawMenuBackButton(gameMenuUi.backButton, theme, focused.row === backRowIndex);
 
      miniGameCtx.restore();
 }
@@ -1755,12 +2079,12 @@ function drawDifficultyOptionsScreen(theme) {
      drawMenuScreenTitle("DIFFICULTY", theme, layout.titleCenterX, layout.titleY);
 
      drawOptionStepper(
-          gameMenuUi.harmfulRow,
-          gameMenuUi.harmfulDecreaseButton,
-          gameMenuUi.harmfulIncreaseButton,
+          gameMenuUi.baneRow,
+          gameMenuUi.baneDecreaseButton,
+          gameMenuUi.baneIncreaseButton,
           "Difficulty",
-          getShortOptionLevelLabel(harmfulLevel),
-          harmfulLevel,
+          getShortOptionLevelLabel(baneLevel),
+          baneLevel,
           theme,
           focused.row === 0,
           focused.row === 0 ? focused.col : -1
@@ -1842,7 +2166,7 @@ function drawMovementOptionsScreen(theme) {
           theme,
           focused.row === 0,
           focused.row === 0 ? focused.col : -1,
-          maxMovementOptionIndex
+          getMaxMovementOptionIndex()
      );
 
      drawMenuDetailLines(theme, optionLines, getOptionDescriptionY(layout, 1));
@@ -1928,9 +2252,11 @@ function drawSharedActionScreen(
      const titleStackGap = titleStyle.stackGap;
      const titleMenuGap = canvasSpacing.menuPadding;
      const resolvedInstructionLines = Array.isArray(instructionLines) ? instructionLines.filter(Boolean) : [];
+     const titleContentGap = resolvedInstructionLines.length ? canvasSpacing.uiRowGap : titleMenuGap;
      const instructionGap = resolvedInstructionLines.length ? canvasSpacing.uiRowGap : 0;
      const instructionLineHeight = buttonStyle.fontSize * 1.35;
-     const websiteActionText = "DEVELOPER WEBSITE";
+     const instructionBlockHeight = resolvedInstructionLines.length * instructionLineHeight;
+     const websiteActionText = "DEVELOPER";
 
      miniGameCtx.save();
      miniGameCtx.globalAlpha = overlayAlpha;
@@ -1947,8 +2273,8 @@ function drawSharedActionScreen(
                text,
                400,
                buttonStyle.fontSize,
-               buttonStyle.buttonExteriorPadding
-          ) - (buttonStyle.buttonExteriorPadding * 2)
+               buttonStyle.buttonPadding
+          ) - (buttonStyle.buttonPadding * 2)
      }));
 
      const actionGap = canvasSpacing.betweenButtons;
@@ -1956,11 +2282,9 @@ function drawSharedActionScreen(
      const tallestButtonHeight = getUnifiedButtonHeight(
           theme,
           buttonStyle.fontSize,
-          buttonStyle.buttonExteriorPadding
+          buttonStyle.buttonPadding
      );
-     const primaryActions = measuredActions.filter((item) => item.text !== websiteActionText);
-     const websiteActions = measuredActions.filter((item) => item.text === websiteActionText);
-     const actionRows = websiteActions.length ? [primaryActions, websiteActions] : [primaryActions];
+     const actionRows = [measuredActions];
      const actionBlockHeight =
           (actionRows.length * tallestButtonHeight) +
           (actionRowGap * Math.max(0, actionRows.length - 1));
@@ -1971,10 +2295,10 @@ function drawSharedActionScreen(
 
      const totalTitleBlockHeight =
           titleBlockHeight +
-          titleMenuGap +
-          actionBlockHeight +
+          titleContentGap +
+          instructionBlockHeight +
           instructionGap +
-          (resolvedInstructionLines.length * instructionLineHeight);
+          actionBlockHeight;
 
      const titleCenterY = miniGameHeight / 2;
      const stackTopY =
@@ -2026,21 +2350,46 @@ function drawSharedActionScreen(
 
      resetActionButtonBounds(actionUi, primaryButtonKey);
 
+     if (resolvedInstructionLines.length) {
+          const instructionY =
+               stackTopY +
+               titleBlockHeight +
+               titleContentGap +
+               (buttonStyle.fontSize / 2);
+
+          resolvedInstructionLines.forEach((line, lineIndex) => {
+               drawGlowingCanvasText(
+                    miniGameCtx,
+                    line,
+                    miniGameWidth / 2,
+                    instructionY + (lineIndex * instructionLineHeight),
+                    buttonStyle.color,
+                    getTextFont(theme, "buttonsOptions", 400),
+                    "center",
+                    "middle",
+                    theme,
+                    buttonStyle.glow
+               );
+          });
+     }
+
      const firstActionY =
           stackTopY +
           titleBlockHeight +
-          titleMenuGap +
+          titleContentGap +
+          instructionBlockHeight +
+          instructionGap +
           (tallestButtonHeight / 2);
 
      actionRows.forEach((rowActions, rowIndex) => {
           const actionY = firstActionY + (rowIndex * (tallestButtonHeight + actionRowGap));
           const totalActionWidth =
-               rowActions.reduce((sum, item) => sum + item.textWidth + (buttonStyle.buttonExteriorPadding * 2), 0) +
+               rowActions.reduce((sum, item) => sum + item.textWidth + (buttonStyle.buttonPadding * 2), 0) +
                (actionGap * Math.max(0, rowActions.length - 1));
           let currentX = (miniGameWidth - totalActionWidth) / 2;
 
           rowActions.forEach((item) => {
-               const buttonWidth = item.textWidth + (buttonStyle.buttonExteriorPadding * 2);
+               const buttonWidth = item.textWidth + (buttonStyle.buttonPadding * 2);
                const buttonHeight = tallestButtonHeight;
                const buttonX = currentX;
                const buttonY = actionY - (buttonHeight / 2);
@@ -2076,29 +2425,6 @@ function drawSharedActionScreen(
           });
      });
 
-     if (resolvedInstructionLines.length) {
-          const actionBlockBottom = firstActionY - (tallestButtonHeight / 2) + actionBlockHeight;
-          const instructionY =
-               actionBlockBottom +
-               instructionGap +
-               (buttonStyle.fontSize / 2);
-
-          resolvedInstructionLines.forEach((line, lineIndex) => {
-               drawGlowingCanvasText(
-                    miniGameCtx,
-                    line,
-                    miniGameWidth / 2,
-                    instructionY + (lineIndex * instructionLineHeight),
-                    buttonStyle.color,
-                    getTextFont(theme, "buttonsOptions", 400),
-                    "center",
-                    "middle",
-                    theme,
-                    buttonStyle.glow
-               );
-          });
-     }
-
      miniGameCtx.restore();
 }
 
@@ -2127,7 +2453,7 @@ function drawGameWelcomeOverlay(theme) {
                "NEW GAME": 0,
                "TIPS": 1,
                "OPTIONS": 2,
-               "DEVELOPER WEBSITE": 3
+               "DEVELOPER": 3
           },
           alpha,
           !isWelcomeScreen,
@@ -2152,7 +2478,7 @@ function drawPausedOverlay(theme) {
                "RESUME": 0,
                "TIPS": 1,
                "OPTIONS": 2,
-               "DEVELOPER WEBSITE": 3
+               "DEVELOPER": 3
           },
           1,
           true
@@ -2332,9 +2658,9 @@ export function drawGame() {
      }
 
      if (gameStarted) {
-          drawSparkles();
-          drawHealthHazards();
-          drawEffectPickups();
+          drawStars();
+          drawStrikes();
+          drawBoostBanePickups();
           drawCollisionBursts();
           drawPlayerTrail();
           drawPlayer();
@@ -2354,20 +2680,8 @@ export function drawGame() {
      if (gameMenuOpen) {
           if (gameMenuView === "tips") {
                drawTipsMenuScreen(theme);
-          } else if (gameMenuView === "tips_how_to_play") {
-               drawTipsDetailScreen(theme, "GUIDE", getHowToPlayLines());
-          } else if (gameMenuView === "tips_effects") {
-               drawTipsDetailScreen(theme, "EFFECTS", getEffectLines());
           } else if (gameMenuView === "options") {
                drawOptionsScreen(theme);
-          } else if (gameMenuView === "options_difficulty") {
-               drawDifficultyOptionsScreen(theme);
-          } else if (gameMenuView === "options_audio") {
-               drawAudioOptionsScreen(theme);
-          } else if (gameMenuView === "options_movement") {
-               drawMovementOptionsScreen(theme);
-          } else if (gameMenuView === "options_color") {
-               drawColorOptionsScreen(theme);
           }
      } else if (gamePaused && !gameOver && !gameWon) {
           drawPausedOverlay(theme);

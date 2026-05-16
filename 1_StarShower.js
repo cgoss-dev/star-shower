@@ -1,7 +1,7 @@
-// NOTE: SPARKLE SEEKER PAGE HELPERS
+// NOTE: STAR SHOWER PAGE HELPERS
 
 import {
-     sparkleSeekerRainbowPalette
+     starShowerRainbowPalette
 } from "./9_Config.js";
 
 function getCssValue(variableName) {
@@ -54,27 +54,27 @@ function getGlowSettings() {
      };
 }
 
-function getSparkleSettings() {
+function getStarSettings() {
      return {
-          countMax: getCssNumber("--sparkle-count-max", 180),
-          sizeMin: getCssNumber("--sparkle-size-min", 16),
-          sizeMax: getCssNumber("--sparkle-size-max", 26),
-          speedMin: getCssNumber("--sparkle-speed-min", 0.2),
-          speedMax: getCssNumber("--sparkle-speed-max", 0.7),
-          density: getCssNumber("--sparkle-density", 0.00015),
-          wobbleSpeedMin: getCssNumber("--sparkle-wobble-speed-min", 0.005),
-          wobbleSpeedMax: getCssNumber("--sparkle-wobble-speed-max", 0.02),
-          wobbleAmountMin: getCssNumber("--sparkle-wobble-amount-min", 5),
-          wobbleAmountMax: getCssNumber("--sparkle-wobble-amount-max", 15),
-          opacityMin: getCssNumber("--sparkle-opacity-min", 0.2),
-          opacityMax: getCssNumber("--sparkle-opacity-max", 1),
-          respawnOffsetTop: getCssNumber("--sparkle-respawn-offset-top", -20),
-          respawnOffsetBottom: getCssNumber("--sparkle-respawn-offset-bottom", 24)
+          countMax: getCssNumber("--star-count-max", 180),
+          sizeMin: getCssNumber("--star-size-min", 16),
+          sizeMax: getCssNumber("--star-size-max", 26),
+          speedMin: getCssNumber("--star-speed-min", 0.2),
+          speedMax: getCssNumber("--star-speed-max", 0.7),
+          density: getCssNumber("--star-density", 0.00015),
+          wobbleSpeedMin: getCssNumber("--star-wobble-speed-min", 0.005),
+          wobbleSpeedMax: getCssNumber("--star-wobble-speed-max", 0.02),
+          wobbleAmountMin: getCssNumber("--star-wobble-amount-min", 5),
+          wobbleAmountMax: getCssNumber("--star-wobble-amount-max", 15),
+          opacityMin: getCssNumber("--star-opacity-min", 0.2),
+          opacityMax: getCssNumber("--star-opacity-max", 1),
+          respawnOffsetTop: getCssNumber("--star-respawn-offset-top", -20),
+          respawnOffsetBottom: getCssNumber("--star-respawn-offset-bottom", 24)
      };
 }
 
 function getRainbowPalette() {
-     return sparkleSeekerRainbowPalette.filter(Boolean);
+     return starShowerRainbowPalette.filter(Boolean);
 }
 
 function randomNumber(min, max) {
@@ -177,7 +177,7 @@ window.SiteTheme = {
      getCssColor,
      getTextSettings,
      getGlowSettings,
-     getSparkleSettings,
+     getStarSettings,
      getRainbowPalette,
      createColorEngine,
      randomNumber,
@@ -193,7 +193,7 @@ const bgParticles = [];
 let bgWidth = 0;
 let bgHeight = 0;
 let bgParticleCount = 0;
-let sparkleColorEngine = null;
+let starColorEngine = null;
 
 function resizeBgCanvasFromCss(canvas) {
      if (!canvas) {
@@ -215,35 +215,35 @@ function resizeBgCanvasFromCss(canvas) {
 }
 
 function setBgParticleCount() {
-     const sparkleSettings = getSparkleSettings();
+     const starSettings = getStarSettings();
      const screenArea = bgWidth * bgHeight;
 
      bgParticleCount = Math.min(
-          sparkleSettings.countMax,
-          Math.floor(screenArea * sparkleSettings.density)
+          starSettings.countMax,
+          Math.floor(screenArea * starSettings.density)
      );
 }
 
 function createBgParticle(startAboveScreen = false) {
-     const sparkleSettings = getSparkleSettings();
+     const starSettings = getStarSettings();
      const x = Math.random() * bgWidth;
 
-     if (!sparkleColorEngine) {
-          sparkleColorEngine = createColorEngine(["#ffffff"]);
+     if (!starColorEngine) {
+          starColorEngine = createColorEngine(["#ffffff"]);
      }
 
      return {
           x,
           baseX: x,
-          y: startAboveScreen ? sparkleSettings.respawnOffsetTop : Math.random() * bgHeight,
+          y: startAboveScreen ? starSettings.respawnOffsetTop : Math.random() * bgHeight,
           char: Math.random() < 0.5 ? "\u2726" : "\u2727",
-          color: sparkleColorEngine.next() || "#ffffff",
-          size: randomNumber(sparkleSettings.sizeMin, sparkleSettings.sizeMax),
-          speed: randomNumber(sparkleSettings.speedMin, sparkleSettings.speedMax),
+          color: starColorEngine.next() || "#ffffff",
+          size: randomNumber(starSettings.sizeMin, starSettings.sizeMax),
+          speed: randomNumber(starSettings.speedMin, starSettings.speedMax),
           wobbleOffset: randomNumber(0, Math.PI * 2),
-          wobbleSpeed: randomNumber(sparkleSettings.wobbleSpeedMin, sparkleSettings.wobbleSpeedMax),
-          wobbleAmount: randomNumber(sparkleSettings.wobbleAmountMin, sparkleSettings.wobbleAmountMax),
-          opacity: randomNumber(sparkleSettings.opacityMin, sparkleSettings.opacityMax)
+          wobbleSpeed: randomNumber(starSettings.wobbleSpeedMin, starSettings.wobbleSpeedMax),
+          wobbleAmount: randomNumber(starSettings.wobbleAmountMin, starSettings.wobbleAmountMax),
+          opacity: randomNumber(starSettings.opacityMin, starSettings.opacityMax)
      };
 }
 
@@ -255,19 +255,19 @@ function initBgParticles(count) {
      }
 }
 
-function setupSparkleRain() {
+function setupStarRain() {
      if (!siteBgCanvas || !siteBgCtx) {
           return;
      }
 
-     sparkleColorEngine = createColorEngine(["#ffffff"]);
+     starColorEngine = createColorEngine(["#ffffff"]);
      resizeBgCanvasFromCss(siteBgCanvas);
      setBgParticleCount();
      initBgParticles(bgParticleCount);
 }
 
 function updateBgParticles() {
-     const sparkleSettings = getSparkleSettings();
+     const starSettings = getStarSettings();
 
      for (let i = 0; i < bgParticles.length; i += 1) {
           const p = bgParticles[i];
@@ -276,7 +276,7 @@ function updateBgParticles() {
           p.wobbleOffset += p.wobbleSpeed;
           p.x = p.baseX + Math.sin(p.wobbleOffset) * p.wobbleAmount;
 
-          if (p.y > bgHeight + sparkleSettings.respawnOffsetBottom) {
+          if (p.y > bgHeight + starSettings.respawnOffsetBottom) {
                bgParticles[i] = createBgParticle(true);
           }
      }
@@ -307,17 +307,17 @@ function drawBgParticles() {
      }
 }
 
-function drawSparkleRain() {
+function drawStarRain() {
      if (!siteBgCanvas || !siteBgCtx) {
           return;
      }
 
      updateBgParticles();
      drawBgParticles();
-     window.requestAnimationFrame(drawSparkleRain);
+     window.requestAnimationFrame(drawStarRain);
 }
 
-setupSparkleRain();
-drawSparkleRain();
+setupStarRain();
+drawStarRain();
 
-window.addEventListener("resize", setupSparkleRain);
+window.addEventListener("resize", setupStarRain);

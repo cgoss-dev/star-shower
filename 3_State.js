@@ -1,5 +1,5 @@
 // NOTE: 3_State
-// Shared runtime data for Sparkle Seeker.
+// Shared runtime data for Star Shower.
 //
 // Other files import from here to READ shared state, and use the setter
 // functions below to UPDATE shared state.
@@ -41,8 +41,8 @@ export const player = {
      baseRadius: 30,
 
      // Temporary face-expression timer.
-     // Example: sparkle pickup changes the face briefly, then it returns.
-     sparkleFaceTimer: 0,
+     // Example: star pickup changes the face briefly, then it returns.
+     starFaceTimer: 0,
 
      hitScale: 1.1,
      lowHealthPulseTime: 0
@@ -54,16 +54,16 @@ export const player = {
 // ==================================================
 
 export const keys = {};
-export const sparkles = [];
-export const healthHazards = [];
-export const effectPickups = [];
+export const stars = [];
+export const strikes = [];
+export const boostBanePickups = [];
 export const collisionBursts = [];
 
 // ==================================================
 // SCORE + HEALTH
 // ==================================================
 
-export let sparkleScore = 0;
+export let starScore = 0;
 export let scoreMultiplier = 1;
 
 export let playerHealth = gameplayStartingHealth;
@@ -75,20 +75,19 @@ export let playerHealth = gameplayStartingHealth;
 
 export let musicLevel = defaultOptionLevelIndex;
 export let soundEffectsLevel = defaultOptionLevelIndex;
-export let harmfulLevel = defaultOptionLevelIndex;
+export let baneLevel = defaultOptionLevelIndex;
 export let movementLevel = 0;
 export let colorLevel = 0;
 
 // ==================================================
 // EFFECT STATE
-// Runtime storage only. Effect rules live elsewhere.
+// Runtime storage only. Boost/bane rules live elsewhere.
 // Timers are frame counts, so 60 frames is roughly 1 second.
 // ==================================================
 
-export const effectTimers = {
-     luck: 0,
+export const boostBaneTimers = {
      magnet: 0,
-     slowmo: 0,
+     double: 0,
 
      freeze: 0,
      daze: 0,
@@ -117,7 +116,7 @@ export let gameMenuView = "";
 // Compatibility booleans for systems that still expect simple flags.
 export let musicEnabled = true;
 export let soundEffectsEnabled = true;
-export let harmfulEnabled = true;
+export let baneEnabled = true;
 
 export let gameOver = false;
 export let gameWon = false;
@@ -141,16 +140,16 @@ export const gameMenuUi = {
      panel: { x: 0, y: 0, width: 0, height: 0 },
 
      tipsHowToPlayButton: { x: 0, y: 0, width: 0, height: 0 },
-     tipsEffectsButton: { x: 0, y: 0, width: 0, height: 0 },
+     tipsBoostsButton: { x: 0, y: 0, width: 0, height: 0 },
 
      optionsDifficultyButton: { x: 0, y: 0, width: 0, height: 0 },
      optionsAudioButton: { x: 0, y: 0, width: 0, height: 0 },
      optionsMovementButton: { x: 0, y: 0, width: 0, height: 0 },
      optionsColorButton: { x: 0, y: 0, width: 0, height: 0 },
 
-     harmfulRow: { x: 0, y: 0, width: 0, height: 0 },
-     harmfulDecreaseButton: { x: 0, y: 0, width: 0, height: 0 },
-     harmfulIncreaseButton: { x: 0, y: 0, width: 0, height: 0 },
+     baneRow: { x: 0, y: 0, width: 0, height: 0 },
+     baneDecreaseButton: { x: 0, y: 0, width: 0, height: 0 },
+     baneIncreaseButton: { x: 0, y: 0, width: 0, height: 0 },
 
      musicRow: { x: 0, y: 0, width: 0, height: 0 },
      musicDecreaseButton: { x: 0, y: 0, width: 0, height: 0 },
@@ -197,6 +196,16 @@ export let optionsSelection = {
      row: 0,
      col: 0
 };
+export const gameMenuScroll = {
+     offset: 0,
+     max: 0,
+     pointerId: null,
+     lastY: 0
+};
+export const menuKeyboardFocus = {
+     timer: 0,
+     duration: 60
+};
 
 // ==================================================
 // TOUCH CONTROLS
@@ -217,8 +226,7 @@ export const touchControls = {
           width: 50,
           height: 50,
           isPressed: false,
-          pointerId: null,
-          label: "\u23EF\uFE0E"
+          pointerId: null
      },
 
      joystick: {
@@ -295,8 +303,8 @@ export let resizeHandlerBound = false;
 // SPAWN TIMERS
 // ==================================================
 
-export let sparkleSpawnTimer = 0;
-export let effectPickupSpawnTimer = 0;
+export let starSpawnTimer = 0;
+export let boostBanePickupSpawnTimer = 0;
 
 // ==================================================
 // BASIC SETTERS
@@ -319,12 +327,12 @@ export function setResizeHandlerBound(value) {
      resizeHandlerBound = value;
 }
 
-export function setSparkleSpawnTimer(value) {
-     sparkleSpawnTimer = value;
+export function setStarSpawnTimer(value) {
+     starSpawnTimer = value;
 }
 
-export function setEffectPickupSpawnTimer(value) {
-     effectPickupSpawnTimer = value;
+export function setBoostBanePickupSpawnTimer(value) {
+     boostBanePickupSpawnTimer = value;
 }
 
 export function setHoverCanvasPosition(x, y) {
@@ -344,8 +352,8 @@ export function setHoverTrackingAttachedCanvas(value) {
 // SCORE + HEALTH SETTERS
 // ==================================================
 
-export function setSparkleScore(value) {
-     sparkleScore = Math.max(0, value);
+export function setStarScore(value) {
+     starScore = Math.max(0, value);
 }
 
 export function setScoreMultiplier(value) {
@@ -356,8 +364,8 @@ export function resetScoreMultiplier() {
      scoreMultiplier = 1;
 }
 
-export function addSparkleScore(value) {
-     sparkleScore = Math.max(0, sparkleScore + (value * scoreMultiplier));
+export function addStarScore(value) {
+     starScore = Math.max(0, starScore + (value * scoreMultiplier));
 }
 
 export function setPlayerHealth(value) {
@@ -372,30 +380,30 @@ export function addPlayerHealth(value) {
 // EFFECT SETTERS + HELPERS
 // ==================================================
 
-export function setEffectTimer(effectName, value) {
-     if (!(effectName in effectTimers)) {
+export function setBoostBaneTimer(boostBaneName, value) {
+     if (!(boostBaneName in boostBaneTimers)) {
           return;
      }
 
-     effectTimers[effectName] = Math.max(0, value);
+     boostBaneTimers[boostBaneName] = Math.max(0, value);
 }
 
-export function addEffectTimer(effectName, value) {
-     if (!(effectName in effectTimers)) {
+export function addBoostBaneTimer(boostBaneName, value) {
+     if (!(boostBaneName in boostBaneTimers)) {
           return;
      }
 
-     effectTimers[effectName] = Math.max(0, effectTimers[effectName] + value);
+     boostBaneTimers[boostBaneName] = Math.max(0, boostBaneTimers[boostBaneName] + value);
 }
 
-export function isEffectActive(effectName) {
-     return (effectTimers[effectName] || 0) > 0;
+export function isBoostBaneActive(boostBaneName) {
+     return (boostBaneTimers[boostBaneName] || 0) > 0;
 }
 
-export function decrementEffectTimers() {
-     Object.keys(effectTimers).forEach((effectName) => {
-          if (effectTimers[effectName] > 0) {
-               effectTimers[effectName] -= 1;
+export function decrementBoostBaneTimers() {
+     Object.keys(boostBaneTimers).forEach((boostBaneName) => {
+          if (boostBaneTimers[boostBaneName] > 0) {
+               boostBaneTimers[boostBaneName] -= 1;
           }
      });
 
@@ -418,9 +426,9 @@ export function clearActiveStatusUi() {
      activeStatusUi.duration = 0;
 }
 
-export function resetEffectState() {
-     Object.keys(effectTimers).forEach((effectName) => {
-          effectTimers[effectName] = 0;
+export function resetBoostBaneState() {
+     Object.keys(boostBaneTimers).forEach((boostBaneName) => {
+          boostBaneTimers[boostBaneName] = 0;
      });
 
      clearActiveStatusUi();
@@ -443,20 +451,20 @@ function syncSoundEffectsEnabledFromLevel() {
      soundEffectsEnabled = soundEffectsLevel > 0;
 }
 
-function syncHarmfulEnabledFromLevel() {
-     harmfulEnabled = harmfulLevel > 0;
+function syncBaneEnabledFromLevel() {
+     baneEnabled = baneLevel > 0;
 }
 
 export function syncOptionFlagsFromLevels() {
      syncMusicEnabledFromLevel();
      syncSoundEffectsEnabledFromLevel();
-     syncHarmfulEnabledFromLevel();
+     syncBaneEnabledFromLevel();
 }
 
 export function resetOptionsToDefaults() {
      musicLevel = defaultOptionLevelIndex;
      soundEffectsLevel = defaultOptionLevelIndex;
-     harmfulLevel = defaultOptionLevelIndex;
+     baneLevel = defaultOptionLevelIndex;
      movementLevel = 0;
      colorLevel = 0;
 
@@ -477,9 +485,19 @@ export function setGamePaused(value) {
 
 export function setGameMenuOpen(value) {
      gameMenuOpen = value;
+
+     if (!value) {
+          resetGameMenuScroll();
+     }
 }
 
 export function setGameMenuView(value) {
+     if (gameMenuView !== value) {
+          gameMenuView = value;
+          resetGameMenuScroll();
+          return;
+     }
+
      gameMenuView = value;
 }
 
@@ -508,6 +526,66 @@ export function setOptionsSelectionCol(value) {
      optionsSelection.col = value;
 }
 
+function clampGameMenuScrollOffset(value) {
+     return Math.max(0, Math.min(gameMenuScroll.max, value));
+}
+
+export function resetGameMenuScroll() {
+     gameMenuScroll.offset = 0;
+     gameMenuScroll.max = 0;
+     gameMenuScroll.pointerId = null;
+     gameMenuScroll.lastY = 0;
+}
+
+export function setGameMenuScrollMax(value) {
+     gameMenuScroll.max = Math.max(0, value);
+     gameMenuScroll.offset = clampGameMenuScrollOffset(gameMenuScroll.offset);
+}
+
+export function addGameMenuScrollOffset(delta) {
+     gameMenuScroll.offset = clampGameMenuScrollOffset(gameMenuScroll.offset + delta);
+}
+
+export function beginGameMenuScrollDrag(pointerId, y) {
+     gameMenuScroll.pointerId = pointerId;
+     gameMenuScroll.lastY = y;
+}
+
+export function updateGameMenuScrollDrag(y) {
+     const delta = gameMenuScroll.lastY - y;
+
+     gameMenuScroll.lastY = y;
+     addGameMenuScrollOffset(delta);
+}
+
+export function endGameMenuScrollDrag(pointerId = gameMenuScroll.pointerId) {
+     if (gameMenuScroll.pointerId !== pointerId) {
+          return false;
+     }
+
+     gameMenuScroll.pointerId = null;
+     gameMenuScroll.lastY = 0;
+     return true;
+}
+
+export function showMenuKeyboardFocus(duration = menuKeyboardFocus.duration) {
+     menuKeyboardFocus.timer = duration;
+}
+
+export function updateMenuKeyboardFocusTimer() {
+     if (menuKeyboardFocus.timer > 0) {
+          menuKeyboardFocus.timer -= 1;
+     }
+}
+
+export function getMenuKeyboardFocusAlpha() {
+     if (menuKeyboardFocus.duration <= 0) {
+          return 0;
+     }
+
+     return Math.max(0, Math.min(1, menuKeyboardFocus.timer / menuKeyboardFocus.duration));
+}
+
 // Boolean setters. Keep legacy simple on/off controls in sync with option levels.
 export function setMusicEnabled(value) {
      musicEnabled = value;
@@ -519,9 +597,9 @@ export function setSoundEffectsEnabled(value) {
      soundEffectsLevel = value ? maxOptionLevelIndex : 0;
 }
 
-export function setHarmfulEnabled(value) {
-     harmfulEnabled = value;
-     harmfulLevel = value ? maxOptionLevelIndex : 0;
+export function setBaneEnabled(value) {
+     baneEnabled = value;
+     baneLevel = value ? maxOptionLevelIndex : 0;
 }
 
 // Level setters for Options UI.
@@ -535,9 +613,9 @@ export function setSoundEffectsLevel(value) {
      syncSoundEffectsEnabledFromLevel();
 }
 
-export function setHarmfulLevel(value) {
-     harmfulLevel = clampRuntimeOptionLevelIndex(value);
-     syncHarmfulEnabledFromLevel();
+export function setBaneLevel(value) {
+     baneLevel = clampRuntimeOptionLevelIndex(value);
+     syncBaneEnabledFromLevel();
 }
 
 export function setMovementLevel(value) {
@@ -684,7 +762,7 @@ export function resetActionButtonBounds(actionUi, primaryButtonKey) {
 // ==================================================
 
 export function resetGameState() {
-     sparkleScore = 0;
+     starScore = 0;
      scoreMultiplier = 1;
 
      playerHealth = gameplayStartingHealth;
@@ -705,12 +783,12 @@ export function resetGameState() {
      gameOverlayTimer = 0;
      gameOverlayDuration = 0;
 
-     sparkleSpawnTimer = 0;
-     effectPickupSpawnTimer = 0;
+     starSpawnTimer = 0;
+     boostBanePickupSpawnTimer = 0;
 
-     sparkles.length = 0;
-     healthHazards.length = 0;
-     effectPickups.length = 0;
+     stars.length = 0;
+     strikes.length = 0;
+     boostBanePickups.length = 0;
      collisionBursts.length = 0;
 
      welcomeSelectionIndex = 0;
@@ -718,8 +796,10 @@ export function resetGameState() {
      tipsSelectionIndex = 0;
      optionsSelection.row = 0;
      optionsSelection.col = 0;
+     resetGameMenuScroll();
+     menuKeyboardFocus.timer = 0;
 
-     resetEffectState();
+     resetBoostBaneState();
      resetUiActionBounds();
 
      touchControls.touchMoveTarget.x = 0;
@@ -747,9 +827,9 @@ export function randomNumber(min, max) {
      return Math.random() * (max - min) + min;
 }
 
-export function isCollidingWithSparkle(playerObject, sparkleObject) {
-     const dx = playerObject.x - sparkleObject.x;
-     const dy = playerObject.y - sparkleObject.y;
+export function isCollidingWithStar(playerObject, starObject) {
+     const dx = playerObject.x - starObject.x;
+     const dy = playerObject.y - starObject.y;
 
-     return Math.sqrt((dx * dx) + (dy * dy)) < playerObject.radius + (sparkleObject.size * 0.25);
+     return Math.sqrt((dx * dx) + (dy * dy)) < playerObject.radius + (starObject.size * 0.25);
 }

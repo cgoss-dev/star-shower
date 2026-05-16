@@ -1,11 +1,11 @@
 // NOTE: 8_Entities
-// Player behavior, sparkles, effect pickups, collision bursts, and effect state for Sparkle Seeker.
+// Player behavior, stars, boost/bane pickups, collision bursts, and boost/bane state for Star Shower.
 //
 // Owned here:
 // - player reset / clamping / movement / face-state sync / trail-state updates
-// - sparkle spawning / updates / collection
-// - helpful and harmful pickup definitions
-// - active effect timers and status sync
+// - star spawning / updates / collection
+// - boost and bane pickup definitions
+// - active boost/bane timers and status sync
 // - collision burst creation / updates
 // - shared falling-object color cycle
 //
@@ -29,39 +29,38 @@ import {
      gamePaused,
      gameWon,
      playerHealth,
-     sparkleScore,
+     starScore,
      scoreMultiplier,
-     sparkles,
-     healthHazards,
-     effectPickups,
+     stars,
+     strikes,
+     boostBanePickups,
      collisionBursts,
-     sparkleSpawnTimer,
-     harmfulLevel,
+     starSpawnTimer,
+     baneLevel,
      movementLevel,
      colorLevel,
-     effectTimers,
-     setSparkleSpawnTimer,
-     addSparkleScore,
+     boostBaneTimers,
+     setStarSpawnTimer,
+     addStarScore,
      setScoreMultiplier,
      addPlayerHealth,
      setPlayerHealth,
-     setEffectTimer,
-     isEffectActive,
-     decrementEffectTimers,
+     setBoostBaneTimer,
+     isBoostBaneActive,
+     decrementBoostBaneTimers,
      setActiveStatusUi,
      clearActiveStatusUi,
      randomItem,
      randomNumber,
-     isCollidingWithSparkle
+     isCollidingWithStar
 } from "./3_State.js";
 
 import {
      maxPlayerHealth,
      particleGlowBlurFallback,
-     sparkleSizeMinFallback,
-     sparkleSizeMaxFallback,
-     sparkleHealthGain,
-     harmfulHealthDamage,
+     starSizeMinFallback,
+     starSizeMaxFallback,
+     strikeHealthDamage,
      magnetCollisionRadiusMultiplier,
      statusFlashSeconds,
      gameplayStartingHealth,
@@ -70,14 +69,15 @@ import {
 } from "./4_Options.js";
 
 import {
-     areHealthHazardsUnlockedForCurrentLevel,
+     areStrikesUnlockedForCurrentLevel,
+     progressUnitsPerCircle,
      getCurrentLevelNumber,
-     getUnlockedHarmfulEffectNamesForCurrentLevel
+     getUnlockedBaneNamesForCurrentLevel
 } from "./5_GameRules.js";
 
 import {
-     sparkleSeekerEffectIcons,
-     sparkleSeekerRainbowPalette,
+     starShowerBoostBaneIcons,
+     starShowerRainbowPalette,
      getCssColor
 } from "./9_Config.js";
 
@@ -94,8 +94,8 @@ const siteTheme = window.SiteTheme;
 export const playerFaces = {
      neutral: "😐",
      smile: "🙂",
-     sparkle: "😁",
-     harmful: "😫",
+     star: "😁",
+     bane: "😫",
      maxHealth: "🤩",
      lowHealth: "😰",
      dead: "☠️",
@@ -115,14 +115,18 @@ export const playerBaseRadius = 30;
 
 export const framesPerSecond = 60;
 
-export const sparkleSpawnDelay = 25;
-export const sparkleSpawnCap = 50;
-export const hazardSpawnRatio = 0.5;
-export const effectPickupCap = 60;
+export const starSpawnDelay = 25;
+export const starSpawnCap = 50;
+export const strikeSpawnRatio = 0.5;
+export const boostBanePickupCap = 60;
 export const collisionBurstParticleCount = 15;
 
-// Effects are spawned as a ratio of successful sparkle spawns:
-export const effectSpawnRatios = [
+const spawnDensityBaselineArea = 960 * 640;
+const spawnDensityMinScale = 0.45;
+const spawnDensityMaxScale = 1;
+
+// Boosts and banes are spawned as a ratio of successful star spawns:
+export const boostBaneSpawnRatios = [
      0,
      0,
      1 / 24,
@@ -130,10 +134,52 @@ export const effectSpawnRatios = [
      1 / 8
 ];
 
-const effectTypes = Object.values(sparkleSeekerEffectIcons);
+const boostBaneTypes = Object.values(starShowerBoostBaneIcons);
+const pickupAssetImages = {};
 
-export const helpfulEffectTypes = effectTypes.filter((type) => type.category === "helpful");
-export const harmfulEffectTypes = effectTypes.filter((type) => type.category === "harmful");
+export const boostTypes = boostBaneTypes.filter((type) => type.category === "boost");
+export const baneTypes = boostBaneTypes.filter((type) => type.category === "bane");
+
+function getPickupAssetImage(src) {
+     if (!src) {
+          return null;
+     }
+
+     if (!pickupAssetImages[src]) {
+          pickupAssetImages[src] = new Image();
+          pickupAssetImages[src].src = src;
+     }
+
+     return pickupAssetImages[src];
+}
+
+function clampSpawnDensityScale(value) {
+     return Math.max(spawnDensityMinScale, Math.min(spawnDensityMaxScale, value));
+}
+
+function getSpawnDensityScale() {
+     if (miniGameWidth <= 0 || miniGameHeight <= 0) {
+          return spawnDensityMaxScale;
+     }
+
+     return clampSpawnDensityScale((miniGameWidth * miniGameHeight) / spawnDensityBaselineArea);
+}
+
+function getScaledStarSpawnDelay() {
+     return starSpawnDelay / getSpawnDensityScale();
+}
+
+function getScaledStarSpawnCap() {
+     return Math.max(1, Math.round(starSpawnCap * getSpawnDensityScale()));
+}
+
+function getScaledStrikeSpawnCap() {
+     return Math.max(1, Math.round(getScaledStarSpawnCap() * strikeSpawnRatio));
+}
+
+function getScaledBoostBanePickupCap() {
+     return Math.max(1, Math.round(boostBanePickupCap * getSpawnDensityScale()));
+}
 
 // ====================================================================================================
 // TRAIL
@@ -164,15 +210,15 @@ export const playerTrail = [];
 // ==================================================
 
 function getRainbowPalette() {
-     return sparkleSeekerRainbowPalette.filter(Boolean);
+     return starShowerRainbowPalette.filter(Boolean);
 }
 
 function getGameParticleSizeMin() {
-     return siteTheme?.getSparkleSettings?.().sizeMin ?? sparkleSizeMinFallback;
+     return siteTheme?.getStarSettings?.().sizeMin ?? starSizeMinFallback;
 }
 
 function getGameParticleSizeMax() {
-     return siteTheme?.getSparkleSettings?.().sizeMax ?? sparkleSizeMaxFallback;
+     return siteTheme?.getStarSettings?.().sizeMax ?? starSizeMaxFallback;
 }
 
 // ==================================================
@@ -231,15 +277,15 @@ function getPastelParticleColor(colorIndex = 0) {
 
 export function getModeParticleColor(colorRole, fallback = "#ffffff", colorIndex = 0) {
      if (colorLevel === 0) {
-          if (colorRole === "sparkle") {
+          if (colorRole === "star") {
                return getCssColor("--tertiary-05", "#ff0");
           }
 
-          if (colorRole === "hazard" || colorRole === "harmfulEffect") {
+          if (colorRole === "strike" || colorRole === "bane") {
                return getCssColor("--tertiary-01", "#f00");
           }
 
-          if (colorRole === "effect" || colorRole === "helpfulEffect") {
+          if (colorRole === "boost") {
                return getCssColor("--tertiary-08", "#08f");
           }
 
@@ -248,7 +294,7 @@ export function getModeParticleColor(colorRole, fallback = "#ffffff", colorIndex
           }
      }
 
-     if (colorLevel !== 3 && colorRole === "sparkle") {
+     if (colorLevel !== 3 && colorRole === "star") {
           return getCssColor("--color-white", "#fff");
      }
 
@@ -257,15 +303,15 @@ export function getModeParticleColor(colorRole, fallback = "#ffffff", colorIndex
      }
 
      if (colorLevel === 3) {
-          if (colorRole === "sparkle") {
+          if (colorRole === "star") {
                return getCssColor("--color-gray2", "#666");
           }
 
-          if (colorRole === "hazard") {
+          if (colorRole === "strike") {
                return getCssColor("--color-black", "#000");
           }
 
-          if (colorRole === "effect") {
+          if (colorRole === "boost") {
                return getCssColor("--color-white", "#fff");
           }
 
@@ -301,7 +347,7 @@ export function resetEntityColorCycle() {
 // ==================================================
 
 function getPlayerMovementMultiplier() {
-     if (isEffectActive("freeze")) {
+     if (isBoostBaneActive("freeze")) {
           return 0;
      }
 
@@ -354,11 +400,11 @@ export function getDefaultPlayerFace() {
           return playerFaces.dead;
      }
 
-     if (isEffectActive("freeze")) {
+     if (isBoostBaneActive("freeze")) {
           return playerFaces.frozen;
      }
 
-     if (isEffectActive("daze")) {
+     if (isBoostBaneActive("daze")) {
           return playerFaces.dazed;
      }
 
@@ -392,16 +438,16 @@ export function applyTemporaryPlayerFace(face, duration) {
           playerHealth <= 0 ||
           playerHealth === maxPlayerHealth ||
           playerHealth <= 2 ||
-          isEffectActive("freeze") ||
-          isEffectActive("daze")
+          isBoostBaneActive("freeze") ||
+          isBoostBaneActive("daze")
      ) {
-          player.sparkleFaceTimer = 0;
+          player.starFaceTimer = 0;
           refreshPlayerFaceFromHealth();
           return;
      }
 
      player.char = face;
-     player.sparkleFaceTimer = duration;
+     player.starFaceTimer = duration;
 }
 
 export function triggerPlayerFacePop(scale = 1.1) {
@@ -425,7 +471,7 @@ export function resetPlayerPosition() {
      player.y = miniGameHeight * 0.75;
      player.size = playerBaseSize;
      player.radius = playerBaseRadius;
-     player.sparkleFaceTimer = 0;
+     player.starFaceTimer = 0;
      player.hitScale = 1;
      player.lowHealthPulseTime = 0;
      playerTrail.length = 0;
@@ -470,7 +516,7 @@ function movePlayerTowardPointerTarget() {
           return true;
      }
 
-     const reverseMultiplier = isEffectActive("daze") ? -1 : 1;
+     const reverseMultiplier = isBoostBaneActive("daze") ? -1 : 1;
      const step = Math.min(player.speed * getPlayerMovementMultiplier(), distance);
 
      player.x += (dx / distance) * step * reverseMultiplier;
@@ -508,7 +554,7 @@ function movePlayerFromKeyboard() {
      }
 
      const length = Math.hypot(dx, dy);
-     const reverseMultiplier = isEffectActive("daze") ? -1 : 1;
+     const reverseMultiplier = isBoostBaneActive("daze") ? -1 : 1;
      const speed = player.speed * getPlayerMovementMultiplier();
 
      player.x += (dx / length) * speed * reverseMultiplier;
@@ -538,7 +584,7 @@ function movePlayerFromJoystick() {
           return true;
      }
 
-     const reverseMultiplier = isEffectActive("daze") ? -1 : 1;
+     const reverseMultiplier = isBoostBaneActive("daze") ? -1 : 1;
      const speed = player.speed * getPlayerMovementMultiplier();
 
      player.x += joystick.dx * speed * reverseMultiplier;
@@ -571,16 +617,16 @@ export function updatePlayerFaceState() {
      applyPlayerLevelScale();
 
      if (gamePaused) {
-          player.char = gameWon ? playerFaces.sparkle : playerFaces.neutral;
+          player.char = gameWon ? playerFaces.star : playerFaces.neutral;
           player.hitScale = 1;
           return;
      }
 
-     if (player.sparkleFaceTimer > 0) {
-          player.sparkleFaceTimer -= 1;
+     if (player.starFaceTimer > 0) {
+          player.starFaceTimer -= 1;
      }
 
-     if (player.sparkleFaceTimer <= 0) {
+     if (player.starFaceTimer <= 0) {
           refreshPlayerFaceFromHealth();
      }
 
@@ -615,10 +661,9 @@ export function updatePlayerTrail() {
 // EFFECT HELPERS
 // ==================================================
 
-const timedEffectNames = [
-     "luck",
+const timedBoostBaneNames = [
      "magnet",
-     "slowmo",
+     "double",
      "freeze",
      "daze",
      "fog"
@@ -628,72 +673,71 @@ export function secondsToFrames(seconds) {
      return Math.round(seconds * framesPerSecond);
 }
 
-function getEffectDurationFrames(effectType) {
-     return secondsToFrames(effectType.durationSeconds || 0);
+function getBoostBaneDurationFrames(boostBaneType) {
+     return secondsToFrames(boostBaneType.durationSeconds || 0);
 }
 
 function getStatusFlashFrames() {
      return secondsToFrames(statusFlashSeconds);
 }
 
-function clearTimedEffects() {
-     timedEffectNames.forEach((effectName) => {
-          setEffectTimer(effectName, 0);
+function clearTimedBoostBanes() {
+     timedBoostBaneNames.forEach((boostBaneName) => {
+          setBoostBaneTimer(boostBaneName, 0);
      });
 }
 
-function syncScoreMultiplierFromEffects() {
-     const nextMultiplier = isEffectActive("luck") ? 2 : 1;
+function syncScoreMultiplierFromBoostBanes() {
+     const nextMultiplier = isBoostBaneActive("double") ? 2 : 1;
 
      if (scoreMultiplier !== nextMultiplier) {
           setScoreMultiplier(nextMultiplier);
      }
 }
 
-function setSingleTimedEffect(effectName, durationFrames) {
-     clearTimedEffects();
-     setEffectTimer(effectName, durationFrames);
-     syncScoreMultiplierFromEffects();
+function setSingleTimedBoostBane(boostBaneName, durationFrames) {
+     clearTimedBoostBanes();
+     setBoostBaneTimer(boostBaneName, durationFrames);
+     syncScoreMultiplierFromBoostBanes();
 }
 
-function getHighestPriorityActiveEffect() {
+function getHighestPriorityActiveBoostBane() {
      const statusPriority = [
           "freeze",
           "fog",
           "daze",
-          "slowmo",
-          "magnet",
-          "luck"
+          "double",
+          "magnet"
      ];
 
      for (let i = 0; i < statusPriority.length; i += 1) {
-          const effectName = statusPriority[i];
+          const boostBaneName = statusPriority[i];
 
-          if (isEffectActive(effectName)) {
-               return effectName;
+          if (isBoostBaneActive(boostBaneName)) {
+               return boostBaneName;
           }
      }
 
      return "";
 }
 
-function getEffectTypeByName(effectName) {
+function getBoostBaneTypeByName(boostBaneName) {
      return (
-          helpfulEffectTypes.find((type) => type.name === effectName) ||
-          harmfulEffectTypes.find((type) => type.name === effectName) ||
+          boostTypes.find((type) => type.name === boostBaneName) ||
+          baneTypes.find((type) => type.name === boostBaneName) ||
           null
      );
 }
 
-function syncActiveStatusUiFromEffects() {
-     const activeEffectName = getHighestPriorityActiveEffect();
+function syncActiveStatusUiFromBoostBanes() {
+     const activeBoostBaneName = getHighestPriorityActiveBoostBane();
 
-     if (!activeEffectName) {
+     if (!activeBoostBaneName) {
           clearActiveStatusUi();
           return;
      }
 
-     const type = getEffectTypeByName(activeEffectName);
+     const type = getBoostBaneTypeByName(activeBoostBaneName);
 
      if (!type) {
           clearActiveStatusUi();
@@ -708,32 +752,34 @@ function syncActiveStatusUiFromEffects() {
      setActiveStatusUi(
           type.label,
           type.particle,
-          effectTimers[type.name] || 0,
-          getEffectDurationFrames(type)
+          boostBaneTimers[type.name] || 0,
+          getBoostBaneDurationFrames(type)
      );
 }
 
-export function updateEffectState() {
-     decrementEffectTimers();
-     syncScoreMultiplierFromEffects();
-     syncActiveStatusUiFromEffects();
+export function updateBoostBaneState() {
+     decrementBoostBaneTimers();
+     syncScoreMultiplierFromBoostBanes();
+     syncActiveStatusUiFromBoostBanes();
 }
 
-function applyHelpfulEffect(type) {
-     setSingleTimedEffect(type.name, getEffectDurationFrames(type));
-     syncActiveStatusUiFromEffects();
+function applyBoostPickup(type) {
+     if (type.name === "health") {
+          addPlayerHealth(progressUnitsPerCircle);
+          syncPlayerHealthState();
+          return;
+     }
+
+     setSingleTimedBoostBane(type.name, getBoostBaneDurationFrames(type));
+     syncActiveStatusUiFromBoostBanes();
 }
 
-function applyHarmfulEffect(type) {
-     setSingleTimedEffect(type.name, getEffectDurationFrames(type));
-     syncActiveStatusUiFromEffects();
+function applyBanePickup(type) {
+     setSingleTimedBoostBane(type.name, getBoostBaneDurationFrames(type));
+     syncActiveStatusUiFromBoostBanes();
 }
 
 function getObjectFallSpeedMultiplier() {
-     if (isEffectActive("slowmo")) {
-          return 0.25;
-     }
-
      return 1;
 }
 
@@ -741,38 +787,38 @@ function getObjectFallSpeedMultiplier() {
 // SPARKLES
 // ==================================================
 
-export const sparkleParticles = ["✦", "✧"];
-export const hazardParticles = ["\u2716\uFE0E", "\u2715\uFE0E"];
+export const starParticles = ["✦", "✧"];
+export const strikeParticles = ["\u2716\uFE0E", "\u2715\uFE0E"];
 
-function getSparkleCollisionRadiusMultiplier() {
-     if (!isEffectActive("magnet")) {
+function getStarCollisionRadiusMultiplier() {
+     if (!isBoostBaneActive("magnet")) {
           return 1;
      }
 
      return magnetCollisionRadiusMultiplier;
 }
 
-function isCollidingWithSparkleCollectionRadius(sparkle) {
-     return isCollidingWithSparkle(
+function isCollidingWithStarCollectionRadius(star) {
+     return isCollidingWithStar(
           {
                ...player,
-               radius: player.radius * getSparkleCollisionRadiusMultiplier()
+               radius: player.radius * getStarCollisionRadiusMultiplier()
           },
-          sparkle
+          star
      );
 }
 
-export function createSparkle() {
+export function createStar() {
      const x = Math.random() * (miniGameWidth - 20) + 10;
 
-     sparkles.push({
+     stars.push({
           x,
           baseX: x,
           y: -20,
           speed: 0.25 + Math.random() * 0.5,
           size: Math.random() * (getGameParticleSizeMax() - getGameParticleSizeMin()) + getGameParticleSizeMin(),
-          particle: sparkleParticles[Math.floor(Math.random() * sparkleParticles.length)],
-          colorRole: "sparkle",
+          particle: starParticles[Math.floor(Math.random() * starParticles.length)],
+          colorRole: "star",
           colorIndex: getNextPastelColorIndex(),
           color: getNextParticleColor(),
           wobbleOffset: Math.random() * Math.PI * 2,
@@ -781,17 +827,17 @@ export function createSparkle() {
      });
 }
 
-function createHealthHazard() {
+function createStrike() {
      const x = Math.random() * (miniGameWidth - 20) + 10;
 
-     healthHazards.push({
+     strikes.push({
           x,
           baseX: x,
           y: -20,
           speed: 0.3 + Math.random() * 0.6,
           size: randomNumber(getGameParticleSizeMin() * 1.1, getGameParticleSizeMax() * 1.15),
-          particle: hazardParticles[Math.floor(Math.random() * hazardParticles.length)],
-          colorRole: "hazard",
+          particle: strikeParticles[Math.floor(Math.random() * strikeParticles.length)],
+          colorRole: "strike",
           colorIndex: getNextPastelColorIndex(),
           color: getNextParticleColor(),
           wobbleOffset: Math.random() * Math.PI * 2,
@@ -800,111 +846,109 @@ function createHealthHazard() {
      });
 }
 
-function createMatchingHealthHazardFromSparkleSpawn() {
-     if (harmfulLevel <= 0) {
+function createMatchingStrikeFromStarSpawn() {
+     if (baneLevel <= 0) {
           return;
      }
 
-     if (!areHealthHazardsUnlockedForCurrentLevel()) {
+     if (!areStrikesUnlockedForCurrentLevel()) {
           return;
      }
 
-     if (Math.random() > hazardSpawnRatio) {
+     if (Math.random() > strikeSpawnRatio) {
           return;
      }
 
-     if (healthHazards.length >= sparkleSpawnCap * hazardSpawnRatio) {
+     if (strikes.length >= getScaledStrikeSpawnCap()) {
           return;
      }
 
-     createHealthHazard();
+     createStrike();
 }
 
-export function updateSparkleSpawns() {
-     const nextSparkleSpawnTimer = sparkleSpawnTimer + 1;
-     setSparkleSpawnTimer(nextSparkleSpawnTimer);
+export function updateStarSpawns() {
+     const nextStarSpawnTimer = starSpawnTimer + 1;
+     setStarSpawnTimer(nextStarSpawnTimer);
 
-     const sparkleSpawnJitter = Math.random() * 8;
+     const starSpawnJitter = Math.random() * 8;
 
-     if (nextSparkleSpawnTimer >= sparkleSpawnDelay + sparkleSpawnJitter) {
-          if (sparkles.length < sparkleSpawnCap) {
-               createSparkle();
-               createMatchingHealthHazardFromSparkleSpawn();
-               maybeCreateEffectPickupsFromSparkleSpawn();
+     if (nextStarSpawnTimer >= getScaledStarSpawnDelay() + starSpawnJitter) {
+          if (stars.length < getScaledStarSpawnCap()) {
+               createStar();
+               createMatchingStrikeFromStarSpawn();
+               maybeCreateBoostBanePickupsFromStarSpawn();
           }
 
-          setSparkleSpawnTimer(0);
+          setStarSpawnTimer(0);
      }
 }
 
-export function updateSparkles() {
+export function updateStars() {
      const fallSpeedMultiplier = getObjectFallSpeedMultiplier();
 
-     for (let i = sparkles.length - 1; i >= 0; i -= 1) {
-          const sparkle = sparkles[i];
+     for (let i = stars.length - 1; i >= 0; i -= 1) {
+          const star = stars[i];
 
-          sparkle.y += sparkle.speed * fallSpeedMultiplier;
-          sparkle.wobbleOffset += sparkle.wobbleSpeed;
-          sparkle.x = sparkle.baseX + Math.sin(sparkle.wobbleOffset) * sparkle.wobbleAmount;
+          star.y += star.speed * fallSpeedMultiplier;
+          star.wobbleOffset += star.wobbleSpeed;
+          star.x = star.baseX + Math.sin(star.wobbleOffset) * star.wobbleAmount;
 
-          if (sparkle.y > miniGameHeight + 30) {
-               sparkles.splice(i, 1);
+          if (star.y > miniGameHeight + 30) {
+               stars.splice(i, 1);
           }
      }
 }
 
-export function updateHealthHazards() {
+export function updateStrikes() {
      const fallSpeedMultiplier = getObjectFallSpeedMultiplier();
 
-     for (let i = healthHazards.length - 1; i >= 0; i -= 1) {
-          const hazard = healthHazards[i];
+     for (let i = strikes.length - 1; i >= 0; i -= 1) {
+          const strike = strikes[i];
 
-          hazard.y += hazard.speed * fallSpeedMultiplier;
-          hazard.wobbleOffset += hazard.wobbleSpeed;
-          hazard.x = hazard.baseX + Math.sin(hazard.wobbleOffset) * hazard.wobbleAmount;
+          strike.y += strike.speed * fallSpeedMultiplier;
+          strike.wobbleOffset += strike.wobbleSpeed;
+          strike.x = strike.baseX + Math.sin(strike.wobbleOffset) * strike.wobbleAmount;
 
-          if (hazard.y > miniGameHeight + 30) {
-               healthHazards.splice(i, 1);
+          if (strike.y > miniGameHeight + 30) {
+               strikes.splice(i, 1);
           }
      }
 }
 
-export function collectSparkles() {
-     for (let i = sparkles.length - 1; i >= 0; i -= 1) {
-          const sparkle = sparkles[i];
+export function collectStars() {
+     for (let i = stars.length - 1; i >= 0; i -= 1) {
+          const star = stars[i];
 
-          if (!isCollidingWithSparkleCollectionRadius(sparkle)) {
+          if (!isCollidingWithStarCollectionRadius(star)) {
                continue;
           }
 
-          createCollisionBurst(sparkle.x, sparkle.y, sparkle.color, "sparkle");
-          sparkles.splice(i, 1);
+          createCollisionBurst(star.x, star.y, star.color, "star");
+          stars.splice(i, 1);
 
-          addSparkleScore(1);
-          addPlayerHealth(sparkleHealthGain);
-          syncPlayerHealthState();
-          applyTemporaryPlayerFace(playerFaces.sparkle, 60);
+          addStarScore(1);
+          applyTemporaryPlayerFace(playerFaces.star, 60);
           triggerPlayerFacePop(1.25);
-          playSoundEffect("sparkle");
+          playSoundEffect("star");
      }
 }
 
-export function collectHealthHazards() {
-     for (let i = healthHazards.length - 1; i >= 0; i -= 1) {
-          const hazard = healthHazards[i];
+export function collectStrikes() {
+     for (let i = strikes.length - 1; i >= 0; i -= 1) {
+          const strike = strikes[i];
 
-          if (!isCollidingWithSparkle(player, hazard)) {
+          if (!isCollidingWithStar(player, strike)) {
                continue;
           }
 
-          createCollisionBurst(hazard.x, hazard.y, hazard.color, "harmful");
-          healthHazards.splice(i, 1);
+          createCollisionBurst(strike.x, strike.y, strike.color, "bane");
+          strikes.splice(i, 1);
 
-          addPlayerHealth(-harmfulHealthDamage);
+          addPlayerHealth(-strikeHealthDamage);
           syncPlayerHealthState();
-          applyTemporaryPlayerFace(playerFaces.harmful, 30);
+          applyTemporaryPlayerFace(playerFaces.bane, 30);
           triggerPlayerFacePop(1.25);
-          playSoundEffect("hazard");
+          playSoundEffect("strike");
      }
 }
 
@@ -912,23 +956,23 @@ export function collectHealthHazards() {
 // EFFECT PICKUPS
 // ==================================================
 
-function createEffectPickup(type, category) {
+function createBoostBanePickup(type, category) {
      const x = Math.random() * (miniGameWidth - 20) + 10;
 
-     effectPickups.push({
+     boostBanePickups.push({
           x,
           baseX: x,
           y: -20,
-          speed: category === "helpful"
+          speed: category === "boost"
                ? 0.35 + Math.random() * 0.55
                : 0.5 + Math.random() * 0.7,
-          size: category === "helpful"
+          size: category === "boost"
                ? randomNumber(getGameParticleSizeMin() * 1.25, getGameParticleSizeMax() * 1.15)
                : randomNumber(getGameParticleSizeMin() * 1.5, getGameParticleSizeMax() * 1.25),
           particle: type.particle,
           type,
           category,
-          colorRole: category === "helpful" ? "helpfulEffect" : "harmfulEffect",
+          colorRole: category === "boost" ? "boost" : "bane",
           colorIndex: getNextPastelColorIndex(),
           color: getNextParticleColor(),
           wobbleOffset: Math.random() * Math.PI * 2,
@@ -937,90 +981,90 @@ function createEffectPickup(type, category) {
      });
 }
 
-export function createHelpfulEffect() {
-     createEffectPickup(randomItem(helpfulEffectTypes), "helpful");
+export function createBoostPickup() {
+     createBoostBanePickup(randomItem(boostTypes), "boost");
 }
 
-export function createHarmfulEffect() {
-     const unlockedEffectNames = getUnlockedHarmfulEffectNamesForCurrentLevel();
-     const availableEffectTypes = harmfulEffectTypes.filter((type) => unlockedEffectNames.includes(type.name));
+export function createBanePickup() {
+     const unlockedBaneNames = getUnlockedBaneNamesForCurrentLevel();
+     const availableBoostBaneTypes = baneTypes.filter((type) => unlockedBaneNames.includes(type.name));
 
-     if (availableEffectTypes.length <= 0) {
+     if (availableBoostBaneTypes.length <= 0) {
           return;
      }
 
-     createEffectPickup(randomItem(availableEffectTypes), "harmful");
+     createBoostBanePickup(randomItem(availableBoostBaneTypes), "bane");
 }
 
-export function maybeCreateEffectPickupsFromSparkleSpawn() {
-     const effectSpawnChance = effectSpawnRatios[harmfulLevel] ?? 0;
+export function maybeCreateBoostBanePickupsFromStarSpawn() {
+     const boostBaneSpawnChance = boostBaneSpawnRatios[baneLevel] ?? 0;
 
-     if (effectPickups.length >= effectPickupCap) {
+     if (boostBanePickups.length >= getScaledBoostBanePickupCap()) {
           return;
      }
 
-     if (effectSpawnChance > 0 && Math.random() <= effectSpawnChance) {
-          createHelpfulEffect();
+     if (boostBaneSpawnChance > 0 && Math.random() <= boostBaneSpawnChance) {
+          createBoostPickup();
      }
 
-     if (effectPickups.length >= effectPickupCap) {
+     if (boostBanePickups.length >= getScaledBoostBanePickupCap()) {
           return;
      }
 
-     if (effectSpawnChance > 0 && Math.random() <= effectSpawnChance) {
-          createHarmfulEffect();
+     if (boostBaneSpawnChance > 0 && Math.random() <= boostBaneSpawnChance) {
+          createBanePickup();
      }
 }
 
-export function updateEffectPickups() {
+export function updateBoostBanePickups() {
      const fallSpeedMultiplier = getObjectFallSpeedMultiplier();
 
-     for (let i = effectPickups.length - 1; i >= 0; i -= 1) {
-          const pickup = effectPickups[i];
+     for (let i = boostBanePickups.length - 1; i >= 0; i -= 1) {
+          const pickup = boostBanePickups[i];
 
           pickup.y += pickup.speed * fallSpeedMultiplier;
           pickup.wobbleOffset += pickup.wobbleSpeed;
           pickup.x = pickup.baseX + Math.sin(pickup.wobbleOffset) * pickup.wobbleAmount;
 
           if (pickup.y > miniGameHeight + 30) {
-               effectPickups.splice(i, 1);
+               boostBanePickups.splice(i, 1);
           }
      }
 }
 
-function collectHelpfulEffect(pickup, index) {
-     createCollisionBurst(pickup.x, pickup.y, pickup.color, "sparkle", "helpfulEffect");
-     effectPickups.splice(index, 1);
+function collectBoostPickup(pickup, index) {
+     createCollisionBurst(pickup.x, pickup.y, pickup.color, "star", "boost");
+     boostBanePickups.splice(index, 1);
 
-     applyHelpfulEffect(pickup.type);
-     applyTemporaryPlayerFace(playerFaces.sparkle, 45);
+     applyBoostPickup(pickup.type);
+     applyTemporaryPlayerFace(playerFaces.star, 45);
      triggerPlayerFacePop(1.2);
-     playSoundEffect("helpfulEffect");
+     playSoundEffect("boost");
 }
 
-function collectHarmfulEffect(pickup, index) {
-     createCollisionBurst(pickup.x, pickup.y, pickup.color, "harmful", "harmfulEffect");
-     effectPickups.splice(index, 1);
+function collectBanePickup(pickup, index) {
+     createCollisionBurst(pickup.x, pickup.y, pickup.color, "bane", "bane");
+     boostBanePickups.splice(index, 1);
 
-     applyHarmfulEffect(pickup.type);
+     applyBanePickup(pickup.type);
      syncPlayerHealthState();
-     applyTemporaryPlayerFace(playerFaces.harmful, 30);
+     applyTemporaryPlayerFace(playerFaces.bane, 30);
      triggerPlayerFacePop(1.25);
-     playSoundEffect("harmfulEffect");
+     playSoundEffect("bane");
 }
 
-export function collectEffectPickups() {
-     for (let i = effectPickups.length - 1; i >= 0; i -= 1) {
-          const pickup = effectPickups[i];
+export function collectBoostBanePickups() {
+     for (let i = boostBanePickups.length - 1; i >= 0; i -= 1) {
+          const pickup = boostBanePickups[i];
 
-          if (!isCollidingWithSparkle(player, pickup)) {
+          if (!isCollidingWithStar(player, pickup)) {
                continue;
           }
 
-          if (pickup.category === "helpful") {
-               collectHelpfulEffect(pickup, i);
+          if (pickup.category === "boost") {
+               collectBoostPickup(pickup, i);
           } else {
-               collectHarmfulEffect(pickup, i);
+               collectBanePickup(pickup, i);
           }
      }
 }
@@ -1034,7 +1078,7 @@ export const burstChars = ["✦", "✧", "·", "•"];
 export function createCollisionBurst(x, y, color, burstType, colorRole = null) {
      for (let i = 0; i < collisionBurstParticleCount; i += 1) {
           const angle = randomNumber(0, Math.PI * 2);
-          const speed = burstType === "harmful"
+          const speed = burstType === "bane"
                ? randomNumber(1.1, 2.6)
                : randomNumber(0.7, 2.1);
 
@@ -1047,10 +1091,10 @@ export function createCollisionBurst(x, y, color, burstType, colorRole = null) {
                maxLife: 50,
                size: randomNumber(20, 30),
                particle: randomItem(burstChars),
-               colorRole: colorRole || (burstType === "harmful" ? "hazard" : "sparkle"),
+               colorRole: colorRole || (burstType === "bane" ? "strike" : "star"),
                colorIndex: getNextPastelColorIndex(),
                color,
-               glowBoost: burstType === "harmful" ? 1.25 : 1
+               glowBoost: burstType === "bane" ? 1.25 : 1
           });
      }
 }
@@ -1078,7 +1122,7 @@ function getGameGlowBlur() {
      return siteTheme?.getGlowSettings?.().gameParticleBlur ?? particleGlowBlurFallback;
 }
 
-export function drawSparkles() {
+export function drawStars() {
      if (!miniGameCtx) {
           return;
      }
@@ -1088,28 +1132,28 @@ export function drawSparkles() {
      miniGameCtx.textAlign = "center";
      miniGameCtx.textBaseline = "middle";
 
-     for (let i = sparkles.length - 1; i >= 0; i -= 1) {
-          const sparkle = sparkles[i];
-          const fillColor = getParticleFillColor(sparkle);
+     for (let i = stars.length - 1; i >= 0; i -= 1) {
+          const star = stars[i];
+          const fillColor = getParticleFillColor(star);
 
           miniGameCtx.save();
-          miniGameCtx.font = `${Math.max(16, sparkle.size)}px Arial, Helvetica, sans-serif`;
+          miniGameCtx.font = `${Math.max(16, star.size)}px Arial, Helvetica, sans-serif`;
           miniGameCtx.fillStyle = fillColor;
           miniGameCtx.shadowColor = getParticleGlowColor(fillColor);
           miniGameCtx.shadowBlur = glowBlur;
 
           miniGameCtx.globalAlpha = 0.95;
-          miniGameCtx.fillText(sparkle.particle, sparkle.x, sparkle.y);
+          miniGameCtx.fillText(star.particle, star.x, star.y);
 
           miniGameCtx.shadowBlur = 0;
           miniGameCtx.globalAlpha = 1;
-          miniGameCtx.fillText(sparkle.particle, sparkle.x, sparkle.y);
+          miniGameCtx.fillText(star.particle, star.x, star.y);
 
           miniGameCtx.restore();
      }
 }
 
-export function drawHealthHazards() {
+export function drawStrikes() {
      if (!miniGameCtx) {
           return;
      }
@@ -1119,46 +1163,72 @@ export function drawHealthHazards() {
      miniGameCtx.textAlign = "center";
      miniGameCtx.textBaseline = "middle";
 
-     for (let i = healthHazards.length - 1; i >= 0; i -= 1) {
-          const hazard = healthHazards[i];
-          const fillColor = getParticleFillColor(hazard);
+     for (let i = strikes.length - 1; i >= 0; i -= 1) {
+          const strike = strikes[i];
+          const fillColor = getParticleFillColor(strike);
 
           miniGameCtx.save();
-          miniGameCtx.font = `${Math.max(16, hazard.size)}px Arial, Helvetica, sans-serif`;
+          miniGameCtx.font = `${Math.max(16, strike.size)}px Arial, Helvetica, sans-serif`;
           miniGameCtx.fillStyle = fillColor;
           miniGameCtx.shadowColor = getParticleGlowColor(fillColor);
           miniGameCtx.shadowBlur = glowBlur;
 
-          miniGameCtx.fillText(hazard.particle, hazard.x, hazard.y);
+          miniGameCtx.fillText(strike.particle, strike.x, strike.y);
 
           miniGameCtx.shadowBlur = 0;
-          miniGameCtx.fillText(hazard.particle, hazard.x, hazard.y);
+          miniGameCtx.fillText(strike.particle, strike.x, strike.y);
 
           miniGameCtx.restore();
      }
 }
 
-export function drawEffectPickups() {
+export function drawBoostBanePickups() {
      if (!miniGameCtx) {
           return;
      }
 
      const glowBlur = getGameGlowBlur();
 
+     function drawTintedPickupAsset(pickup, image, size, fillColor) {
+          const assetX = pickup.x - (size / 2);
+          const assetY = pickup.y - (size / 2);
+          const tintCanvas = document.createElement("canvas");
+          const tintCtx = tintCanvas.getContext("2d");
+
+          tintCanvas.width = Math.ceil(size);
+          tintCanvas.height = Math.ceil(size);
+
+          tintCtx.drawImage(image, 0, 0, tintCanvas.width, tintCanvas.height);
+          tintCtx.globalCompositeOperation = "source-in";
+          tintCtx.fillStyle = fillColor;
+          tintCtx.fillRect(0, 0, tintCanvas.width, tintCanvas.height);
+
+          miniGameCtx.save();
+          miniGameCtx.shadowColor = getParticleGlowColor(fillColor);
+          miniGameCtx.shadowBlur = glowBlur;
+          miniGameCtx.globalAlpha = pickup.category === "boost" ? 1 : 0.95;
+          miniGameCtx.drawImage(tintCanvas, assetX, assetY, size, size);
+
+          miniGameCtx.shadowBlur = 0;
+          miniGameCtx.globalAlpha = 1;
+          miniGameCtx.drawImage(tintCanvas, assetX, assetY, size, size);
+          miniGameCtx.restore();
+     }
+
      miniGameCtx.textAlign = "center";
      miniGameCtx.textBaseline = "middle";
 
-     for (let i = effectPickups.length - 1; i >= 0; i -= 1) {
-          const pickup = effectPickups[i];
+     for (let i = boostBanePickups.length - 1; i >= 0; i -= 1) {
+          const pickup = boostBanePickups[i];
           const fillColor = getParticleFillColor(pickup);
 
-          const pickupSizeBoost =
-               pickup.type?.name === "luck" ? 1.25 :
-               pickup.type?.name === "fog" ? 1.25 :
-               pickup.type?.name === "magnet" ? 1.25 :
-               1;
+          const pickupFontSize = Math.max(20, pickup.size);
+          const assetImage = getPickupAssetImage(pickup.type?.assetSrc);
 
-          const pickupFontSize = Math.max(20, pickup.size * pickupSizeBoost);
+          if (assetImage?.complete && assetImage.naturalWidth > 0) {
+               drawTintedPickupAsset(pickup, assetImage, pickupFontSize, fillColor);
+               continue;
+          }
 
           miniGameCtx.save();
           miniGameCtx.font = `${pickupFontSize}px Arial, Helvetica, sans-serif`;
@@ -1166,7 +1236,7 @@ export function drawEffectPickups() {
           miniGameCtx.shadowColor = getParticleGlowColor(fillColor);
           miniGameCtx.shadowBlur = glowBlur;
 
-          miniGameCtx.globalAlpha = pickup.category === "helpful" ? 1 : 0.95;
+          miniGameCtx.globalAlpha = pickup.category === "boost" ? 1 : 0.95;
           miniGameCtx.fillText(pickup.particle, pickup.x, pickup.y);
 
           miniGameCtx.shadowBlur = 0;

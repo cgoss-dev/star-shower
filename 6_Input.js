@@ -1,5 +1,5 @@
 // NOTE: 6_Input
-// Keyboard, pointer, touch, pause-button, menu-hitbox, and resize binding for Sparkle Seeker.
+// Keyboard, pointer, touch, pause-button, menu-hitbox, and resize binding for Star Shower.
 //
 // Owned here:
 // - keyboard movement input
@@ -31,7 +31,9 @@ import {
      gameMenuView,
      gameOver,
      gameWon,
+     baneLevel,
      movementLevel,
+     colorLevel,
      gameMenuUi,
      touchControls,
      screenActionUi,
@@ -43,6 +45,7 @@ import {
      pausedSelectionIndex,
      tipsSelectionIndex,
      optionsSelection,
+     gameMenuScroll,
 
      setTouchMoveTarget,
      clearTouchMoveTarget,
@@ -59,11 +62,20 @@ import {
      setPausedSelectionIndex,
      setTipsSelectionIndex,
      setOptionsSelectionRow,
-     setOptionsSelectionCol
+     setOptionsSelectionCol,
+     addGameMenuScrollOffset,
+     beginGameMenuScrollDrag,
+     updateGameMenuScrollDrag,
+     endGameMenuScrollDrag,
+     showMenuKeyboardFocus
 } from "./3_State.js";
 
 import {
-     movementOptionIndexes
+     isJoystickEnabled,
+     movementOptionIndexes,
+     maxOptionLevelIndex,
+     getMaxMovementOptionIndex,
+     maxColorOptionIndex
 } from "./4_Options.js";
 
 import {
@@ -77,8 +89,8 @@ import {
      isScreenWelcomeActive,
      isOverlayScreenActive,
      startNewGameRound,
-     decreaseHarmfulLevel,
-     increaseHarmfulLevel,
+     decreaseBaneLevel,
+     increaseBaneLevel,
      decreaseMusicLevel,
      increaseMusicLevel,
      decreaseSoundEffectsLevel,
@@ -150,6 +162,7 @@ export function bindPointerInput() {
      miniGameCanvas.style.touchAction = "none";
 
      miniGameCanvas.addEventListener("pointerdown", handlePointerDown);
+     miniGameCanvas.addEventListener("wheel", handleWheel, { passive: false });
      window.addEventListener("pointermove", handlePointerMove, { passive: false });
      window.addEventListener("pointerup", handlePointerUp, { passive: false });
      window.addEventListener("pointercancel", handlePointerCancel, { passive: false });
@@ -191,7 +204,7 @@ function getCanvasPoint(event) {
 }
 
 function preventPointerDefault(event) {
-     if (event.pointerType === "touch") {
+     if (event.cancelable && (event.pointerType === "touch" || event.type === "wheel")) {
           event.preventDefault();
      }
 }
@@ -204,28 +217,28 @@ function isPausedOverlayActive() {
      return gameStarted && gamePaused && !gameMenuOpen && !gameOver && !gameWon;
 }
 
-function isTipsDetailView() {
-     return (
-          gameMenuView === "tips_how_to_play" ||
-          gameMenuView === "tips_effects"
-     );
-}
-
 function isOptionsView() {
      return gameMenuView === "options";
 }
 
 function isOptionsDetailView() {
-     return (
-          gameMenuView === "options_difficulty" ||
-          gameMenuView === "options_audio" ||
-          gameMenuView === "options_movement" ||
-          gameMenuView === "options_color"
-     );
+     return false;
 }
 
 function isTipsListView() {
      return gameMenuView === "tips";
+}
+
+function isScrollableMenuView() {
+     return gameMenuOpen && isTipsListView();
+}
+
+function getOptionsBackRowIndex() {
+     return isJoystickEnabled() ? 3 : 2;
+}
+
+function getOptionsColorRowIndex() {
+     return isJoystickEnabled() ? 2 : 1;
 }
 
 function isUiNavigationActive() {
@@ -238,6 +251,12 @@ function isPreviousMenuKey(event) {
 
 function isNextMenuKey(event) {
      return event.key === "ArrowRight" || event.key === "ArrowDown" || event.key === "d" || event.key === "D" || event.key === "s" || event.key === "S";
+}
+
+function showMenuKeyboardFocusForDirectionalArrow(event) {
+     if (event.key.startsWith("Arrow")) {
+          showMenuKeyboardFocus();
+     }
 }
 
 function isLeftKey(event) {
@@ -298,8 +317,11 @@ function clearPointerMove(pointerId = touchControls.touchMoveTarget.pointerId) {
 
 function isJoystickMovementMode() {
      return (
-          movementLevel === movementOptionIndexes.joystickLeft ||
-          movementLevel === movementOptionIndexes.joystickRight
+          isJoystickEnabled() &&
+          (
+               movementLevel === movementOptionIndexes.joystickLeft ||
+               movementLevel === movementOptionIndexes.joystickRight
+          )
      );
 }
 
@@ -340,8 +362,8 @@ function closeMenuAndRefresh() {
 }
 
 function activateOptionAdjustment(optionName, direction) {
-     if (optionName === "harmful") {
-          direction < 0 ? decreaseHarmfulLevel() : increaseHarmfulLevel();
+     if (optionName === "bane") {
+          direction < 0 ? decreaseBaneLevel() : increaseBaneLevel();
      }
 
      if (optionName === "music") {
@@ -440,40 +462,12 @@ function handleTipsMenuPointerDown(x, y) {
      }
 
      if (isPointInsideBox(x, y, gameMenuUi.backButton)) {
-          setTipsSelectionIndex(2);
+          setTipsSelectionIndex(0);
           closeMenuAndRefresh();
           return true;
      }
 
-     if (isPointInsideBox(x, y, gameMenuUi.tipsHowToPlayButton)) {
-          setTipsSelectionIndex(0);
-          setGameMenuView("tips_how_to_play");
-          syncUiBounds();
-          return true;
-     }
-
-     if (isPointInsideBox(x, y, gameMenuUi.tipsEffectsButton)) {
-          setTipsSelectionIndex(1);
-          setGameMenuView("tips_effects");
-          syncUiBounds();
-          return true;
-     }
-
-     return true;
-}
-
-function handleTipsDetailPointerDown(x, y) {
-     if (!isTipsDetailView()) {
-          return false;
-     }
-
-     if (isPointInsideBox(x, y, gameMenuUi.backButton)) {
-          setGameMenuView("tips");
-          syncUiBounds();
-          return true;
-     }
-
-     return true;
+     return false;
 }
 
 function handleOptionsPointerDown(x, y) {
@@ -482,31 +476,55 @@ function handleOptionsPointerDown(x, y) {
      }
 
      if (isPointInsideBox(x, y, gameMenuUi.backButton)) {
-          setOptionsSelectionRow(3);
+          setOptionsSelectionRow(getOptionsBackRowIndex());
           closeMenuAndRefresh();
           return true;
      }
 
-     if (isPointInsideBox(x, y, gameMenuUi.optionsDifficultyButton)) {
+     if (baneLevel > 0 && isPointInsideBox(x, y, gameMenuUi.baneDecreaseButton)) {
           setOptionsSelectionRow(0);
           setOptionsSelectionCol(0);
-          setGameMenuView("options_difficulty");
+          decreaseBaneLevel();
           syncUiBounds();
           return true;
      }
 
-     if (isPointInsideBox(x, y, gameMenuUi.optionsMovementButton)) {
+     if (baneLevel < maxOptionLevelIndex && isPointInsideBox(x, y, gameMenuUi.baneIncreaseButton)) {
           setOptionsSelectionRow(0);
-          setOptionsSelectionCol(0);
-          setGameMenuView("options_movement");
+          setOptionsSelectionCol(1);
+          increaseBaneLevel();
           syncUiBounds();
           return true;
      }
 
-     if (isPointInsideBox(x, y, gameMenuUi.optionsColorButton)) {
-          setOptionsSelectionRow(0);
+     if (isJoystickEnabled() && movementLevel > 0 && isPointInsideBox(x, y, gameMenuUi.movementDecreaseButton)) {
+          setOptionsSelectionRow(1);
           setOptionsSelectionCol(0);
-          setGameMenuView("options_color");
+          decreaseMovementLevel();
+          syncUiBounds();
+          return true;
+     }
+
+     if (isJoystickEnabled() && movementLevel < getMaxMovementOptionIndex() && isPointInsideBox(x, y, gameMenuUi.movementIncreaseButton)) {
+          setOptionsSelectionRow(1);
+          setOptionsSelectionCol(1);
+          increaseMovementLevel();
+          syncUiBounds();
+          return true;
+     }
+
+     if (colorLevel > 0 && isPointInsideBox(x, y, gameMenuUi.colorDecreaseButton)) {
+          setOptionsSelectionRow(getOptionsColorRowIndex());
+          setOptionsSelectionCol(0);
+          decreaseColorLevel();
+          syncUiBounds();
+          return true;
+     }
+
+     if (colorLevel < maxColorOptionIndex && isPointInsideBox(x, y, gameMenuUi.colorIncreaseButton)) {
+          setOptionsSelectionRow(getOptionsColorRowIndex());
+          setOptionsSelectionCol(1);
+          increaseColorLevel();
           syncUiBounds();
           return true;
      }
@@ -535,18 +553,18 @@ function handleOptionsDetailPointerDown(x, y) {
      }
 
      if (gameMenuView === "options_difficulty") {
-          if (isPointInsideBox(x, y, gameMenuUi.harmfulDecreaseButton)) {
+          if (isPointInsideBox(x, y, gameMenuUi.baneDecreaseButton)) {
                setOptionsSelectionRow(0);
                setOptionsSelectionCol(0);
-               decreaseHarmfulLevel();
+               decreaseBaneLevel();
                syncUiBounds();
                return true;
           }
 
-          if (isPointInsideBox(x, y, gameMenuUi.harmfulIncreaseButton)) {
+          if (isPointInsideBox(x, y, gameMenuUi.baneIncreaseButton)) {
                setOptionsSelectionRow(0);
                setOptionsSelectionCol(1);
-               increaseHarmfulLevel();
+               increaseBaneLevel();
                syncUiBounds();
                return true;
           }
@@ -629,7 +647,44 @@ function handleOptionsDetailPointerDown(x, y) {
      return true;
 }
 
-function handleMenuPointerDown(x, y) {
+function beginMenuScrollDrag(event, x, y) {
+     if (!isScrollableMenuView()) {
+          return false;
+     }
+
+     if (isPointInsideBox(x, y, gameMenuUi.backButton)) {
+          return false;
+     }
+
+     beginGameMenuScrollDrag(event.pointerId, y);
+     preventPointerDefault(event);
+     return true;
+}
+
+function updateMenuScrollDrag(event, x, y) {
+     if (!isScrollableMenuView()) {
+          return false;
+     }
+
+     if (gameMenuScroll.pointerId !== event.pointerId) {
+          return false;
+     }
+
+     updateGameMenuScrollDrag(y);
+     preventPointerDefault(event);
+     return true;
+}
+
+function endMenuScrollDrag(event) {
+     if (!endGameMenuScrollDrag(event.pointerId)) {
+          return false;
+     }
+
+     preventPointerDefault(event);
+     return true;
+}
+
+function handleMenuPointerDown(event, x, y) {
      if (!gameMenuOpen) {
           return false;
      }
@@ -638,7 +693,7 @@ function handleMenuPointerDown(x, y) {
           return true;
      }
 
-     if (handleTipsDetailPointerDown(x, y)) {
+     if (beginMenuScrollDrag(event, x, y)) {
           return true;
      }
 
@@ -656,6 +711,15 @@ function handleMenuPointerDown(x, y) {
      }
 
      return true;
+}
+
+function handleWheel(event) {
+     if (!isScrollableMenuView()) {
+          return;
+     }
+
+     addGameMenuScrollOffset(event.deltaY);
+     preventPointerDefault(event);
 }
 
 function handlePauseButtonPointerDown(event, x, y) {
@@ -796,36 +860,22 @@ function activatePausedSelection() {
 }
 
 function activateTipsSelection() {
-     if (tipsSelectionIndex === 0) {
-          setGameMenuView("tips_how_to_play");
-          syncUiBounds();
-     }
-
-     if (tipsSelectionIndex === 1) {
-          setGameMenuView("tips_effects");
-          syncUiBounds();
-     }
-
-     if (tipsSelectionIndex === 2) {
-          closeMenuAndRefresh();
-     }
+     closeMenuAndRefresh();
 }
 
 function activateOptionsSelection() {
-     if (optionsSelection.row === 3) {
+     if (optionsSelection.row >= getOptionsBackRowIndex()) {
           closeMenuAndRefresh();
           return;
      }
 
-     const optionView =
-          optionsSelection.row === 0 ? "options_difficulty" :
-          optionsSelection.row === 1 ? "options_movement" :
-          "options_color";
+     const optionName =
+          optionsSelection.row === 0 ? "bane" :
+          optionsSelection.row === 1 && isJoystickEnabled() ? "movement" :
+          "color";
+     const direction = optionsSelection.col === 0 ? -1 : 1;
 
-     setOptionsSelectionRow(0);
-     setOptionsSelectionCol(0);
-     setGameMenuView(optionView);
-     syncUiBounds();
+     activateOptionAdjustment(optionName, direction);
 }
 
 function activateOptionsDetailSelection() {
@@ -837,7 +887,7 @@ function activateOptionsDetailSelection() {
           }
 
           const direction = optionsSelection.col === 0 ? -1 : 1;
-          activateOptionAdjustment("harmful", direction);
+          activateOptionAdjustment("bane", direction);
           return;
      }
 
@@ -899,12 +949,14 @@ function handleWelcomeNavigation(event) {
 
      if (isPreviousMenuKey(event)) {
           event.preventDefault();
+          showMenuKeyboardFocusForDirectionalArrow(event);
           setWelcomeSelectionIndex(clamp(welcomeSelectionIndex - 1, 0, 3));
           return true;
      }
 
      if (isNextMenuKey(event)) {
           event.preventDefault();
+          showMenuKeyboardFocusForDirectionalArrow(event);
           setWelcomeSelectionIndex(clamp(welcomeSelectionIndex + 1, 0, 3));
           return true;
      }
@@ -932,12 +984,14 @@ function handlePausedNavigation(event) {
 
      if (isPreviousMenuKey(event)) {
           event.preventDefault();
+          showMenuKeyboardFocusForDirectionalArrow(event);
           setPausedSelectionIndex(clamp(pausedSelectionIndex - 1, 0, 3));
           return true;
      }
 
      if (isNextMenuKey(event)) {
           event.preventDefault();
+          showMenuKeyboardFocusForDirectionalArrow(event);
           setPausedSelectionIndex(clamp(pausedSelectionIndex + 1, 0, 3));
           return true;
      }
@@ -952,26 +1006,8 @@ function handleTipsNavigation(event) {
 
      if (isEscapeKey(event)) {
           event.preventDefault();
-
-          if (isTipsDetailView()) {
-               setGameMenuView("tips");
-               syncUiBounds();
-          } else {
-               closeMenuAndRefresh();
-          }
-
+          closeMenuAndRefresh();
           return true;
-     }
-
-     if (isTipsDetailView()) {
-          if (isEnterKey(event)) {
-               event.preventDefault();
-               setGameMenuView("tips");
-               syncUiBounds();
-               return true;
-          }
-
-          return false;
      }
 
      if (!isTipsListView()) {
@@ -986,13 +1022,15 @@ function handleTipsNavigation(event) {
 
      if (isPreviousMenuKey(event)) {
           event.preventDefault();
-          setTipsSelectionIndex(clamp(tipsSelectionIndex - 1, 0, 2));
+          showMenuKeyboardFocusForDirectionalArrow(event);
+          setTipsSelectionIndex(0);
           return true;
      }
 
      if (isNextMenuKey(event)) {
           event.preventDefault();
-          setTipsSelectionIndex(clamp(tipsSelectionIndex + 1, 0, 2));
+          showMenuKeyboardFocusForDirectionalArrow(event);
+          setTipsSelectionIndex(0);
           return true;
      }
 
@@ -1018,15 +1056,33 @@ function handleOptionsNavigation(event) {
 
      if (isUpKey(event)) {
           event.preventDefault();
-          setOptionsSelectionRow(clamp(optionsSelection.row - 1, 0, 3));
+          showMenuKeyboardFocusForDirectionalArrow(event);
+          setOptionsSelectionRow(clamp(optionsSelection.row - 1, 0, getOptionsBackRowIndex()));
           setOptionsSelectionCol(0);
           return true;
      }
 
      if (isDownKey(event)) {
           event.preventDefault();
-          setOptionsSelectionRow(clamp(optionsSelection.row + 1, 0, 3));
+          showMenuKeyboardFocusForDirectionalArrow(event);
+          setOptionsSelectionRow(clamp(optionsSelection.row + 1, 0, getOptionsBackRowIndex()));
           setOptionsSelectionCol(0);
+          return true;
+     }
+
+     if (optionsSelection.row < getOptionsBackRowIndex() && isLeftKey(event)) {
+          event.preventDefault();
+          showMenuKeyboardFocusForDirectionalArrow(event);
+          setOptionsSelectionCol(0);
+          activateOptionsSelection();
+          return true;
+     }
+
+     if (optionsSelection.row < getOptionsBackRowIndex() && isRightKey(event)) {
+          event.preventDefault();
+          showMenuKeyboardFocusForDirectionalArrow(event);
+          setOptionsSelectionCol(1);
+          activateOptionsSelection();
           return true;
      }
 
@@ -1055,6 +1111,7 @@ function handleOptionsDetailNavigation(event) {
 
      if (isUpKey(event)) {
           event.preventDefault();
+          showMenuKeyboardFocusForDirectionalArrow(event);
           setOptionsSelectionRow(clamp(optionsSelection.row - 1, 0, maxRow));
           setOptionsSelectionCol(0);
           return true;
@@ -1062,6 +1119,7 @@ function handleOptionsDetailNavigation(event) {
 
      if (isDownKey(event)) {
           event.preventDefault();
+          showMenuKeyboardFocusForDirectionalArrow(event);
           setOptionsSelectionRow(clamp(optionsSelection.row + 1, 0, maxRow));
           setOptionsSelectionCol(0);
           return true;
@@ -1069,6 +1127,7 @@ function handleOptionsDetailNavigation(event) {
 
      if (optionsSelection.row < maxRow && isLeftKey(event)) {
           event.preventDefault();
+          showMenuKeyboardFocusForDirectionalArrow(event);
           setOptionsSelectionCol(0);
           activateOptionsDetailSelection();
           return true;
@@ -1076,6 +1135,7 @@ function handleOptionsDetailNavigation(event) {
 
      if (optionsSelection.row < maxRow && isRightKey(event)) {
           event.preventDefault();
+          showMenuKeyboardFocusForDirectionalArrow(event);
           setOptionsSelectionCol(1);
           activateOptionsDetailSelection();
           return true;
@@ -1167,7 +1227,7 @@ function handlePointerDown(event) {
           return;
      }
 
-     if (handleMenuPointerDown(x, y)) {
+     if (handleMenuPointerDown(event, x, y)) {
           return;
      }
 
@@ -1193,6 +1253,10 @@ function handlePointerMove(event) {
 
      const { x, y } = getCanvasPoint(event);
 
+     if (updateMenuScrollDrag(event, x, y)) {
+          return;
+     }
+
      if (updateJoystickMove(event, x, y)) {
           return;
      }
@@ -1206,6 +1270,10 @@ function handlePointerUp(event) {
      }
 
      const { x, y } = getCanvasPoint(event);
+
+     if (endMenuScrollDrag(event)) {
+          return;
+     }
 
      if (handlePauseButtonPointerUp(event, x, y)) {
           return;
@@ -1224,6 +1292,7 @@ function handlePointerCancel(event) {
      }
 
      releasePauseButton(event.pointerId);
+     endMenuScrollDrag(event);
      endJoystickMove(event);
      endPointerMove(event);
 }

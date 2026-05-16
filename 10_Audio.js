@@ -1,7 +1,7 @@
 // NOTE: 10_Audio
-// Audio loading/playback for Sparkle Seeker.
+// Audio loading/playback for Star Shower.
 //
-// Drop audio files into `games/sparkle-seeker/audio/` using the filenames below.
+// Drop audio files into `games/star-shower/audio/` using the filenames below.
 // Missing files fail quietly so the game stays playable while assets are in progress.
 
 import {
@@ -13,14 +13,14 @@ import {
      optionLevelValues
 } from "./4_Options.js";
 
-export const sparkleSeekerAudioFiles = {
+export const starShowerAudioFiles = {
      music: "./audio/music-loop.mp3",
 
      soundEffects: {
-          sparkle: "./audio/sparkle.wav",
-          hazard: "./audio/hazard.wav",
-          helpfulEffect: "./audio/helpful-effect.wav",
-          harmfulEffect: "./audio/harmful-effect.wav",
+          star: "./audio/star.wav",
+          strike: "./audio/strike.wav",
+          boost: "./audio/boost-effect.wav",
+          bane: "./audio/bane-effect.wav",
           win: "./audio/win.wav",
           lose: "./audio/lose.wav",
           pause: "./audio/pause.wav",
@@ -53,7 +53,7 @@ function getMusicAudio() {
      }
 
      if (!musicAudio) {
-          musicAudio = new Audio(sparkleSeekerAudioFiles.music);
+          musicAudio = new Audio(starShowerAudioFiles.music);
           musicAudio.loop = true;
           musicAudio.preload = "auto";
      }
@@ -66,7 +66,7 @@ function getSoundEffectAudio(name) {
           return null;
      }
 
-     const src = sparkleSeekerAudioFiles.soundEffects[name];
+     const src = starShowerAudioFiles.soundEffects[name];
 
      if (!src) {
           return null;

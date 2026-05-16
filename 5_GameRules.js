@@ -22,8 +22,12 @@
 //   it belongs here.
 
 import {
-     sparkleScore
+     starScore
 } from "./3_State.js";
+
+import {
+     isJoystickEnabled
+} from "./4_Options.js";
 
 // ====================================================================================================
 // NOTE: LEVELS
@@ -37,50 +41,50 @@ export const levelPopupDuration = 180;
 export const maxLevelProgressUnits = 10;
 export const progressUnitsPerCircle = 2;
 
-const levelEnemyProgression = [
+const levelChallengeProgression = [
      {
           introText: "",
           introDescription: "",
-          hazardsUnlocked: false,
-          harmfulEffectNames: []
+          strikesUnlocked: false,
+          baneNames: []
      },
      {
-          introText: "HAZARDS",
+          introText: "STRIKES",
           introDescription: "Costs health.",
-          hazardsUnlocked: true,
-          harmfulEffectNames: []
+          strikesUnlocked: true,
+          baneNames: []
      },
      {
           introText: "FREEZE",
           introDescription: "Freezes player.",
-          hazardsUnlocked: true,
-          harmfulEffectNames: ["freeze"]
+          strikesUnlocked: true,
+          baneNames: ["freeze"]
      },
      {
           introText: "DAZE",
           introDescription: "Reverses controls.",
-          hazardsUnlocked: true,
-          harmfulEffectNames: ["freeze", "daze"]
+          strikesUnlocked: true,
+          baneNames: ["freeze", "daze"]
      },
      {
           introText: "FOG",
           introDescription: "Limits vision.",
-          hazardsUnlocked: true,
-          harmfulEffectNames: ["freeze", "daze", "fog"]
+          strikesUnlocked: true,
+          baneNames: ["freeze", "daze", "fog"]
      }
 ];
 
 const levelRules = Array.from({ length: maxLevelProgressUnits }, (_, index) => {
-     const progressionIndex = Math.min(index, levelEnemyProgression.length - 1);
-     const progression = levelEnemyProgression[progressionIndex];
+     const progressionIndex = Math.min(index, levelChallengeProgression.length - 1);
+     const progression = levelChallengeProgression[progressionIndex];
 
      return {
           levelNumber: index + 1,
           scoreMin: index * 100,
-          introText: index < levelEnemyProgression.length ? progression.introText : "",
-          introDescription: index < levelEnemyProgression.length ? progression.introDescription : "",
-          hazardsUnlocked: progression.hazardsUnlocked,
-          harmfulEffectNames: progression.harmfulEffectNames
+          introText: index < levelChallengeProgression.length ? progression.introText : "",
+          introDescription: index < levelChallengeProgression.length ? progression.introDescription : "",
+          strikesUnlocked: progression.strikesUnlocked,
+          baneNames: progression.baneNames
      };
 });
 
@@ -88,12 +92,11 @@ const levelRules = Array.from({ length: maxLevelProgressUnits }, (_, index) => {
 // NOTE: WELCOME / BUTTON TEXT
 // ====================================================================================================
 
-const welcomeTitleLines = ["SPARKLE", "SEEKER"];
-const screenActionTexts = ["NEW GAME", "TIPS", "OPTIONS", "DEVELOPER WEBSITE"];
-const pausedActionTexts = ["RESUME", "TIPS", "OPTIONS", "DEVELOPER WEBSITE"];
+const welcomeTitleLines = ["STAR", "SHOWER"];
+const screenActionTexts = ["NEW GAME", "TIPS", "OPTIONS", "DEVELOPER"];
+const pausedActionTexts = ["RESUME", "TIPS", "OPTIONS", "DEVELOPER"];
 const welcomeInstructionLines = [
-     "Collect white sparkles.",
-     "Avoid hazards. Reach 1000 to win."
+     "Collect stars, avoid strikes. Use pointer or arrows to navigate."
 ];
 
 export function getWelcomeTitleLines() {
@@ -105,7 +108,7 @@ export function getWelcomeInstructionLines() {
 }
 
 export function getWinGoalText() {
-     return `Reach ${winScore}+ sparkles to win.`;
+     return `Reach ${winScore}+ to win.`;
 }
 
 export function getWinTitleLines() {
@@ -142,18 +145,22 @@ export function getCurrentPausedActionTexts() {
 
 export function getHowToPlayLines() {
      return [
-          "Seek sparkles to level and heal.",
-          "Avoid hazards. They deal damage.",
+          "{iconStar} Stars level.",
+          "{iconStrike} Strikes deal damage.",
           getWinGoalText()
      ];
 }
 
-export function getEffectLines() {
+export function getBoostLines() {
      return [
-          "{iconLuck} Luck: doubles points.",
+          "{iconHealth} Health: increases health.",
           "{iconMagnet} Magnet: triples pickup range.",
-          "{iconSlowmo} Slowmo: objects 1/4 speed.",
+          "{iconDouble} Double: stars count twice."
+     ];
+}
 
+export function getBaneLines() {
+     return [
           "{iconFreeze} Freeze: freezes player.",
           "{iconDaze} Daze: reverses movement.",
           "{iconFog} Fog: limits visible area."
@@ -162,11 +169,11 @@ export function getEffectLines() {
 
 export function getDifficultyOptionLines() {
      return [
-          "OFF: sparkles only.",
-          "MIN: hazards unlock at Level 2.",
-          "LOW: effects unlock by level; fall 1 per 24 sparkles.",
-          "MED: effects unlock by level; fall 1 per 16 sparkles.",
-          "MAX: effects unlock by level; fall 1 per 8 sparkles."
+          "OFF: stars only.",
+          "MIN: strikes introduced.",
+          "LOW: 1 per 24 stars.",
+          "MED: 1 per 16 stars.",
+          "MAX: 1 per 8 stars."
      ];
 }
 
@@ -181,18 +188,25 @@ export function getAudioOptionLines() {
 }
 
 export function getMovementOptionLines() {
-     return [
+     const lines = [
           "Touch/Click + WASD/Arrows: pointer and keyboard movement.",
-          "Joystick Left: lower-left touch joystick.",
-          "Joystick Right: lower-right touch joystick."
      ];
+
+     if (isJoystickEnabled()) {
+          lines.push(
+               "Joystick Left: lower-left touch joystick.",
+               "Joystick Right: lower-right touch joystick."
+          );
+     }
+
+     return lines;
 }
 
 export function getColorOptionLines() {
      return [
-          "High Contrast: yellow sparkles, red hazards, and blue friendlies.",
-          "Vibrant: white sparkles; hazards and effects use rainbow colors.",
-          "Pastel: white sparkles; hazards and effects use soft Catppuccin Mocha colors.",
+          "High Contrast: yellow stars, red strikes and banes, blue boosts.",
+          "Vibrant: white stars; boosts and banes use rainbow colors.",
+          "Pastel: white stars; boosts and banes use soft Catppuccin Mocha colors.",
           "Black & White: monochrome accessibility board."
      ];
 }
@@ -205,7 +219,7 @@ export function getCurrentLevelData() {
      let currentLevelData = levelRules[0];
 
      for (let i = 0; i < levelRules.length; i += 1) {
-          if (sparkleScore >= levelRules[i].scoreMin) {
+          if (starScore >= levelRules[i].scoreMin) {
                currentLevelData = levelRules[i];
           } else {
                break;
@@ -217,7 +231,7 @@ export function getCurrentLevelData() {
 
 export function getCurrentLevelMeterUnits() {
      const currentLevelData = getCurrentLevelData();
-     const pointsIntoLevel = sparkleScore - currentLevelData.scoreMin;
+     const pointsIntoLevel = starScore - currentLevelData.scoreMin;
      const completedLevels = currentLevelData.levelNumber - 1;
      const halfwayToNextLevel = pointsIntoLevel >= 50 ? 1 : 0;
 
@@ -228,12 +242,12 @@ export function getCurrentLevelNumber() {
      return getCurrentLevelData().levelNumber;
 }
 
-export function areHealthHazardsUnlockedForCurrentLevel() {
-     return getCurrentLevelData().hazardsUnlocked;
+export function areStrikesUnlockedForCurrentLevel() {
+     return getCurrentLevelData().strikesUnlocked;
 }
 
-export function getUnlockedHarmfulEffectNamesForCurrentLevel() {
-     return getCurrentLevelData().harmfulEffectNames;
+export function getUnlockedBaneNamesForCurrentLevel() {
+     return getCurrentLevelData().baneNames;
 }
 
 export function getLevelIntroText(levelNumber) {
