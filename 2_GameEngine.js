@@ -109,6 +109,7 @@ import {
      overlayFadeFrames,
      levelPopupDuration,
      getLevelIntroDescription,
+     getLevelIntroIcon,
      getLevelIntroText,
      getCurrentLevelNumber,
      getScreenTitleLinesForMode
@@ -139,6 +140,7 @@ let gameScreenMode = "screenWelcome";
 let activeLevelNumber = 1;
 let levelPopupText = "";
 let levelPopupSubtext = "";
+let levelPopupIcon = "";
 let levelPopupTimer = 0;
 let levelPopupDurationFrames = 0;
 
@@ -477,6 +479,7 @@ function resetLevelProgressState() {
      activeLevelNumber = getCurrentLevelNumber();
      levelPopupText = "";
      levelPopupSubtext = "";
+     levelPopupIcon = "";
      levelPopupTimer = 0;
      levelPopupDurationFrames = 0;
 }
@@ -484,11 +487,13 @@ function resetLevelProgressState() {
 function showLevelPopup(levelNumber) {
      const introText = getLevelIntroText(levelNumber);
      const introDescription = getLevelIntroDescription(levelNumber);
+     const introIcon = getLevelIntroIcon(levelNumber);
 
      levelPopupText = introText
           ? `LEVEL ${levelNumber}: ${introText}`
           : `LEVEL ${levelNumber}`;
      levelPopupSubtext = introDescription;
+     levelPopupIcon = introIcon;
      levelPopupTimer = levelPopupDuration;
      levelPopupDurationFrames = levelPopupDuration;
 }
@@ -503,6 +508,7 @@ function updateLevelPopupTimer() {
      if (levelPopupTimer <= 0) {
           levelPopupText = "";
           levelPopupSubtext = "";
+          levelPopupIcon = "";
           levelPopupTimer = 0;
           levelPopupDurationFrames = 0;
      }
@@ -525,6 +531,10 @@ export function getLevelPopupText() {
 
 export function getLevelPopupSubtext() {
      return levelPopupSubtext;
+}
+
+export function getLevelPopupIcon() {
+     return levelPopupIcon;
 }
 
 export function getLevelPopupAlpha() {

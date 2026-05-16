@@ -37,7 +37,7 @@ import {
 export const winScore = 1000;
 export const startOverlayDuration = 120;
 export const overlayFadeFrames = 30;
-export const levelPopupDuration = 180;
+export const levelPopupDuration = 300;
 export const maxLevelProgressUnits = 10;
 export const progressUnitsPerCircle = 2;
 
@@ -45,30 +45,35 @@ const levelChallengeProgression = [
      {
           introText: "",
           introDescription: "",
-          strikesUnlocked: false,
+          introIcon: "",
+          strikesUnlocked: true,
           baneNames: []
      },
      {
-          introText: "STRIKES",
-          introDescription: "Costs health.",
+          introText: "",
+          introDescription: "",
+          introIcon: "",
           strikesUnlocked: true,
           baneNames: []
      },
      {
           introText: "FREEZE",
           introDescription: "Freezes player.",
+          introIcon: "iconFreeze",
           strikesUnlocked: true,
           baneNames: ["freeze"]
      },
      {
           introText: "DAZE",
           introDescription: "Reverses controls.",
+          introIcon: "iconDaze",
           strikesUnlocked: true,
           baneNames: ["freeze", "daze"]
      },
      {
           introText: "FOG",
           introDescription: "Limits vision.",
+          introIcon: "iconFog",
           strikesUnlocked: true,
           baneNames: ["freeze", "daze", "fog"]
      }
@@ -83,6 +88,7 @@ const levelRules = Array.from({ length: maxLevelProgressUnits }, (_, index) => {
           scoreMin: index * 100,
           introText: index < levelChallengeProgression.length ? progression.introText : "",
           introDescription: index < levelChallengeProgression.length ? progression.introDescription : "",
+          introIcon: index < levelChallengeProgression.length ? progression.introIcon : "",
           strikesUnlocked: progression.strikesUnlocked,
           baneNames: progression.baneNames
      };
@@ -169,8 +175,8 @@ export function getBaneLines() {
 
 export function getDifficultyOptionLines() {
      return [
-          "OFF: stars only.",
-          "MIN: strikes introduced.",
+          "OFF: stars and strikes.",
+          "MIN: adds boosts and banes.",
           "LOW: 1 per 24 stars.",
           "MED: 1 per 16 stars.",
           "MAX: 1 per 8 stars."
@@ -204,10 +210,9 @@ export function getMovementOptionLines() {
 
 export function getColorOptionLines() {
      return [
-          "High Contrast: yellow stars, red strikes and banes, blue boosts.",
-          "Vibrant: white stars; boosts and banes use rainbow colors.",
+          "Bright: white stars; boosts and banes use rainbow colors.",
           "Pastel: white stars; boosts and banes use soft Catppuccin Mocha colors.",
-          "Black & White: monochrome accessibility board."
+          "Monochrome: white, gray, and black."
      ];
 }
 
@@ -260,4 +265,10 @@ export function getLevelIntroDescription(levelNumber) {
      const levelData = levelRules.find((rule) => rule.levelNumber === levelNumber);
 
      return levelData?.introDescription || "";
+}
+
+export function getLevelIntroIcon(levelNumber) {
+     const levelData = levelRules.find((rule) => rule.levelNumber === levelNumber);
+
+     return levelData?.introIcon || "";
 }

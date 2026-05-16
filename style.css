@@ -8,7 +8,7 @@
           --color-gray3: #999;
           --color-gray4: #ccc;
           --color-white: #fff;
-          --color-rainbow: #f0f;
+          --color-rainbow: #f00;
 
      /* BLACK ALPHA */
           --black-25: rgba(0, 0, 0, 0.25);
@@ -101,20 +101,20 @@
           --glow-particle-game-blur: 16;
 
      /* BACKGROUND PARTICLES */
-          --sparkle-count-max: 180;
-          --sparkle-size-min: 16;
-          --sparkle-size-max: 26;
-          --sparkle-speed-min: 0.2;
-          --sparkle-speed-max: 0.7;
-          --sparkle-density: 0.00015;
-          --sparkle-wobble-speed-min: 0.005;
-          --sparkle-wobble-speed-max: 0.02;
-          --sparkle-wobble-amount-min: 5;
-          --sparkle-wobble-amount-max: 15;
-          --sparkle-opacity-min: 0.2;
-          --sparkle-opacity-max: 1;
-          --sparkle-respawn-offset-top: -20;
-          --sparkle-respawn-offset-bottom: 24;
+          --star-count-max: 180;
+          --star-size-min: 16;
+          --star-size-max: 26;
+          --star-speed-min: 0.2;
+          --star-speed-max: 0.7;
+          --star-density: 0.00015;
+          --star-wobble-speed-min: 0.005;
+          --star-wobble-speed-max: 0.02;
+          --star-wobble-amount-min: 5;
+          --star-wobble-amount-max: 15;
+          --star-opacity-min: 0.2;
+          --star-opacity-max: 1;
+          --star-respawn-offset-top: -20;
+          --star-respawn-offset-bottom: 24;
 }
 
 *,

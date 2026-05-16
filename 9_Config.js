@@ -135,6 +135,7 @@ export const starShowerGuideIcons = {
           name: "strike",
           label: "STRIKE",
           particle: "\u2715\uFE0E",
+          assetSrc: "./images/icons/strike.svg",
           xOffset: 0,
           yOffset: -6
      }
@@ -184,7 +185,20 @@ export function getCanvasTheme() {
                letterSpacing: 0.25,
                stackGap: 10,
                color: titleColor,
-               rainbow: false,
+               rainbow: true,
+               glow: false
+          },
+
+          welcomeTitle: {
+               font: "marquee",
+               fontSize: uiFontLg,
+               minSize: uiFontMd,
+               shrinkStep: 2,
+               sidePadding: uiFontSm,
+               letterSpacing: 0.25,
+               stackGap: 10,
+               color: titleColor,
+               rainbow: true,
                glow: false
           },
 
@@ -193,7 +207,7 @@ export function getCanvasTheme() {
                fontSize: uiFontMd,
                letterSpacing: 0.25,
                color: titleColor,
-               rainbow: false,
+               rainbow: true,
                glow: false
           },
 
@@ -202,7 +216,7 @@ export function getCanvasTheme() {
                fontSize: uiFontSm * 1.75,
                letterSpacing: 0.25,
                color: "#fff",
-               rainbow: false,
+               rainbow: true,
                glow: false
           },
 
@@ -345,7 +359,7 @@ export function getCanvasTheme() {
 
           screens: {
                welcome: {
-                    textStyle: "marquee"
+                    textStyle: "welcomeTitle"
                },
 
                paused: {

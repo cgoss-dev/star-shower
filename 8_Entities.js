@@ -120,6 +120,8 @@ export const starSpawnCap = 50;
 export const strikeSpawnRatio = 0.5;
 export const boostBanePickupCap = 60;
 export const collisionBurstParticleCount = 15;
+export const fallingObjectSpeedMin = 0.5;
+export const fallingObjectSpeedMax = 1;
 
 const spawnDensityBaselineArea = 960 * 640;
 const spawnDensityMinScale = 0.45;
@@ -128,7 +130,7 @@ const spawnDensityMaxScale = 1;
 // Boosts and banes are spawned as a ratio of successful star spawns:
 export const boostBaneSpawnRatios = [
      0,
-     0,
+     1 / 32,
      1 / 24,
      1 / 16,
      1 / 8
@@ -179,6 +181,10 @@ function getScaledStrikeSpawnCap() {
 
 function getScaledBoostBanePickupCap() {
      return Math.max(1, Math.round(boostBanePickupCap * getSpawnDensityScale()));
+}
+
+function getFallingObjectSpeed() {
+     return randomNumber(fallingObjectSpeedMin, fallingObjectSpeedMax);
 }
 
 // ====================================================================================================
@@ -278,36 +284,30 @@ function getPastelParticleColor(colorIndex = 0) {
 export function getModeParticleColor(colorRole, fallback = "#ffffff", colorIndex = 0) {
      if (colorLevel === 0) {
           if (colorRole === "star") {
-               return getCssColor("--tertiary-05", "#ff0");
-          }
-
-          if (colorRole === "strike" || colorRole === "bane") {
-               return getCssColor("--tertiary-01", "#f00");
-          }
-
-          if (colorRole === "boost") {
-               return getCssColor("--tertiary-08", "#08f");
+               return getCssColor("--color-white", "#fff");
           }
 
           if (colorRole === "trail") {
                return getCssColor("--color-white", "#fff");
           }
+
+          return fallback;
      }
 
-     if (colorLevel !== 3 && colorRole === "star") {
+     if (colorLevel !== 2 && colorRole === "star") {
           return getCssColor("--color-white", "#fff");
      }
 
-     if (colorLevel === 2) {
+     if (colorLevel === 1) {
           return getPastelParticleColor(colorIndex);
      }
 
-     if (colorLevel === 3) {
+     if (colorLevel === 2) {
           if (colorRole === "star") {
                return getCssColor("--color-gray2", "#666");
           }
 
-          if (colorRole === "strike") {
+          if (colorRole === "strike" || colorRole === "bane") {
                return getCssColor("--color-black", "#000");
           }
 
@@ -328,7 +328,7 @@ export function getParticleFillColor(particle) {
 }
 
 export function getParticleGlowColor(fillColor) {
-     return colorLevel === 3
+     return colorLevel === 2
           ? getCssColor("--color-white", "#ffffff")
           : fillColor;
 }
@@ -784,11 +784,12 @@ function getObjectFallSpeedMultiplier() {
 }
 
 // ==================================================
-// SPARKLES
+// STARS + STRIKES
 // ==================================================
 
 export const starParticles = ["✦", "✧"];
 export const strikeParticles = ["\u2716\uFE0E", "\u2715\uFE0E"];
+export const strikeAssetSrc = "./images/icons/strike.svg";
 
 function getStarCollisionRadiusMultiplier() {
      if (!isBoostBaneActive("magnet")) {
@@ -815,7 +816,7 @@ export function createStar() {
           x,
           baseX: x,
           y: -20,
-          speed: 0.25 + Math.random() * 0.5,
+          speed: getFallingObjectSpeed(),
           size: Math.random() * (getGameParticleSizeMax() - getGameParticleSizeMin()) + getGameParticleSizeMin(),
           particle: starParticles[Math.floor(Math.random() * starParticles.length)],
           colorRole: "star",
@@ -834,9 +835,10 @@ function createStrike() {
           x,
           baseX: x,
           y: -20,
-          speed: 0.3 + Math.random() * 0.6,
+          speed: getFallingObjectSpeed(),
           size: randomNumber(getGameParticleSizeMin() * 1.1, getGameParticleSizeMax() * 1.15),
           particle: strikeParticles[Math.floor(Math.random() * strikeParticles.length)],
+          assetSrc: strikeAssetSrc,
           colorRole: "strike",
           colorIndex: getNextPastelColorIndex(),
           color: getNextParticleColor(),
@@ -847,10 +849,6 @@ function createStrike() {
 }
 
 function createMatchingStrikeFromStarSpawn() {
-     if (baneLevel <= 0) {
-          return;
-     }
-
      if (!areStrikesUnlockedForCurrentLevel()) {
           return;
      }
@@ -963,9 +961,7 @@ function createBoostBanePickup(type, category) {
           x,
           baseX: x,
           y: -20,
-          speed: category === "boost"
-               ? 0.35 + Math.random() * 0.55
-               : 0.5 + Math.random() * 0.7,
+          speed: getFallingObjectSpeed(),
           size: category === "boost"
                ? randomNumber(getGameParticleSizeMin() * 1.25, getGameParticleSizeMax() * 1.15)
                : randomNumber(getGameParticleSizeMin() * 1.5, getGameParticleSizeMax() * 1.25),
@@ -1160,15 +1156,46 @@ export function drawStrikes() {
 
      const glowBlur = getGameGlowBlur();
 
+     function drawTintedStrikeAsset(strike, image, size, fillColor) {
+          const assetX = strike.x - (size / 2);
+          const assetY = strike.y - (size / 2);
+          const tintCanvas = document.createElement("canvas");
+          const tintCtx = tintCanvas.getContext("2d");
+
+          tintCanvas.width = Math.ceil(size);
+          tintCanvas.height = Math.ceil(size);
+
+          tintCtx.drawImage(image, 0, 0, tintCanvas.width, tintCanvas.height);
+          tintCtx.globalCompositeOperation = "source-in";
+          tintCtx.fillStyle = fillColor;
+          tintCtx.fillRect(0, 0, tintCanvas.width, tintCanvas.height);
+
+          miniGameCtx.save();
+          miniGameCtx.shadowColor = getParticleGlowColor(fillColor);
+          miniGameCtx.shadowBlur = glowBlur;
+          miniGameCtx.drawImage(tintCanvas, assetX, assetY, size, size);
+
+          miniGameCtx.shadowBlur = 0;
+          miniGameCtx.drawImage(tintCanvas, assetX, assetY, size, size);
+          miniGameCtx.restore();
+     }
+
      miniGameCtx.textAlign = "center";
      miniGameCtx.textBaseline = "middle";
 
      for (let i = strikes.length - 1; i >= 0; i -= 1) {
           const strike = strikes[i];
           const fillColor = getParticleFillColor(strike);
+          const strikeSize = Math.max(16, strike.size);
+          const assetImage = getPickupAssetImage(strike.assetSrc);
+
+          if (assetImage?.complete && assetImage.naturalWidth > 0) {
+               drawTintedStrikeAsset(strike, assetImage, strikeSize, fillColor);
+               continue;
+          }
 
           miniGameCtx.save();
-          miniGameCtx.font = `${Math.max(16, strike.size)}px Arial, Helvetica, sans-serif`;
+          miniGameCtx.font = `${strikeSize}px Arial, Helvetica, sans-serif`;
           miniGameCtx.fillStyle = fillColor;
           miniGameCtx.shadowColor = getParticleGlowColor(fillColor);
           miniGameCtx.shadowBlur = glowBlur;

@@ -626,7 +626,7 @@ export function setMovementLevel(value) {
 }
 
 export function setColorLevel(value) {
-     colorLevel = Math.max(0, Math.min(3, Math.round(Number(value) || 0)));
+     colorLevel = Math.max(0, Math.min(2, Math.round(Number(value) || 0)));
 }
 
 export function setGameOver(value) {

@@ -138,6 +138,7 @@ import {
      getGameWelcomeAlpha,
      getLevelPopupText,
      getLevelPopupSubtext,
+     getLevelPopupIcon,
      getLevelPopupAlpha,
      getGameOverlayAlpha
 } from "./2_GameEngine.js";
@@ -753,27 +754,26 @@ function getRainbowTextColor(theme, style, letterIndex) {
 }
 
 function getColorModeTextPalette(theme, style) {
-     if (colorLevel === 0) {
-          return [
-               getCssColor("--tertiary-01", "#f00"),
-               getCssColor("--tertiary-08", "#08f"),
-               getCssColor("--tertiary-07", "#0f0")
-          ];
+     function getTertiaryPalette() {
+          return Array.from({ length: 12 }, (_item, index) => {
+               const variableName = `--tertiary-${String(index + 1).padStart(2, "0")}`;
+               return getCssColor(variableName, "#f0f");
+          });
      }
 
-     if (colorLevel === 2) {
+     function getCatppuccinPalette() {
           return Array.from({ length: 12 }, (_item, index) => {
                const variableName = `--mocha-${String(index + 1).padStart(2, "0")}`;
                return getCssColor(variableName, "#f5c2e7");
           });
      }
 
-     if (colorLevel === 3) {
-          return [
-               getCssColor("--color-gray2", "#666"),
-               getCssColor("--color-gray3", "#999"),
-               getCssColor("--color-white", "#fff")
-          ];
+     if (colorLevel === 0) {
+          return getTertiaryPalette();
+     }
+
+     if (colorLevel === 1 || colorLevel === 2) {
+          return getCatppuccinPalette();
      }
 
      return style.palette || theme.colors.titleRainbow || [];
@@ -921,7 +921,7 @@ function getShortMovementOptionLabel(levelIndex) {
 }
 
 function getShortColorOptionLabel(levelIndex) {
-     const labels = ["High Contrast", "Vibrant", "Pastel", "Monochrome"];
+     const labels = ["Bright", "Pastel", "Monochrome"];
 
      return labels[levelIndex] || getColorOptionLabel(levelIndex).toUpperCase();
 }
@@ -943,7 +943,7 @@ function resetCanvasColorModeFilter() {
 }
 
 function getCanvasGlowColor(color) {
-     return colorLevel === 3
+     return colorLevel === 2
           ? getCssColor("--color-white", "#ffffff")
           : color;
 }
@@ -2565,6 +2565,7 @@ function drawGameStatusOverlay(theme) {
 function drawLevelPopup(theme) {
      const popupText = getLevelPopupText();
      const popupSubtext = getLevelPopupSubtext();
+     const popupIconName = getLevelPopupIcon();
      const alpha = getLevelPopupAlpha();
 
      if (!miniGameCtx || !popupText || alpha <= 0 || gameMenuOpen || gameOver || gameWon) {
@@ -2577,7 +2578,10 @@ function drawLevelPopup(theme) {
      const subtextStyle = getTextStyle(theme, "scoreReady");
      const panelPadding = canvasSpacing.uiPadding;
      const gapBetweenLines = popupSubtext ? canvasSpacing.uiRowGap : 0;
-     const popupY = miniGameHeight * 0.28;
+     const popupY = miniGameHeight * 0.65;
+     const titleIcon = popupIconName ? getRichTextIcon(theme, popupIconName) : null;
+     const titleIconSize = titleIcon ? getRichTextIconSize(titleIcon, titleStyle.fontSize) : 0;
+     const titleIconGap = titleIcon ? canvasSpacing.betweenButtons : 0;
 
      miniGameCtx.save();
      miniGameCtx.globalAlpha = alpha;
@@ -2586,6 +2590,7 @@ function drawLevelPopup(theme) {
      miniGameCtx.font = getTextFont(theme, "title", 400);
 
      const titleWidth = miniGameCtx.measureText(popupText).width;
+     const fullTitleWidth = titleWidth + titleIconSize + titleIconGap;
      let subtextWidth = 0;
 
      if (popupSubtext) {
@@ -2593,7 +2598,7 @@ function drawLevelPopup(theme) {
           subtextWidth = miniGameCtx.measureText(popupSubtext).width;
      }
 
-     const panelWidth = Math.max(titleWidth, subtextWidth) + (panelPadding * 2);
+     const panelWidth = Math.max(fullTitleWidth, subtextWidth) + (panelPadding * 2);
      const panelHeight =
           titleStyle.fontSize +
           (popupSubtext ? subtextStyle.fontSize + gapBetweenLines : 0) +
@@ -2607,16 +2612,48 @@ function drawLevelPopup(theme) {
 
      drawPanelBox(panelX, panelY, panelWidth, panelHeight, theme);
 
+     const titleStartX = (miniGameWidth - fullTitleWidth) / 2;
+
+     if (titleIcon) {
+          const iconX = titleStartX + (titleIcon.xOffset || 0);
+          const iconY =
+               titleY -
+               (titleIconSize / 2) +
+               (titleIcon.yOffset || 0);
+
+          if (!drawTintedRichTextIcon(
+               miniGameCtx,
+               titleIcon,
+               iconX,
+               iconY,
+               titleIconSize,
+               titleStyle.color || colors.fontColor
+          )) {
+               drawGlowingCanvasText(
+                    miniGameCtx,
+                    titleIcon.particle,
+                    iconX,
+                    titleY,
+                    titleStyle.color || colors.fontColor,
+                    getTextFont(theme, "title", 400, "body", titleIconSize),
+                    "left",
+                    "middle",
+                    theme,
+                    titleStyle.glow
+               );
+          }
+     }
+
      drawStyledCanvasText(
           miniGameCtx,
           popupText,
-          miniGameWidth / 2,
+          titleStartX + titleIconSize + titleIconGap,
           titleY,
           "title",
           theme,
           {
                color: titleStyle.color || colors.fontColor,
-               align: "center",
+               align: "left",
                baseline: "middle"
           }
      );
