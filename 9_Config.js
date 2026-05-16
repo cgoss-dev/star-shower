@@ -161,7 +161,7 @@ export function getCanvasTheme() {
           canvasSpacing: {
                uiPadding: uiFontSm,
                uiRowGap: uiFontSm,
-               circleTitleGap: uiFontSm * 1.5,
+               circleTitleGap: uiFontSm,
                menuPadding: uiFontMd,
                betweenButtons: uiFontSm,
                bodyLineHeight: uiFontSm * 1.5,
@@ -214,7 +214,7 @@ export function getCanvasTheme() {
 
           circleMeters: {
                font: "circleMeter",
-               fontSize: uiFontMd,
+               fontSize: uiFontSm * 1.5,
                emptyChar: "\u25CB\uFE0E",
                halfChar: "\u25D2\uFE0E",
                fullChar: "\u25CF\uFE0E",
@@ -222,12 +222,12 @@ export function getCanvasTheme() {
                letterSpacing: 0.25,
                color: bodyColor,
                rainbow: false,
-               glow: true
+               glow: false
           },
 
           scoreReady: {
                font: "body",
-               fontSize: uiFontMd,
+               fontSize: uiFontSm * 1.5,
                letterSpacing: 0,
                color: bodyColor,
                rainbow: false,
@@ -236,23 +236,23 @@ export function getCanvasTheme() {
 
           scoreIcon: {
                font: "symbol",
-               fontSize: uiFontSm,
+               fontSize: uiFontSm * 1.5,
                particle: "\u2726\uFE0E",
                gap: uiFontSm * 0.5,
                xOffset: 0,
                color: bodyColor,
                rainbow: false,
-               glow: true
+               glow: false
           },
 
           statusIcon: {
                font: "body",
-               fontSize: uiFontSm,
+               fontSize: uiFontSm * 1.5,
                gap: uiFontSm * 0.5,
                xOffset: 0,
                color: bodyColor,
                rainbow: false,
-               glow: true
+               glow: false
           },
 
           buttonsOptions: {

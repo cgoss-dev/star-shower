@@ -59,6 +59,15 @@ const levelChallengeProgression = [
           introDescription: "",
           introIcon: "",
           strikesUnlocked: true,
+          boostNames: [],
+          baneNames: []
+     },
+     {
+          introText: "HEALTH",
+          introDescription: "Increases health.",
+          introIcon: "iconHealth",
+          strikesUnlocked: true,
+          boostNames: ["health"],
           baneNames: []
      },
      {
@@ -66,6 +75,15 @@ const levelChallengeProgression = [
           introDescription: "Freezes player.",
           introIcon: "iconFreeze",
           strikesUnlocked: true,
+          boostNames: ["health"],
+          baneNames: ["freeze"]
+     },
+     {
+          introText: "MAGNET",
+          introDescription: "Triples pickup range.",
+          introIcon: "iconMagnet",
+          strikesUnlocked: true,
+          boostNames: ["health", "magnet"],
           baneNames: ["freeze"]
      },
      {
@@ -73,6 +91,15 @@ const levelChallengeProgression = [
           introDescription: "Reverses controls.",
           introIcon: "iconDaze",
           strikesUnlocked: true,
+          boostNames: ["health", "magnet"],
+          baneNames: ["freeze", "daze"]
+     },
+     {
+          introText: "DOUBLE",
+          introDescription: "Stars count twice.",
+          introIcon: "iconDouble",
+          strikesUnlocked: true,
+          boostNames: ["health", "magnet", "double"],
           baneNames: ["freeze", "daze"]
      },
      {
@@ -80,6 +107,7 @@ const levelChallengeProgression = [
           introDescription: "Limits vision.",
           introIcon: "iconFog",
           strikesUnlocked: true,
+          boostNames: ["health", "magnet", "double"],
           baneNames: ["freeze", "daze", "fog"]
      }
 ];
@@ -95,6 +123,7 @@ const levelRules = Array.from({ length: maxLevelProgressUnits }, (_, index) => {
           introDescription: index < levelChallengeProgression.length ? progression.introDescription : "",
           introIcon: index < levelChallengeProgression.length ? progression.introIcon : "",
           strikesUnlocked: progression.strikesUnlocked,
+          boostNames: progression.boostNames,
           baneNames: progression.baneNames
      };
 });
@@ -259,6 +288,10 @@ export function getCurrentLevelNumber() {
 
 export function areStrikesUnlockedForCurrentLevel() {
      return getCurrentLevelData().strikesUnlocked;
+}
+
+export function getUnlockedBoostNamesForCurrentLevel() {
+     return getCurrentLevelData().boostNames;
 }
 
 export function getUnlockedBaneNamesForCurrentLevel() {

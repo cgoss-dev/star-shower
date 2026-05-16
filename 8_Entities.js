@@ -74,6 +74,7 @@ import {
      areStrikesUnlockedForCurrentLevel,
      progressUnitsPerCircle,
      getCurrentLevelNumber,
+     getUnlockedBoostNamesForCurrentLevel,
      getUnlockedBaneNamesForCurrentLevel
 } from "./5_GameRules.js";
 
@@ -1061,7 +1062,14 @@ function createBoostBanePickup(type, category) {
 }
 
 export function createBoostPickup() {
-     createBoostBanePickup(randomItem(boostTypes), "boost");
+     const unlockedBoostNames = getUnlockedBoostNamesForCurrentLevel();
+     const availableBoostBaneTypes = boostTypes.filter((type) => unlockedBoostNames.includes(type.name));
+
+     if (availableBoostBaneTypes.length <= 0) {
+          return false;
+     }
+
+     createBoostBanePickup(randomItem(availableBoostBaneTypes), "boost");
      return true;
 }
 
