@@ -50,8 +50,7 @@ export const starShowerBoostBaneIcons = {
           ability: "increaseHealth",
           lastsUntilUsed: true,
           durationSeconds: 0,
-          xOffset: 0,
-          yOffset: -6
+          xOffset: 0
      },
 
      iconMagnet: {
@@ -63,8 +62,7 @@ export const starShowerBoostBaneIcons = {
           ability: "expandStarPickupRange",
           lastsUntilUsed: false,
           durationSeconds: 5,
-          xOffset: -3,
-          yOffset: -7
+          xOffset: -3
      },
 
      iconDouble: {
@@ -76,8 +74,7 @@ export const starShowerBoostBaneIcons = {
           ability: "doubleStarScore",
           lastsUntilUsed: false,
           durationSeconds: 8,
-          xOffset: -1,
-          yOffset: -6
+          xOffset: -1
      },
 
      // NOTE: BANES
@@ -91,8 +88,7 @@ export const starShowerBoostBaneIcons = {
           ability: "freezePlayerMovement",
           lastsUntilUsed: false,
           durationSeconds: 5,
-          xOffset: 1,
-          yOffset: -4
+          xOffset: 1
      },
 
      iconDaze: {
@@ -104,8 +100,7 @@ export const starShowerBoostBaneIcons = {
           ability: "reversePlayerMovement",
           lastsUntilUsed: false,
           durationSeconds: 5,
-          xOffset: 0,
-          yOffset: -6
+          xOffset: 0
      },
 
      iconFog: {
@@ -117,8 +112,7 @@ export const starShowerBoostBaneIcons = {
           ability: "limitVisionAroundPlayer",
           lastsUntilUsed: false,
           durationSeconds: 8,
-          xOffset: 0,
-          yOffset: -4
+          xOffset: 0
      }
 };
 
@@ -127,8 +121,7 @@ export const starShowerGuideIcons = {
           name: "star",
           label: "STAR",
           particle: "\u2726\uFE0E",
-          xOffset: 0,
-          yOffset: -6
+          xOffset: 0
      },
 
      iconStrike: {
@@ -136,8 +129,7 @@ export const starShowerGuideIcons = {
           label: "STRIKE",
           particle: "\u2715\uFE0E",
           assetSrc: "./images/icons/strike.svg",
-          xOffset: 0,
-          yOffset: -6
+          xOffset: 0
      }
 };
 
@@ -169,10 +161,10 @@ export function getCanvasTheme() {
           canvasSpacing: {
                uiPadding: uiFontSm,
                uiRowGap: uiFontSm,
-               circleTitleGap: uiFontSm * 1.25,
+               circleTitleGap: uiFontSm,
                menuPadding: uiFontMd,
                betweenButtons: uiFontSm,
-               bodyLineHeight: uiFontMd,
+               bodyLineHeight: uiFontSm * 1.5,
                guideIconGutter: uiFontLg
           },
 
@@ -213,7 +205,7 @@ export function getCanvasTheme() {
 
           levelStatus: {
                font: "marquee",
-               fontSize: uiFontSm * 1.75,
+               fontSize: uiFontSm * 1.5,
                letterSpacing: 0.25,
                color: "#fff",
                rainbow: true,
@@ -235,7 +227,7 @@ export function getCanvasTheme() {
 
           scoreReady: {
                font: "body",
-               fontSize: uiFontSm * 1.25,
+               fontSize: uiFontSm,
                letterSpacing: 0,
                color: bodyColor,
                rainbow: false,
@@ -244,11 +236,10 @@ export function getCanvasTheme() {
 
           scoreIcon: {
                font: "symbol",
-               fontSize: uiFontSm * 1.5,
+               fontSize: uiFontSm,
                particle: "\u2726\uFE0E",
                gap: uiFontSm * 0.5,
                xOffset: 0,
-               yOffset: -1,
                color: bodyColor,
                rainbow: false,
                glow: true
@@ -256,10 +247,9 @@ export function getCanvasTheme() {
 
           statusIcon: {
                font: "body",
-               fontSize: uiFontSm * 1.5,
+               fontSize: uiFontSm,
                gap: uiFontSm * 0.5,
                xOffset: 0,
-               yOffset: -1,
                color: bodyColor,
                rainbow: false,
                glow: true
@@ -292,7 +282,6 @@ export function getCanvasTheme() {
                baseRadius: uiFontLg * 2.5,
                knobRadius: uiFontMd * 1.6,
                edgeGap: uiFontSm * 0.15,
-               yOffset: 0,
                deadZone: 0.12,
                fill: "rgba(0, 0, 0, 0)",
                stroke: outlineFallback,
@@ -347,7 +336,7 @@ export function getCanvasTheme() {
                touchGlow: getCssColor("--game-touch-glow", getCssColor("--ui-touch-glow", fontColor)),
                touchText: getCssColor("--game-touch-text-color", getCssColor("--ui-touch-text-color", bodyColor)),
 
-               menuScreenFill: menuOverlayFill,
+               menuScreenFill: getCssColor("--color-black", "#000000"),
                menuPanelFill: menuOverlayFill
           },
 

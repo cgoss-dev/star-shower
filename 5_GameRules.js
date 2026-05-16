@@ -182,10 +182,10 @@ export function getBaneLines() {
 export function getDifficultyOptionLines() {
      return [
           "OFF: stars and strikes.",
-          "MIN: boosts and banes 0.5x.",
+          "MIN: boosts and banes 0.25x.",
           "LOW: boosts and banes 1x.",
-          "MED: boosts and banes 1.5x.",
-          "MAX: boosts and banes 2x."
+          "MED: boosts and banes 2x.",
+          "MAX: boosts and banes 4x."
      ];
 }
 

@@ -309,7 +309,7 @@ export function getMenuScreenLayout(theme) {
           backButtonWidth,
           backButtonX,
           backButtonY,
-          contentTopY: titleY + titleFontSize + topBotPadding,
+          contentTopY: titleY + titleFontSize,
           contentWidth: miniGameWidth - (sidePadding * 2),
           contentBottomY: miniGameHeight - topBotPadding - buttonHeight - topBotPadding
      };
@@ -317,7 +317,7 @@ export function getMenuScreenLayout(theme) {
 
 export function getMenuLayoutMetrics(theme, panelX, panelWidth) {
      const sharedLayout = getMenuScreenLayout(theme);
-     const buttonWidth = panelWidth - (sharedLayout.sidePadding * 6);
+     const buttonWidth = panelWidth * 0.75;
      const buttonX = panelX + ((panelWidth - buttonWidth) / 2);
 
      return {

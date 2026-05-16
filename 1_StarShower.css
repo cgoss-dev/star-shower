@@ -3,19 +3,11 @@
 :root {
      /* GAME LAYOUT */
           --game-frame-outset: var(--border-md);
-          --game-board-width: min(92vw, 75rem);
-          --game-board-height-available: calc(100dvh - (var(--page-padding) * 2) - (var(--game-frame-outset) * 2));
-          --game-board-height-min: calc(var(--game-board-width) * 0.75);
-          --game-board-height-preferred: 75dvh;
-          --game-board-height-max: calc(var(--game-board-width) * 1.25);
-          --game-board-height: min(
-               max(var(--game-board-height-available), 20rem),
-               clamp(
-                    var(--game-board-height-min),
-                    var(--game-board-height-preferred),
-                    var(--game-board-height-max)
-               )
-          );
+          --game-board-width-step: 100;
+          --game-board-height-step: 100;
+          --game-board-height-available: calc(100dvh - (var(--page-padding) * 2));
+          --game-board-height: calc(var(--game-board-height-available) * (var(--game-board-height-step) / 100));
+          --game-board-width: min(calc(var(--game-board-width-step) * 1vw), var(--game-board-height));
           --game-board-top: calc(var(--page-padding) + ((100dvh - (var(--page-padding) * 2) - var(--game-board-height)) / 2));
           --header-top: calc(var(--game-board-top) / 2);
 
@@ -46,8 +38,24 @@
           --glow-particle-game-blur: 16;
 }
 
+html,
 body {
      background: var(--game-color-bg);
+     height: 100%;
+     overflow: hidden;
+     overscroll-behavior: none;
+}
+
+.body-ody {
+     width: 100vw;
+     height: 100dvh;
+     min-height: 100dvh;
+     overflow: hidden;
+}
+
+.main-squeeze {
+     height: calc(100dvh - (var(--page-padding) * 2));
+     min-height: 0;
      overflow: hidden;
 }
 
@@ -84,6 +92,34 @@ body {
      align-items: stretch;
      justify-content: stretch;
      touch-action: none;
+}
+
+@media (min-width: 42rem) and (min-height: 36rem) {
+     :root {
+          --game-board-width-step: 75;
+          --game-board-height-step: 75;
+     }
+}
+
+@media (min-width: 64rem) and (min-height: 48rem) {
+     :root {
+          --game-board-width-step: 70;
+          --game-board-height-step: 70;
+     }
+}
+
+@media (min-width: 80rem) and (min-height: 54rem) {
+     :root {
+          --game-board-width-step: 60;
+          --game-board-height-step: 60;
+     }
+}
+
+@media (min-width: 96rem) and (min-height: 60rem) {
+     :root {
+          --game-board-width-step: 50;
+          --game-board-height-step: 50;
+     }
 }
 
 .game-container::after {

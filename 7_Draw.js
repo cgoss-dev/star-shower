@@ -375,6 +375,7 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
 
      if (gameMenuView === "options") {
           const sliderRowHeight = layout.buttonHeight * 2;
+          const optionsBodyGap = getTextStyle(theme, "canvasSpacing").bodyLineHeight;
           const showMovementOption = isJoystickEnabled();
           const optionRows = [
                {
@@ -413,7 +414,10 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
                     item.decreaseButton,
                     item.increaseButton,
                     layout.buttonX,
-                    layout.contentTopY + (index * (sliderRowHeight + layout.rowGap)),
+                    layout.contentTopY +
+                         optionsBodyGap +
+                         (index * (sliderRowHeight + layout.rowGap)) +
+                         (index > 0 ? optionsBodyGap : 0),
                     layout.buttonWidth,
                     sliderRowHeight
                );
@@ -1045,7 +1049,7 @@ export function drawOptionStepper(
      const { colors } = theme;
      const optionsStyle = getTextStyle(theme, "buttonsOptions");
      const centerY = row.y + (row.height / 2);
-     const lineGap = optionsStyle.fontSize * 1.1;
+     const lineGap = optionsStyle.fontSize * 1.5;
      const titleY = centerY - (lineGap / 2);
      const valueY = centerY + (lineGap / 2);
      const canDecrease = levelIndex > 0;
@@ -1885,10 +1889,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
 
           if (icon) {
                const iconX = currentX + (icon.xOffset || 0);
-               const iconY =
-                    textY +
-                    (icon.yOffset || 0) -
-                    ((getRichTextIconSize(icon, fontSize) - fontSize) * 0.28);
+               const iconY = textY + (icon.yOffset || 0);
 
                if (!drawTintedRichTextIcon(
                     miniGameCtx,
@@ -1923,6 +1924,10 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
           }
 
           if (sectionHeadings.has(line)) {
+               if (line !== "TIPS") {
+                    textY += lineHeight;
+               }
+
                drawMenuScreenTitle(line, theme, screenLayout.titleCenterX, textY);
                textY += sectionHeadingHeight + (lineHeight * 0.5);
                return;
@@ -1950,10 +1955,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
                if (icon) {
                     const iconSize = getRichTextIconSize(icon, fontSize);
                     const richIconX = iconX + (icon.xOffset || 0);
-                    const richIconY =
-                         textY +
-                         (icon.yOffset || 0) -
-                         ((iconSize - fontSize) * 0.28);
+                    const richIconY = textY + (icon.yOffset || 0);
 
                     if (!drawTintedRichTextIcon(
                          miniGameCtx,
@@ -2273,7 +2275,7 @@ function drawSharedActionScreen(
      const resolvedInstructionLines = Array.isArray(instructionLines) ? instructionLines.filter(Boolean) : [];
      const titleContentGap = resolvedInstructionLines.length ? canvasSpacing.uiRowGap : titleMenuGap;
      const instructionGap = resolvedInstructionLines.length ? canvasSpacing.uiRowGap : 0;
-     const instructionLineHeight = buttonStyle.fontSize * 1.35;
+     const instructionLineHeight = buttonStyle.fontSize * 1.5;
      const instructionBlockHeight = resolvedInstructionLines.length * instructionLineHeight;
      const websiteActionText = "DEVELOPER";
 
@@ -2296,6 +2298,25 @@ function drawSharedActionScreen(
           ) - (buttonStyle.buttonPadding * 2)
      }));
 
+     function getActionRows() {
+          if (miniGameWidth > 520) {
+               return [measuredActions];
+          }
+
+          if (actionTexts[0] === "RESUME") {
+               return [
+                    measuredActions.slice(0, 2),
+                    measuredActions.slice(2, 4),
+                    measuredActions.slice(4)
+               ];
+          }
+
+          return [
+               measuredActions.slice(0, 3),
+               measuredActions.slice(3)
+          ];
+     }
+
      const actionGap = canvasSpacing.betweenButtons;
      const actionRowGap = canvasSpacing.uiRowGap;
      const tallestButtonHeight = getUnifiedButtonHeight(
@@ -2303,7 +2324,7 @@ function drawSharedActionScreen(
           buttonStyle.fontSize,
           buttonStyle.buttonPadding
      );
-     const actionRows = [measuredActions];
+     const actionRows = getActionRows().filter((row) => row.length);
      const actionBlockHeight =
           (actionRows.length * tallestButtonHeight) +
           (actionRowGap * Math.max(0, actionRows.length - 1));
@@ -2602,7 +2623,6 @@ function drawLevelPopup(theme) {
      const subtextStyle = getTextStyle(theme, "scoreReady");
      const panelPadding = canvasSpacing.uiPadding;
      const gapBetweenLines = popupSubtext ? canvasSpacing.uiRowGap : 0;
-     const popupY = miniGameHeight * 0.65;
      const titleIcon = popupIconName ? getRichTextIcon(theme, popupIconName) : null;
      const titleIconSize = titleIcon ? getRichTextIconSize(titleIcon, titleStyle.fontSize) : 0;
      const titleIconGap = titleIcon ? canvasSpacing.betweenButtons : 0;
@@ -2627,6 +2647,10 @@ function drawLevelPopup(theme) {
           titleStyle.fontSize +
           (popupSubtext ? subtextStyle.fontSize + gapBetweenLines : 0) +
           (panelPadding * 2);
+     const popupY = Math.min(
+          miniGameHeight - (panelHeight / 2) - panelPadding,
+          Math.max(miniGameHeight * 0.75 + (panelHeight / 2), miniGameHeight * 0.875)
+     );
      const panelX = (miniGameWidth - panelWidth) / 2;
      const panelY = popupY - (panelHeight / 2);
      const titleY = popupSubtext
