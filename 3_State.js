@@ -212,12 +212,12 @@ export const meterPulse = {
      level: {
           timer: 0,
           duration: 18,
-          scale: 1.1
+          scale: 1.2
      },
      health: {
           timer: 0,
           duration: 18,
-          scale: 1.1
+          scale: 1.2
      }
 };
 

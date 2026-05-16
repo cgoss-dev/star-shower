@@ -113,8 +113,7 @@ import {
      applyTemporaryPlayerFace,
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
-     applyPlayerLevelScale,
-     getPlayerLevelScale
+     syncPlayerSize
 } from "./8_Entities.js";
 
 import {
@@ -167,8 +166,7 @@ export {
      applyTemporaryPlayerFace,
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
-     applyPlayerLevelScale,
-     getPlayerLevelScale
+     syncPlayerSize
 };
 
 // ==================================================

@@ -509,15 +509,9 @@ export function triggerPlayerFacePop(scale = 1.1) {
      player.hitScale = Math.max(player.hitScale, scale);
 }
 
-export function getPlayerLevelScale() {
-     return getCurrentLevelNumber() >= 5 ? 1.1 : 1;
-}
-
-export function applyPlayerLevelScale() {
-     const levelScale = getPlayerLevelScale();
-
-     player.size = playerBaseSize * levelScale;
-     player.radius = playerBaseRadius * levelScale;
+export function syncPlayerSize() {
+     player.size = playerBaseSize;
+     player.radius = playerBaseRadius;
      clampPlayerToCanvas();
 }
 
@@ -669,7 +663,7 @@ export function updatePlayer() {
 }
 
 export function updatePlayerFaceState() {
-     applyPlayerLevelScale();
+     syncPlayerSize();
 
      if (gamePaused) {
           player.char = gameWon ? playerFaces.star : playerFaces.neutral;
