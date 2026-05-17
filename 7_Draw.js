@@ -1454,11 +1454,20 @@ function getCircleMeterAssetImage(assetSrc) {
      return circleMeterAssetImages[assetSrc];
 }
 
-function drawCircleMeterSlot(ctx, circleMeterStyle, filledUnits, x, y) {
+function drawCircleMeterSlot(ctx, circleMeterStyle, filledUnits, x, y, options = {}) {
      const assetImage = getCircleMeterAssetImage(getCircleMeterAssetSrc(circleMeterStyle, filledUnits));
 
      if (assetImage?.complete && assetImage.naturalWidth > 0) {
           const iconSize = circleMeterStyle.fontSize * (circleMeterStyle.assetScale || 1);
+
+          if (options.rotateHalf && filledUnits > 0 && filledUnits < progressUnitsPerCircle) {
+               ctx.save();
+               ctx.translate(x, y + (iconSize / 2));
+               ctx.rotate(Math.PI);
+               ctx.drawImage(assetImage, -(iconSize / 2), -(iconSize / 2), iconSize, iconSize);
+               ctx.restore();
+               return;
+          }
 
           ctx.drawImage(assetImage, x - (iconSize / 2), y, iconSize, iconSize);
      }
@@ -1687,7 +1696,7 @@ export function drawHealth(theme) {
           const slotUnits = Math.max(0, Math.min(progressUnitsPerCircle, healthUnits - (fillIndex * progressUnitsPerCircle)));
           const circleX = (i - ((circleSlots - 1) / 2)) * circleAdvance;
 
-          drawCircleMeterSlot(miniGameCtx, circleMeterStyle, slotUnits, circleX, 0);
+          drawCircleMeterSlot(miniGameCtx, circleMeterStyle, slotUnits, circleX, 0, { rotateHalf: true });
      }
 
      miniGameCtx.restore();
