@@ -55,14 +55,6 @@ const levelScoreMins = [
 
 const levelChallengeProgression = [
      {
-          introText: "",
-          introDescription: "",
-          introIcon: "",
-          strikesUnlocked: true,
-          boostNames: [],
-          baneNames: []
-     },
-     {
           introText: "HEALTH",
           introDescription: "Increases health.",
           introIcon: "iconHealth",
