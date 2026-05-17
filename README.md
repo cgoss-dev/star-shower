@@ -91,28 +91,6 @@ audio/
 - `draw/`: canvas rendering.
 - `entities/`: player, stars, strikes, boosts, blights, collision bursts, and entity tuning constants.
 
-## Assets
-
-Icon assets live in:
-
-```text
-images/icons/
-```
-
-Meter icons, boost/blight icons, guide icons, and control icons are SVGs. Canvas drawing code loads these assets directly, so keep icon paths stable or update the matching config in `game.js`.
-
-## Audio
-
-Audio files belong in:
-
-```text
-audio/
-```
-
-Expected filenames are documented in `audio/README.md`.
-
-Missing audio files fail quietly so the game stays playable while assets are in progress. At the moment, `audio/music-loop.mp3` may 404 during local preview until a music file is added.
-
 ### $\textcolor{purple}{Dev \ Notes}$
 
 The project uses native JavaScript modules and has no build step. Keep imports relative and browser-safe.
@@ -131,6 +109,7 @@ Recommended next cleanup areas:
 - Split HUD drawing out of `draw/index.js`.
 - Split boost/blight logic out of `entities/index.js`.
 - Remove compatibility exports once imports are fully direct.
+- Future audio placeholders fail quietly so the game stays playable while assets are in progress. At the moment, `audio/music-loop.mp3` may 404 during local preview until a music file is added.
 
 ## Deployment
 
