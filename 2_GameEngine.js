@@ -102,7 +102,9 @@ import {
      collectStars,
      collectStrikes,
      collectBoostBanePickups,
-     updatePlayerTrail
+     updatePlayerTrail,
+     resetBoostBaneIntroState,
+     setBoostBaneIntroCallback
 } from "./8_Entities.js";
 
 import {
@@ -110,9 +112,6 @@ import {
      startOverlayDuration,
      overlayFadeFrames,
      levelPopupDuration,
-     getLevelIntroDescription,
-     getLevelIntroIcon,
-     getLevelIntroText,
      getCurrentLevelNumber,
      getScreenTitleLinesForMode
 } from "./5_GameRules.js";
@@ -123,6 +122,10 @@ import {
      updateScreenTitleColorState,
      drawGame
 } from "./7_Draw.js";
+
+import {
+     starShowerBoostBaneIcons
+} from "./9_Config.js";
 
 import {
      playSoundEffect,
@@ -338,6 +341,7 @@ export function startNewGameRound() {
      resetGameState();
      resetTouchControls();
      resetEntityColorCycle();
+     resetBoostBaneIntroState();
      resetLevelProgressState();
 
      syncCanvasResolutionAndUiBounds();
@@ -486,22 +490,26 @@ function resetLevelProgressState() {
      levelPopupDurationFrames = 0;
 }
 
-function showLevelPopup(levelNumber) {
-     const introText = getLevelIntroText(levelNumber);
-     const introDescription = getLevelIntroDescription(levelNumber);
-     const introIcon = getLevelIntroIcon(levelNumber);
+function showNewEntityPopup(entityType) {
+     if (!entityType) {
+          return;
+     }
 
-     levelPopupText = introText
-          ? introText
-          : `LEVEL ${levelNumber}`;
-     levelPopupSubtext = introDescription;
-     levelPopupIcon = introIcon;
+     levelPopupText = `NEW ${entityType.category === "bane" ? "BANE" : "BOOST"}`;
+     levelPopupSubtext = entityType.label || "";
+     levelPopupIcon = Object.keys(starShowerBoostBaneIcons).find(
+          (iconName) => starShowerBoostBaneIcons[iconName] === entityType
+     ) || "";
      levelPopupTimer = levelPopupDuration;
      levelPopupDurationFrames = levelPopupDuration;
 }
 
 function updateLevelPopupTimer() {
      if (levelPopupTimer <= 0) {
+          return;
+     }
+
+     if (gamePaused) {
           return;
      }
 
@@ -525,7 +533,6 @@ function syncLevelProgressState() {
 
      activeLevelNumber = currentLevelNumber;
      triggerLevelMeterPulse();
-     showLevelPopup(currentLevelNumber);
 }
 
 export function getLevelPopupText() {
@@ -682,10 +689,12 @@ function gameLoop() {
 
 export function startStarShower() {
      loadAndApplySavedOptions();
+     setBoostBaneIntroCallback(showNewEntityPopup);
 
      resetGameState();
      resetTouchControls();
      resetEntityColorCycle();
+     resetBoostBaneIntroState();
 
      syncCanvasResolutionAndUiBounds();
      resetPlayerPosition();

@@ -318,7 +318,7 @@ export function getMenuScreenLayout(theme) {
 
 export function getMenuLayoutMetrics(theme, panelX, panelWidth) {
      const sharedLayout = getMenuScreenLayout(theme);
-     const buttonWidth = panelWidth - (sharedLayout.sidePadding * 6);
+     const buttonWidth = panelWidth * 0.75;
      const buttonX = panelX + ((panelWidth - buttonWidth) / 2);
 
      return {

@@ -36,11 +36,13 @@ import {
      boostBanePickups,
      collisionBursts,
      starSpawnTimer,
+     boostBanePickupSpawnTimer,
      baneLevel,
      movementLevel,
      colorLevel,
      boostBaneTimers,
      setStarSpawnTimer,
+     setBoostBanePickupSpawnTimer,
      addStarScore,
      setScoreMultiplier,
      addPlayerHealth,
@@ -105,7 +107,7 @@ export const playerFaces = {
 };
 
 export const playerBaseHealth = gameplayStartingHealth;
-export const playerBaseSpeed = 3;
+export const playerBaseSpeed = 1.5;
 export const playerSpeedPerHeart = 0.25;
 export const playerBaseSize = 64;
 export const playerBaseRadius = 30;
@@ -121,8 +123,8 @@ export const starSpawnCap = 50;
 export const strikeSpawnRatio = 0.5;
 export const boostBanePickupCap = 60;
 export const collisionBurstParticleCount = 15;
-export const fallingObjectSpeedMin = 0.5;
-export const fallingObjectSpeedMax = 1;
+export const fallingObjectSpeedMin = 0.25;
+export const fallingObjectSpeedMax = 0.75;
 
 const spawnDensityBaselineArea = 960 * 640;
 const spawnDensityMinScale = 0.45;
@@ -132,31 +134,50 @@ const fallSpeedMaxScale = 1;
 const fallingObjectSpeedStep = 0.25;
 
 export const boostBaneBaseSpawnStarsByLevel = [
-     Infinity,
-     48,
-     40,
-     32,
-     28,
-     24,
-     20,
-     16,
-     12,
-     10
+     8,
+     10,
+     9,
+     8,
+     7,
+     6,
+     5,
+     4,
+     3,
+     2
 ];
 
 export const boostBaneDifficultyMultipliers = [
      0,
-     0.5,
+     0.25,
      1,
-     1.5,
-     2
+     2,
+     4
 ];
 
 const boostBaneTypes = Object.values(starShowerBoostBaneIcons);
 const pickupAssetImages = {};
+const introducedBoostBaneNames = new Set();
+let boostBaneIntroCallback = null;
 
 export const boostTypes = boostBaneTypes.filter((type) => type.category === "boost");
 export const baneTypes = boostBaneTypes.filter((type) => type.category === "bane");
+
+export function setBoostBaneIntroCallback(callback) {
+     boostBaneIntroCallback = typeof callback === "function" ? callback : null;
+}
+
+export function resetBoostBaneIntroState() {
+     introducedBoostBaneNames.clear();
+}
+
+function announceNewBoostBaneEntity(type) {
+     if (!type?.name || !boostBaneIntroCallback || introducedBoostBaneNames.has(type.name)) {
+          return;
+     }
+
+     introducedBoostBaneNames.add(type.name);
+     boostBaneIntroCallback(type);
+}
 
 function getPickupAssetImage(src) {
      if (!src) {
@@ -241,6 +262,18 @@ function getBoostBaneSpawnChance() {
      }
 
      return difficultyMultiplier / starsPerBoostBane;
+}
+
+function getBoostBaneSpawnInterval() {
+     const levelIndex = Math.max(0, getCurrentLevelNumber() - 1);
+     const starsPerBoostBane = boostBaneBaseSpawnStarsByLevel[levelIndex] ?? boostBaneBaseSpawnStarsByLevel.at(-1);
+     const difficultyMultiplier = boostBaneDifficultyMultipliers[baneLevel] ?? 0;
+
+     if (!Number.isFinite(starsPerBoostBane) || starsPerBoostBane <= 0 || difficultyMultiplier <= 0) {
+          return Infinity;
+     }
+
+     return Math.max(2, Math.round(starsPerBoostBane / difficultyMultiplier));
 }
 
 // ====================================================================================================
@@ -338,12 +371,14 @@ function getPastelParticleColor(colorIndex = 0) {
 }
 
 export function getModeParticleColor(colorRole, fallback = "#ffffff", colorIndex = 0) {
+     if (colorRole === "trail") {
+          return colorLevel === 2
+               ? getCssColor("--color-gray2", "#666")
+               : fallback;
+     }
+
      if (colorLevel === 0) {
           if (colorRole === "star") {
-               return getCssColor("--color-white", "#fff");
-          }
-
-          if (colorRole === "trail") {
                return getCssColor("--color-white", "#fff");
           }
 
@@ -371,9 +406,6 @@ export function getModeParticleColor(colorRole, fallback = "#ffffff", colorIndex
                return getCssColor("--color-white", "#fff");
           }
 
-          if (colorRole === "trail") {
-               return getCssColor("--color-gray2", "#666");
-          }
      }
 
      return fallback;
@@ -1025,6 +1057,8 @@ function createBoostBanePickup(type, category) {
           wobbleSpeed: 0.02 + Math.random() * 0.03,
           wobbleAmount: 5 + Math.random() * 10
      });
+
+     announceNewBoostBaneEntity(type);
 }
 
 export function createBoostPickup() {
@@ -1032,10 +1066,18 @@ export function createBoostPickup() {
      const availableBoostBaneTypes = boostTypes.filter((type) => unlockedBoostNames.includes(type.name));
 
      if (availableBoostBaneTypes.length <= 0) {
+<<<<<<< HEAD
           return;
      }
 
      createBoostBanePickup(randomItem(availableBoostBaneTypes), "boost");
+=======
+          return false;
+     }
+
+     createBoostBanePickup(randomItem(availableBoostBaneTypes), "boost");
+     return true;
+>>>>>>> a6db9e70be504b7e99ec7343eef5cb505fe86f63
 }
 
 export function createBanePickup() {
@@ -1043,21 +1085,46 @@ export function createBanePickup() {
      const availableBoostBaneTypes = baneTypes.filter((type) => unlockedBaneNames.includes(type.name));
 
      if (availableBoostBaneTypes.length <= 0) {
-          return;
+          return false;
      }
 
      createBoostBanePickup(randomItem(availableBoostBaneTypes), "bane");
+     return true;
+}
+
+function createRandomBoostBanePickup() {
+     if (Math.random() < 0.5 && createBanePickup()) {
+          return;
+     }
+
+     createBoostPickup();
 }
 
 export function maybeCreateBoostBanePickupsFromStarSpawn() {
      const boostBaneSpawnChance = getBoostBaneSpawnChance();
+     const boostBaneSpawnInterval = getBoostBaneSpawnInterval();
+     const nextBoostBanePickupSpawnTimer = boostBanePickupSpawnTimer + 1;
 
      if (boostBanePickups.length >= getScaledBoostBanePickupCap()) {
           return;
      }
 
+     if (!Number.isFinite(boostBaneSpawnInterval)) {
+          setBoostBanePickupSpawnTimer(0);
+          return;
+     }
+
+     setBoostBanePickupSpawnTimer(nextBoostBanePickupSpawnTimer);
+
+     if (nextBoostBanePickupSpawnTimer >= boostBaneSpawnInterval) {
+          createRandomBoostBanePickup();
+          setBoostBanePickupSpawnTimer(0);
+          return;
+     }
+
      if (boostBaneSpawnChance > 0 && Math.random() <= boostBaneSpawnChance) {
           createBoostPickup();
+          setBoostBanePickupSpawnTimer(0);
      }
 
      if (boostBanePickups.length >= getScaledBoostBanePickupCap()) {
@@ -1066,6 +1133,7 @@ export function maybeCreateBoostBanePickupsFromStarSpawn() {
 
      if (boostBaneSpawnChance > 0 && Math.random() <= boostBaneSpawnChance) {
           createBanePickup();
+          setBoostBanePickupSpawnTimer(0);
      }
 }
 
