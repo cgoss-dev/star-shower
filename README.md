@@ -69,7 +69,7 @@ Current boost/blight effects:
 - `draw/`: canvas rendering.
 - `entities/`: player, stars, strikes, boosts, blights, collision bursts, and entity tuning constants.
 
-## $\textcolor{red}{Dev \ Notes}$
+## $\textcolor{darkred}{Dev \ Notes}$
 
 The project uses native JavaScript modules and has no build step. Keep imports relative and browser-safe.
 
