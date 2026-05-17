@@ -217,7 +217,7 @@ export function getCanvasTheme() {
 
           levelPopupTitle: {
                font: "marquee",
-               fontSize: uiFontSm * 1.5,
+               fontSize: uiFontSm,
                letterSpacing: 0.25,
                color: titleColor,
                rainbow: true,
@@ -226,7 +226,7 @@ export function getCanvasTheme() {
 
           levelStatus: {
                font: "marquee",
-               fontSize: uiFontSm * 1.5,
+               fontSize: uiFontSm,
                letterSpacing: 0.25,
                color: "#fff",
                rainbow: false,
@@ -234,7 +234,7 @@ export function getCanvasTheme() {
           },
 
           circleMeters: {
-               fontSize: uiFontSm * 1.5,
+               fontSize: uiFontSm,
                emptyAssetSrc: "./images/icons/meter-empty.svg",
                halfAssetSrc: "./images/icons/meter-half.svg",
                fullAssetSrc: "./images/icons/meter-full.svg",
@@ -254,7 +254,7 @@ export function getCanvasTheme() {
 
           scoreIcon: {
                font: "symbol",
-               fontSize: uiFontSm * 1.5,
+               fontSize: uiFontSm,
                particle: "\u2726\uFE0E",
                gap: uiFontSm * 0.5,
                xOffset: 0,
@@ -265,7 +265,7 @@ export function getCanvasTheme() {
 
           statusIcon: {
                font: "body",
-               fontSize: uiFontSm * 1.5,
+               fontSize: uiFontSm,
                gap: uiFontSm * 0.5,
                xOffset: 0,
                color: bodyColor,

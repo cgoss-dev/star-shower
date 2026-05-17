@@ -84,7 +84,7 @@ body {
      height: var(--game-board-height);
      max-width: 100%;
      margin: 0 auto;
-     border: var(--border-md) solid var(--color-white);
+     border: var(--border-lg) solid var(--color-white);
      border-radius: var(--border-radius);
      box-shadow: 0 0 0 var(--border-sm) var(--color-gray3) inset;
      background: var(--game-color-bg);
@@ -134,27 +134,6 @@ body {
 
      #miniGameCanvas {
           border-radius: 0;
-     }
-}
-
-@media (min-width: 64rem) and (min-height: 48rem) {
-     :root {
-          --game-board-width-step: 70;
-          --game-board-height-step: 70;
-     }
-}
-
-@media (min-width: 80rem) and (min-height: 54rem) {
-     :root {
-          --game-board-width-step: 60;
-          --game-board-height-step: 60;
-     }
-}
-
-@media (min-width: 96rem) and (min-height: 60rem) {
-     :root {
-          --game-board-width-step: 50;
-          --game-board-height-step: 50;
      }
 }
 
