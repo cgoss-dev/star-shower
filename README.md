@@ -8,7 +8,7 @@ Star Shower is a standalone browser game. Collect falling stars, avoid damaging 
 +grnLine
 ```
 
-$\textcolor{red}{Color \ text}$
+**$\textcolor{red}{Color \ text}$**
 
 This repo is intentionally separate from the main portfolio site so the game can be developed, versioned, and published on its own. The portfolio can link to the finished game without owning the game source.
 
