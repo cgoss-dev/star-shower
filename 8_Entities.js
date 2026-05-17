@@ -1066,18 +1066,11 @@ export function createBoostPickup() {
      const availableBoostBaneTypes = boostTypes.filter((type) => unlockedBoostNames.includes(type.name));
 
      if (availableBoostBaneTypes.length <= 0) {
-<<<<<<< HEAD
-          return;
-     }
-
-     createBoostBanePickup(randomItem(availableBoostBaneTypes), "boost");
-=======
           return false;
      }
 
      createBoostBanePickup(randomItem(availableBoostBaneTypes), "boost");
      return true;
->>>>>>> a6db9e70be504b7e99ec7343eef5cb505fe86f63
 }
 
 export function createBanePickup() {

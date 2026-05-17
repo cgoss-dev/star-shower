@@ -213,7 +213,6 @@ export function getCanvasTheme() {
           },
 
           circleMeters: {
-<<<<<<< HEAD
                fontSize: uiFontSm * 1.5,
                emptyAssetSrc: "./images/icons/meter-empty.svg",
                halfAssetSrc: "./images/icons/meter-half.svg",
@@ -221,18 +220,6 @@ export function getCanvasTheme() {
                assetScale: 1,
                advanceScale: 0.75,
                letterSpacing: 0.25
-=======
-               font: "circleMeter",
-               fontSize: uiFontSm * 1.5,
-               emptyChar: "\u25CB\uFE0E",
-               halfChar: "\u25D2\uFE0E",
-               fullChar: "\u25CF\uFE0E",
-               advanceScale: 0.75,
-               letterSpacing: 0.25,
-               color: bodyColor,
-               rainbow: false,
-               glow: false
->>>>>>> a6db9e70be504b7e99ec7343eef5cb505fe86f63
           },
 
           scoreReady: {

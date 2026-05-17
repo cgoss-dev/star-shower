@@ -1538,11 +1538,7 @@ export function drawScore(theme) {
      const panelPadding = canvasSpacing.uiPadding;
      const panelX = 0;
      const panelY = 0;
-<<<<<<< HEAD
      const circleInkMetrics = getCircleMeterInkMetrics(circleMeterStyle);
-=======
-     const circleInkMetrics = getCircleMeterInkMetrics(miniGameCtx, circleMeterStyle);
->>>>>>> a6db9e70be504b7e99ec7343eef5cb505fe86f63
      const meterWidth =
           ((circleSlots - 1) * circleAdvance) +
           circleInkMetrics.right -
@@ -1563,10 +1559,6 @@ export function drawScore(theme) {
           scoreReadyStyle.fontSize +
           panelPadding;
      const panelCenterX = panelX + (panelWidth / 2);
-<<<<<<< HEAD
-
-=======
->>>>>>> a6db9e70be504b7e99ec7343eef5cb505fe86f63
      drawActiveHudBox(theme, panelX, panelY, panelWidth, panelHeight, "left");
 
      drawStyledCanvasText(
@@ -1592,11 +1584,7 @@ export function drawScore(theme) {
           const slotUnits = Math.max(0, Math.min(progressUnitsPerCircle, levelMeterUnits - (i * progressUnitsPerCircle)));
           const circleX = (i - ((circleSlots - 1) / 2)) * circleAdvance;
 
-<<<<<<< HEAD
           drawCircleMeterSlot(miniGameCtx, circleMeterStyle, slotUnits, circleX, 0);
-=======
-          miniGameCtx.fillText(getCircleMeterGlyph(circleMeterStyle, slotUnits), circleX, 0);
->>>>>>> a6db9e70be504b7e99ec7343eef5cb505fe86f63
      }
 
      miniGameCtx.restore();
@@ -1640,11 +1628,7 @@ export function drawHealth(theme) {
      const healthUnits = playerHealth;
      const maxHealthUnits = maxVisibleHearts * progressUnitsPerCircle;
      const circleSlots = maxHealthUnits / progressUnitsPerCircle;
-<<<<<<< HEAD
      const circleInkMetrics = getCircleMeterInkMetrics(circleMeterStyle);
-=======
-     const circleInkMetrics = getCircleMeterInkMetrics(miniGameCtx, circleMeterStyle);
->>>>>>> a6db9e70be504b7e99ec7343eef5cb505fe86f63
      const panelPadding = canvasSpacing.uiPadding;
      const meterWidth =
           ((circleSlots - 1) * circleAdvance) +
@@ -1703,11 +1687,7 @@ export function drawHealth(theme) {
           const slotUnits = Math.max(0, Math.min(progressUnitsPerCircle, healthUnits - (fillIndex * progressUnitsPerCircle)));
           const circleX = (i - ((circleSlots - 1) / 2)) * circleAdvance;
 
-<<<<<<< HEAD
           drawCircleMeterSlot(miniGameCtx, circleMeterStyle, slotUnits, circleX, 0);
-=======
-          miniGameCtx.fillText(getCircleMeterGlyph(circleMeterStyle, slotUnits), circleX, 0);
->>>>>>> a6db9e70be504b7e99ec7343eef5cb505fe86f63
      }
 
      miniGameCtx.restore();

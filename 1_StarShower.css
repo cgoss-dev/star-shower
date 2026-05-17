@@ -3,10 +3,7 @@
 :root {
      /* GAME LAYOUT */
           --game-frame-outset: var(--border-md);
-<<<<<<< HEAD
           --game-embed-margin: var(--border-md);
-=======
->>>>>>> a6db9e70be504b7e99ec7343eef5cb505fe86f63
           --game-board-width-step: 100;
           --game-board-height-step: 100;
           --game-board-height-available: calc(100dvh - (var(--page-padding) * 2));
