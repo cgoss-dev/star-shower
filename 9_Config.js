@@ -117,10 +117,19 @@ export const starShowerBoostblightIcons = {
 };
 
 export const starShowerGuideIcons = {
+     iconWin: {
+          name: "win",
+          label: "WIN",
+          particle: "\u2726\uFE0E",
+          assetSrc: "./images/icons/win-level.svg",
+          xOffset: 0
+     },
+
      iconStar: {
           name: "star",
           label: "STAR",
           particle: "\u2726\uFE0E",
+          assetSrc: "./images/icons/star-stat.svg",
           xOffset: 0
      },
 

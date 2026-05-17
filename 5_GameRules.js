@@ -141,7 +141,7 @@ export function getWelcomeInstructionLines() {
 }
 
 export function getWinGoalText() {
-     return "Reach level 10 to win.";
+     return "{iconWin} Reach level 10 to win.";
 }
 
 export function getWinTitleLines() {
