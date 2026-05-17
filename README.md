@@ -2,8 +2,6 @@
 
 Star Shower is a standalone browser game. Collect falling stars, avoid damaging strikes, and manage boost/blight effects while trying to reach level 10.
 
-## $\textcolor{purple}{Color \ text}$
-
 This repo is intentionally separate from the main portfolio site so the game can be developed, versioned, and published on its own. The portfolio can link to the finished game without owning the game source.
 
 ## Gameplay
@@ -115,13 +113,13 @@ Expected filenames are documented in `audio/README.md`.
 
 Missing audio files fail quietly so the game stays playable while assets are in progress. At the moment, `audio/music-loop.mp3` may 404 during local preview until a music file is added.
 
-## Dev Notes
+### $\textcolor{purple}{Dev \ Notes}$
 
 The project uses native JavaScript modules and has no build step. Keep imports relative and browser-safe.
 
 The current module boundaries are:
 
-- `-game.js` answers: what happens next?
+- `game.js` answers: what happens next?
 - `state.js` answers: what shared values exist right now?
 - `options.js` answers: what settings and reusable tunables exist?
 - `input.js` answers: how does the player/menu receive input?
