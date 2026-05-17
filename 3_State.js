@@ -318,6 +318,7 @@ export let resizeHandlerBound = false;
 // ==================================================
 
 export let starSpawnTimer = 0;
+export let starSpawnCount = 0;
 export let boostBanePickupSpawnTimer = 0;
 
 // ==================================================
@@ -343,6 +344,10 @@ export function setResizeHandlerBound(value) {
 
 export function setStarSpawnTimer(value) {
      starSpawnTimer = value;
+}
+
+export function addStarSpawnCount(value = 1) {
+     starSpawnCount = Math.max(0, starSpawnCount + value);
 }
 
 export function setBoostBanePickupSpawnTimer(value) {
@@ -861,6 +866,7 @@ export function resetGameState() {
      gameOverlayDuration = 0;
 
      starSpawnTimer = 0;
+     starSpawnCount = 0;
      boostBanePickupSpawnTimer = 0;
 
      stars.length = 0;

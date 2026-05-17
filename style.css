@@ -51,8 +51,8 @@
      /* TYPOGRAPHY */
           --font-body: "Noto Sans Mono", monospace;
           --font-display: "Bungee Shade", monospace;
-          --font-size-lg: clamp(1.5rem, min(8vw, 8dvh), 8rem);
-          --font-size-md: clamp(1.25rem, min(4vw, 4dvh), 4rem);
+          --font-size-lg: clamp(3rem, min(20vw, 12dvh), 8rem);
+          --font-size-md: clamp(2rem, min(4vw, 4dvh), 4rem);
           --font-size-sm: clamp(0.8rem, min(2vw, 2dvh), 1rem);
           --marquee-font-size: var(--font-size-lg);
           --marquee-font-color: var(--color-gray3);

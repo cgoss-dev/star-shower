@@ -36,12 +36,14 @@ import {
      boostBanePickups,
      collisionBursts,
      starSpawnTimer,
+     starSpawnCount,
      boostBanePickupSpawnTimer,
      baneLevel,
      movementLevel,
      colorLevel,
      boostBaneTimers,
      setStarSpawnTimer,
+     addStarSpawnCount,
      setBoostBanePickupSpawnTimer,
      addStarScore,
      setScoreMultiplier,
@@ -120,7 +122,8 @@ export const framesPerSecond = 60;
 
 export const starSpawnDelay = 25;
 export const starSpawnCap = 50;
-export const strikeSpawnRatio = 0.5;
+export const strikeSpawnRatio = 0.35;
+export const openingStrikeGraceStarSpawns = 3;
 export const boostBanePickupCap = 60;
 export const collisionBurstParticleCount = 15;
 export const fallingObjectSpeedMin = 0.25;
@@ -931,6 +934,10 @@ function createStrike() {
 }
 
 function createMatchingStrikeFromStarSpawn() {
+     if (starSpawnCount <= openingStrikeGraceStarSpawns) {
+          return;
+     }
+
      if (!areStrikesUnlockedForCurrentLevel()) {
           return;
      }
@@ -955,6 +962,7 @@ export function updateStarSpawns() {
      if (nextStarSpawnTimer >= getScaledStarSpawnDelay() + starSpawnJitter) {
           if (stars.length < getScaledStarSpawnCap()) {
                createStar();
+               addStarSpawnCount();
                createMatchingStrikeFromStarSpawn();
                maybeCreateBoostBanePickupsFromStarSpawn();
           }
