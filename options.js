@@ -1,4 +1,4 @@
-// NOTE: 4_Options
+// NOTE: options
 // Player-facing settings, persistence helpers, and shared tunables for Star Shower.
 //
 // Owned here:
@@ -16,9 +16,9 @@
 // Newbie note:
 // - This file should answer "what settings exist?"
 //   and "what reusable numbers should the rest of the game agree on?"
-// - If code changes every frame, it belongs in `3_State.js` or gameplay files.
-// - If code draws pixels, it belongs in `7_Draw.js`.
-// - If code maps CSS into the canvas theme object, it belongs in `2_GameEngine.js`.
+// - If code changes every frame, it belongs in `state.js` or gameplay files.
+// - If code draws pixels, it belongs in `draw/index.js`.
+// - If code maps CSS into the canvas theme object, it belongs in `game.js`.
 
 import {
      miniGameCtx,
@@ -34,11 +34,11 @@ import {
      setblightLevel,
      setMovementLevel,
      setColorLevel
-} from "./3_State.js";
+} from "./state.js";
 
 import {
      getCssBoolean
-} from "./2_GameEngine.js";
+} from "./game.js";
 
 // ==================================================
 // STORAGE

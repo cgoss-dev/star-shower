@@ -1,4 +1,4 @@
-// NOTE: 3_State
+// NOTE: state
 // Shared runtime data for Star Shower.
 //
 // Other files import from here to READ shared state, and use the setter
@@ -12,7 +12,7 @@ import {
      maxPlayerHealth,
      maxOptionLevelIndex,
      defaultOptionLevelIndex
-} from "./4_Options.js";
+} from "./options.js";
 
 export const miniGameCanvas = document.getElementById("miniGameCanvas");
 

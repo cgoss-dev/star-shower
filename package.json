@@ -5,6 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "python3 -m http.server 8000",
-    "check": "node --check 1_StarShower.js && node --check 2_GameEngine.js && node --check 3_State.js && node --check 4_Options.js && node --check 6_Input.js && node --check 7_Draw.js && node --check 8_Entities.js"
+    "check": "node --check site.js && node --check game.js && node --check state.js && node --check options.js && node --check input.js && node --check draw/assets.js && node --check draw/index.js && node --check entities/constants.js && node --check entities/index.js"
   }
 }

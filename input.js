@@ -1,4 +1,4 @@
-// NOTE: 6_Input
+// NOTE: input
 // Keyboard, pointer, touch, pause-button, menu-hitbox, and resize binding for Star Shower.
 //
 // Owned here:
@@ -18,9 +18,9 @@
 //
 // Newbie note:
 // - This file should answer "what happens when the player presses or taps?"
-// - If code stores flags/arrays, it belongs in `3_State.js`.
-// - If code draws buttons, it belongs in `7_Draw.js`.
-// - If code decides win/lose flow, it belongs in `2_GameEngine.js`.
+// - If code stores flags/arrays, it belongs in `state.js`.
+// - If code draws buttons, it belongs in `draw/index.js`.
+// - If code decides win/lose flow, it belongs in `game.js`.
 
 import {
      miniGameCanvas,
@@ -68,7 +68,7 @@ import {
      updateGameMenuScrollDrag,
      endGameMenuScrollDrag,
      showMenuKeyboardFocus
-} from "./3_State.js";
+} from "./state.js";
 
 import {
      isJoystickEnabled,
@@ -76,7 +76,7 @@ import {
      maxOptionLevelIndex,
      getMaxMovementOptionIndex,
      maxColorOptionIndex
-} from "./4_Options.js";
+} from "./options.js";
 
 import {
      dismissScreenWelcomeToStart,
@@ -99,11 +99,11 @@ import {
      increaseMovementLevel,
      decreaseColorLevel,
      increaseColorLevel
-} from "./2_GameEngine.js";
+} from "./game.js";
 
 import {
      syncUiBounds
-} from "./7_Draw.js";
+} from "./draw/index.js";
 
 const portfolioHomeUrl = "https://cgoss-dev.github.io/001_PortfolioProject/";
 

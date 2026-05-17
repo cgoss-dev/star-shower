@@ -1,4 +1,4 @@
-// NOTE: 7_Draw
+// NOTE: draw/index
 // Canvas rendering, HUD, menus, overlays, text layout, and shared draw helpers.
 //
 // Owned here:
@@ -18,9 +18,9 @@
 //
 // Newbie note:
 // - This file should answer "what does the player see?"
-// - If code changes gameplay state or movement rules, it belongs in `8_Entities.js`.
-// - If code only stores mutable shared values, it belongs in `3_State.js`.
-// - If code maps CSS/theme values into a canvas theme object, it belongs in `2_GameEngine.js`.
+// - If code changes gameplay state or movement rules, it belongs in `entities/index.js`.
+// - If code only stores mutable shared values, it belongs in `state.js`.
+// - If code maps CSS/theme values into a canvas theme object, it belongs in `game.js`.
 
 import {
      miniGameCtx,
@@ -67,7 +67,7 @@ import {
      resetActionButtonBounds,
      getLevelMeterPulseScale,
      getHealthMeterPulseScale
-} from "./3_State.js";
+} from "../state.js";
 
 import {
      maxOptionLevelIndex,
@@ -87,7 +87,7 @@ import {
      getMenuLayoutMetrics,
      parseRichTextSegments,
      playerGlowBlurFallback
-} from "./4_Options.js";
+} from "../options.js";
 
 import {
      drawStars,
@@ -109,7 +109,7 @@ import {
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
      syncPlayerSize
-} from "./8_Entities.js";
+} from "../entities/index.js";
 
 import {
      getCanvasTheme,
@@ -136,17 +136,17 @@ import {
      getLevelPopupIcon,
      getLevelPopupAlpha,
      getGameOverlayAlpha
-} from "./2_GameEngine.js";
+} from "../game.js";
+
+import {
+     pauseButtonIcon,
+     stepperLeftIcon,
+     stepperRightIcon,
+     circleMeterAssetImages,
+     richTextIconAssetImages
+} from "./assets.js";
 
 const siteTheme = window.SiteTheme;
-const pauseButtonIcon = new Image();
-pauseButtonIcon.src = "./images/icons/not-started.svg";
-const stepperLeftIcon = new Image();
-stepperLeftIcon.src = "./images/icons/chevron-left.svg";
-const stepperRightIcon = new Image();
-stepperRightIcon.src = "./images/icons/chevron-right.svg";
-const circleMeterAssetImages = {};
-const richTextIconAssetImages = {};
 
 // Re-export moved player/entity helpers so existing imports from this file keep working.
 export {

@@ -1,4 +1,4 @@
-// NOTE: 8_Entities
+// NOTE: entities/index
 // Player behavior, stars, boost/blight pickups, collision bursts, and boost/blight state for Star Shower.
 //
 // Owned here:
@@ -16,8 +16,8 @@
 //
 // Newbie note:
 // - This file should answer "what are the game things doing?"
-// - If code only draws the final frame, it belongs in `7_Draw.js`.
-// - If code stores shared arrays or flags, it belongs in `3_State.js`.
+// - If code only draws the final frame, it belongs in `draw/index.js`.
+// - If code stores shared arrays or flags, it belongs in `state.js`.
 
 import {
      miniGameCtx,
@@ -57,7 +57,7 @@ import {
      randomItem,
      randomNumber,
      isCollidingWithStar
-} from "./3_State.js";
+} from "../state.js";
 
 import {
      maxPlayerHealth,
@@ -67,10 +67,9 @@ import {
      strikeHealthDamage,
      magnetCollisionRadiusMultiplier,
      statusFlashSeconds,
-     gameplayStartingHealth,
      touchArriveDistance,
      movementOptionIndexes
-} from "./4_Options.js";
+} from "../options.js";
 
 import {
      areStrikesUnlockedForCurrentLevel,
@@ -83,7 +82,83 @@ import {
      starShowerRainbowPalette,
      getCssColor,
      playSoundEffect
-} from "./2_GameEngine.js";
+} from "../game.js";
+
+import {
+     playerBaseHealth,
+     playerBaseSpeed,
+     playerSpeedPerHeart,
+     playerBaseSize,
+     playerBaseRadius,
+     framesPerSecond,
+     starSpawnDelay,
+     starSpawnCap,
+     strikeSpawnRatio,
+     openingStrikeGraceStarSpawns,
+     openingBoostblightGraceStarSpawns,
+     boostblightPickupCap,
+     collisionBurstParticleCount,
+     fallingObjectSpeedMin,
+     fallingObjectSpeedMax,
+     spawnDensityBaselineArea,
+     spawnDensityMinScale,
+     spawnDensityMaxScale,
+     fallSpeedMinScale,
+     fallSpeedMaxScale,
+     fallingObjectSpeedStep,
+     boostblightBaseSpawnStarsByLevel,
+     boostblightDifficultyMultipliers,
+     playerTrailCountMax,
+     playerTrailCountMin,
+     playerTrailLifeMax,
+     playerTrailLifeMin,
+     playerTrailWidthMax,
+     playerTrailWidthMin,
+     playerTrailOffsetMax,
+     playerTrailOffsetMin,
+     playerTrailLengthMax,
+     playerTrailLengthMin,
+     playerTrailAnchorYOffset,
+     starParticles,
+     strikeParticles,
+     strikeAssetSrc,
+     burstChars
+} from "./constants.js";
+
+export {
+     playerBaseHealth,
+     playerBaseSpeed,
+     playerSpeedPerHeart,
+     playerBaseSize,
+     playerBaseRadius,
+     framesPerSecond,
+     starSpawnDelay,
+     starSpawnCap,
+     strikeSpawnRatio,
+     openingStrikeGraceStarSpawns,
+     openingBoostblightGraceStarSpawns,
+     boostblightPickupCap,
+     collisionBurstParticleCount,
+     fallingObjectSpeedMin,
+     fallingObjectSpeedMax,
+     boostblightBaseSpawnStarsByLevel,
+     boostblightDifficultyMultipliers,
+     playerTrailCountMax,
+     playerTrailCountMin,
+     playerTrailLifeMax,
+     playerTrailLifeMin,
+     playerTrailWidthMax,
+     playerTrailWidthMin,
+     playerTrailOffsetMax,
+     playerTrailOffsetMin,
+     playerTrailLengthMax,
+     playerTrailLengthMin,
+     playerTrailAnchorYOffset,
+     starParticles,
+     strikeParticles,
+     strikeAssetSrc,
+     burstChars
+};
 
 const siteTheme = window.SiteTheme;
 
@@ -102,56 +177,6 @@ export const playerFaces = {
      frozen: "🥶",
      dazed: "😵‍💫"
 };
-
-export const playerBaseHealth = gameplayStartingHealth;
-export const playerBaseSpeed = 1.5;
-export const playerSpeedPerHeart = 0.25;
-export const playerBaseSize = 64;
-export const playerBaseRadius = 30;
-
-// ====================================================================================================
-// NOTE: BALANCE
-// ====================================================================================================
-
-export const framesPerSecond = 60;
-
-export const starSpawnDelay = 25;
-export const starSpawnCap = 50;
-export const strikeSpawnRatio = 0.35;
-export const openingStrikeGraceStarSpawns = 15;
-export const openingBoostblightGraceStarSpawns = 50;
-export const boostblightPickupCap = 12;
-export const collisionBurstParticleCount = 15;
-export const fallingObjectSpeedMin = 0.25;
-export const fallingObjectSpeedMax = 0.75;
-
-const spawnDensityBaselineArea = 960 * 640;
-const spawnDensityMinScale = 0.45;
-const spawnDensityMaxScale = 1;
-const fallSpeedMinScale = 0.7;
-const fallSpeedMaxScale = 1;
-const fallingObjectSpeedStep = 0.25;
-
-export const boostblightBaseSpawnStarsByLevel = [
-     8,
-     10,
-     9,
-     8,
-     7,
-     6,
-     5,
-     4,
-     3,
-     2
-];
-
-export const boostblightDifficultyMultipliers = [
-     0,
-     0.25,
-     1,
-     2,
-     4
-];
 
 const pickupAssetImages = {};
 const introducedBoostblightNames = new Set();
@@ -300,24 +325,6 @@ function getBoostblightSpawnInterval() {
 // ====================================================================================================
 // TRAIL
 // ====================================================================================================
-
-export const playerTrailCountMax = 2;
-export const playerTrailCountMin = 0;
-
-export const playerTrailLifeMax = 64;
-export const playerTrailLifeMin = 12;
-
-export const playerTrailWidthMax = 10;
-export const playerTrailWidthMin = 2;
-
-export const playerTrailOffsetMax = 25;
-export const playerTrailOffsetMin = -25;
-
-export const playerTrailLengthMax = 32;
-export const playerTrailLengthMin = 2;
-
-// Negative raises the ribbon anchor above the player center; positive lowers it.
-export const playerTrailAnchorYOffset = -4;
 
 export const playerTrail = [];
 
@@ -890,10 +897,6 @@ function getObjectFallSpeedMultiplier() {
 // STARS + STRIKES
 // ==================================================
 
-export const starParticles = ["✦", "✧"];
-export const strikeParticles = ["\u2716\uFE0E", "\u2715\uFE0E"];
-export const strikeAssetSrc = "./images/icons/strike.svg";
-
 function getStarCollisionRadiusMultiplier() {
      if (!isBoostblightActive("magnet")) {
           return 1;
@@ -1250,8 +1253,6 @@ export function collectBoostblightPickups() {
 // ==================================================
 // COLLISION BURSTS
 // ==================================================
-
-export const burstChars = ["✦", "✧", "·", "•"];
 
 export function createCollisionBurst(x, y, color, burstType, colorRole = null) {
      for (let i = 0; i < collisionBurstParticleCount; i += 1) {

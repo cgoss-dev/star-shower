@@ -1,4 +1,4 @@
-// NOTE: 2_GameEngine
+// NOTE: game
 // Consolidated runtime core for Star Shower.
 // Includes game orchestration, progression rules, canvas config, and audio.
 
@@ -45,7 +45,7 @@ import {
 
      resetUiActionBounds,
      resetGameState
-} from "./3_State.js";
+} from "./state.js";
 
 import {
      optionLevelLabels,
@@ -58,7 +58,7 @@ import {
      isJoystickEnabled,
      loadAndApplySavedOptions,
      saveCurrentOptions
-} from "./4_Options.js";
+} from "./options.js";
 
 import {
      bindKeyboardInput,
@@ -66,7 +66,7 @@ import {
      bindResizeHandler,
      updateTouchControlBounds,
      resetTouchControls
-} from "./6_Input.js";
+} from "./input.js";
 
 import {
      resetPlayerPosition,
@@ -85,14 +85,14 @@ import {
      updatePlayerTrail,
      resetBoostblightIntroState,
      setBoostblightIntroCallback
-} from "./8_Entities.js";
+} from "./entities/index.js";
 
 import {
      syncUiBounds,
      updatePauseButtonState,
      updateScreenTitleColorState,
      drawGame
-} from "./7_Draw.js";
+} from "./draw/index.js";
 
 // ====================================================================================================
 // NOTE: CONFIG / THEME
