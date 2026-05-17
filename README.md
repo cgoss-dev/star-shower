@@ -3,17 +3,15 @@
 Star Shower is a standalone browser game. Collect falling stars, avoid damaging strikes, and manage boost/blight effects while trying to reach level 10.
 
 ```diff
-diff --git a/filea.extension b/fileb.extension
-index d28nd309d..b3nu834uj 111111
----a/filea.extension
-+++b/fileb.extension
 @@ -1,6 +1,6 @@
 -oldLine
 +newLine
 ```
 
-<p style="color:blue">Make this text blue.</p>
-
+@@ TEST TEXT @@
+@ TEST TEXT @
+@@TEST TEXT@@
+@TEST TEXT@
 
 This repo is intentionally separate from the main portfolio site so the game can be developed, versioned, and published on its own. The portfolio can link to the finished game without owning the game source.
 
