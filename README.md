@@ -56,28 +56,6 @@ Current boost/blight effects:
 - Daze: reverses movement.
 - Fog: limits visible area.
 
-## Project Structure
-
-```text
-index.html
-theme.css
-star-shower.css
-site.js
-game.js
-state.js
-options.js
-input.js
-draw/
-  assets.js
-  index.js
-entities/
-  constants.js
-  index.js
-images/
-  icons/
-audio/
-```
-
 ## Game Files
 
 - `index.html`: standalone page shell.
@@ -91,7 +69,7 @@ audio/
 - `draw/`: canvas rendering.
 - `entities/`: player, stars, strikes, boosts, blights, collision bursts, and entity tuning constants.
 
-### $\textcolor{purple}{Dev \ Notes}$
+## $\textcolor{purple}{Dev \ Notes}$
 
 The project uses native JavaScript modules and has no build step. Keep imports relative and browser-safe.
 
@@ -110,15 +88,3 @@ Recommended next cleanup areas:
 - Split boost/blight logic out of `entities/index.js`.
 - Remove compatibility exports once imports are fully direct.
 - Future audio placeholders fail quietly so the game stays playable while assets are in progress. At the moment, `audio/music-loop.mp3` may 404 during local preview until a music file is added.
-
-## Deployment
-
-Because the game is static, it can be deployed anywhere that serves plain files, including GitHub Pages.
-
-For GitHub Pages, publish the repo root or copy the static files to the configured Pages branch/folder. Make sure the deployed site includes:
-
-- `index.html`
-- CSS files
-- JavaScript files and folders
-- `images/`
-- `audio/` if audio assets are ready
