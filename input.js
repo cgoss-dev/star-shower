@@ -183,7 +183,7 @@ export function bindResizeHandler(onResize) {
 }
 
 // ====================================================================================================
-// NOTE: FUNCITONS
+// NOTE: FUNCTIONS
 // ====================================================================================================
 
 function isPointInsideBox(x, y, box) {
@@ -1155,6 +1155,10 @@ function handleOptionsDetailNavigation(event) {
 }
 
 function handleUiNavigationKeyDown(event) {
+     // Menu keyboard routing pseudocode:
+     // 1. Ignore normal gameplay keys unless a UI layer is active.
+     // 2. Let the most specific visible layer handle the key first.
+     // 3. Return true once a layer consumes the key so movement does not also happen.
      if (!isUiNavigationActive()) {
           return false;
      }
@@ -1223,6 +1227,10 @@ function handleKeyUp(event) {
 }
 
 function handlePointerDown(event) {
+     // Pointer down routing pseudocode:
+     // 1. Give full-screen overlays and menus first chance at the click/tap.
+     // 2. Ignore gameplay movement when the round is not actively running.
+     // 3. Prefer pause/joystick controls before falling back to pointer-to-move.
      if (!miniGameCanvas || !isPrimaryPointer(event)) {
           return;
      }

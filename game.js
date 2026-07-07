@@ -1156,6 +1156,10 @@ export function syncCanvasResolutionAndUiBounds() {
 // ==================================================
 
 export function startNewGameRound() {
+     // Round reset pseudocode:
+     // 1. Clear every gameplay system back to its starting state.
+     // 2. Resize canvas/UI before placing the player, so coordinates are current.
+     // 3. Switch from menus/overlays into live play and start music if allowed.
      resetGameState();
      resetTouchControls();
      resetEntityColorCycle();
@@ -1434,6 +1438,11 @@ export function getGameOverlayAlpha() {
 // ==================================================
 
 export function updateGame() {
+     // Frame update pseudocode:
+     // 1. Always tick UI-only timers and sync audio, even when gameplay is paused.
+     // 2. Exit early for welcome/menu/paused/result states.
+     // 3. During live play, update effects, movement, spawning, collisions, and progress.
+     // 4. Finish by checking lose/win conditions and switching to the matching result screen.
      updatePauseButtonState();
      updateGameOverlayTimer();
      updateLevelPopupTimer();

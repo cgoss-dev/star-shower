@@ -2974,6 +2974,11 @@ function drawLevelPopup(theme) {
 // ==================================================
 
 export function drawGame() {
+     // Draw order pseudocode:
+     // 1. Paint the background and apply the selected color mode.
+     // 2. If welcome is active, draw only that screen and exit.
+     // 3. Draw gameplay entities from back to front, then HUD controls.
+     // 4. Draw the top-most UI layer last: menu, pause/result overlay, or status popup.
      const theme = getCanvasTheme();
 
      ensureCanvasHoverTracking();

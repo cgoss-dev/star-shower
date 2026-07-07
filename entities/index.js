@@ -704,6 +704,11 @@ function movePlayerFromJoystick() {
 }
 
 export function updatePlayer() {
+     // Movement priority pseudocode:
+     // 1. Joystick wins when that mode is enabled and active.
+     // 2. Pointer movement is next for click/touch movement mode.
+     // 3. Keyboard fills in when no pointer-style movement is active.
+     // 4. Clamp to the canvas and create a trail only if position changed.
      const previousX = player.x;
      const previousY = player.y;
 
@@ -868,6 +873,10 @@ function syncActiveStatusUiFromBoostblights() {
 }
 
 export function updateBoostblightState() {
+     // Active effect pseudocode:
+     // 1. Count down all timed boost/blight effects.
+     // 2. Recalculate derived effects, like the score multiplier.
+     // 3. Mirror the highest-priority active effect into the HUD status slot.
      decrementBoostblightTimers();
      syncScoreMultiplierFromBoostblights();
      syncActiveStatusUiFromBoostblights();
@@ -976,6 +985,10 @@ function createMatchingStrikeFromStarSpawn() {
 }
 
 export function updateStarSpawns() {
+     // Spawn pseudocode:
+     // 1. Advance the star timer with a little random jitter.
+     // 2. Spawn a star if the timer and board cap allow it.
+     // 3. Each star spawn can also unlock matching strikes and boost/blight pickups.
      const nextStarSpawnTimer = starSpawnTimer + 1;
      setStarSpawnTimer(nextStarSpawnTimer);
 
@@ -1026,6 +1039,7 @@ export function updateStrikes() {
 }
 
 export function collectStars() {
+     // Collection loops walk backward because removing an item shifts later indexes.
      for (let i = stars.length - 1; i >= 0; i -= 1) {
           const star = stars[i];
 
@@ -1150,6 +1164,10 @@ function createRandomBoostblightPickup() {
 }
 
 export function maybeCreateBoostblightPickupsFromStarSpawn() {
+     // Boost/blight spawn pseudocode:
+     // 1. Wait through the opening grace period.
+     // 2. Respect the on-screen pickup cap and disabled difficulty states.
+     // 3. Guarantee an early pickup after grace, then use interval/chance checks.
      const boostblightSpawnChance = getBoostblightSpawnChance();
      const boostblightSpawnInterval = getBoostblightSpawnInterval();
      const nextBoostblightPickupSpawnTimer = boostblightPickupSpawnTimer + 1;

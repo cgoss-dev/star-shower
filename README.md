@@ -82,6 +82,23 @@ The current module boundaries are:
 - `draw/` answers: what appears on canvas?
 - `entities/` answers: what are game objects doing?
 
+Commenting style:
+
+- Use file headers to explain ownership: what belongs in the file and what does not.
+- Use pseudocode comments before long flow functions, especially update loops, input routing, spawning, collision, and drawing order.
+- Comment why the order matters, not what each obvious line does.
+- Keep comments current when behavior changes. Stale comments are worse than no comments.
+
+Useful pseudocode template:
+
+```js
+// Feature pseudocode:
+// 1. Validate whether this state should run.
+// 2. Update the smallest state needed for this frame/action.
+// 3. Trigger side effects like sounds, popups, or saved options.
+// 4. Refresh dependent UI bounds/status so input and drawing stay in sync.
+```
+
 Recommended next cleanup areas:
 
 - Split HUD drawing out of `draw/index.js`.
