@@ -105,7 +105,7 @@ import {
      syncUiBounds
 } from "./draw/index.js";
 
-const portfolioHomeUrl = "https://cgoss-dev.github.io/001_PortfolioProject/";
+const portfolioHomeUrl = "https://cgoss-dev.github.io/cgoss-dev/";
 
 function returnToWebsite() {
      if (window.top && window.top !== window) {
