@@ -1,9 +1,8 @@
 // NOTE: draw/index
-// Canvas rendering, HUD, menus, overlays, text layout, and shared draw helpers.
+// Canvas rendering, menus, overlays, text layout, and shared draw helpers.
 //
 // Owned here:
 // - full canvas draw entry
-// - HUD drawing
 // - welcome / paused / win / lose overlays
 // - tips / options menus
 // - shared canvas text / shape helpers
@@ -28,9 +27,6 @@ import {
      miniGameHeight,
      player,
      touchControls,
-     starScore,
-     playerHealth,
-     activeStatusUi,
      gameStarted,
      gamePaused,
      gameMenuOpen,
@@ -64,16 +60,13 @@ import {
      setButtonBounds,
      setGameMenuScrollMax,
      isPointInsideRect,
-     resetActionButtonBounds,
-     getLevelMeterPulseScale,
-     getHealthMeterPulseScale
+     resetActionButtonBounds
 } from "../state.js";
 
 import {
      maxOptionLevelIndex,
      getMaxMovementOptionIndex,
      maxColorOptionIndex,
-     maxVisibleHearts,
      movementOptionIndexes,
      isJoystickEnabled,
      getOptionLevelLabel,
@@ -114,9 +107,6 @@ import {
 import {
      getCanvasTheme,
      getCssColor,
-     getCurrentLevelMeterUnits,
-     maxLevelProgressUnits,
-     progressUnitsPerCircle,
      getCurrentScreenActionTexts,
      getCurrentPausedActionTexts,
      getWelcomeInstructionLines,
@@ -131,10 +121,6 @@ import {
      isOverlayScreenActive,
      getCurrentScreenTitleLines,
      getGameWelcomeAlpha,
-     getLevelPopupText,
-     getLevelPopupSubtext,
-     getLevelPopupIcon,
-     getLevelPopupAlpha,
      getGameOverlayAlpha
 } from "../game.js";
 
@@ -142,7 +128,6 @@ import {
      pauseButtonIcon,
      stepperLeftIcon,
      stepperRightIcon,
-     circleMeterAssetImages,
      richTextIconAssetImages
 } from "./assets.js";
 
@@ -1401,7 +1386,7 @@ export function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
 }
 
 // ====================================================================================================
-// NOTE: BACKGROUND / HUD / TOUCH
+// NOTE: BACKGROUND / TOUCH
 // ====================================================================================================
 
 export function drawMiniGameBackground() {
@@ -1414,665 +1399,6 @@ export function drawMiniGameBackground() {
      miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
 }
 
-function getStatusSecondsRemaining() {
-     if (activeStatusUi.timer <= 0) {
-          return "";
-     }
-
-     return `${Math.ceil(activeStatusUi.timer / 60)}s`;
-}
-
-function getCircleMeterAssetSrc(circleMeterStyle, filledUnits) {
-     if (filledUnits >= progressUnitsPerCircle) {
-          return circleMeterStyle.fullAssetSrc;
-     }
-
-     if (filledUnits > 0) {
-          return circleMeterStyle.halfAssetSrc;
-     }
-
-     return circleMeterStyle.emptyAssetSrc;
-}
-
-function getCircleMeterAssetImage(assetSrc) {
-     if (!assetSrc) {
-          return null;
-     }
-
-     if (!circleMeterAssetImages[assetSrc]) {
-          const image = new Image();
-          image.src = assetSrc;
-          circleMeterAssetImages[assetSrc] = image;
-     }
-
-     return circleMeterAssetImages[assetSrc];
-}
-
-function drawCircleMeterSlot(ctx, circleMeterStyle, filledUnits, x, y, options = {}) {
-     const assetImage = getCircleMeterAssetImage(getCircleMeterAssetSrc(circleMeterStyle, filledUnits));
-
-     if (assetImage?.complete && assetImage.naturalWidth > 0) {
-          const iconSize = circleMeterStyle.fontSize * (circleMeterStyle.assetScale || 1);
-
-          if (options.rotateHalf && filledUnits > 0 && filledUnits < progressUnitsPerCircle) {
-               ctx.save();
-               ctx.translate(x, y + (iconSize / 2));
-               ctx.rotate(Math.PI);
-               ctx.drawImage(assetImage, -(iconSize / 2), -(iconSize / 2), iconSize, iconSize);
-               ctx.restore();
-               return;
-          }
-
-          ctx.drawImage(assetImage, x - (iconSize / 2), y, iconSize, iconSize);
-     }
-}
-
-function getCircleMeterInkMetrics(circleMeterStyle) {
-     const iconSize = circleMeterStyle.fontSize * (circleMeterStyle.assetScale || 1);
-
-     return {
-          left: -(iconSize / 2),
-          right: iconSize / 2,
-          top: 0,
-          bottom: iconSize
-     };
-}
-
-function drawActiveHudBox(theme, x, y, width, height, side = "left", edge = "top") {
-     const { colors } = theme;
-     const borderWidth = theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1;
-     const cornerRadius = Math.min(getControlCornerRadius(theme, width, height), height * 0.18);
-     const isRightSide = side === "right";
-     const isBottomEdge = edge === "bottom";
-     const innerX = isRightSide ? x : x + width;
-     const outerX = isRightSide ? x + width : x;
-     const innerCornerX = isRightSide ? x + cornerRadius : x + width - cornerRadius;
-     const bottomY = y + height;
-     const strokeInnerX = innerX - (isRightSide ? -borderWidth / 2 : borderWidth / 2);
-     const strokeCornerX = innerCornerX + (isRightSide ? borderWidth / 2 : -borderWidth / 2);
-
-     miniGameCtx.save();
-     miniGameCtx.shadowBlur = 0;
-     miniGameCtx.fillStyle = colors.menuPanelFill;
-     miniGameCtx.beginPath();
-
-     if (isBottomEdge) {
-          miniGameCtx.moveTo(outerX, bottomY);
-          miniGameCtx.lineTo(innerX, bottomY);
-          miniGameCtx.lineTo(innerX, y + cornerRadius);
-          miniGameCtx.quadraticCurveTo(innerX, y, innerCornerX, y);
-          miniGameCtx.lineTo(outerX, y);
-     } else {
-          miniGameCtx.moveTo(outerX, y);
-          miniGameCtx.lineTo(innerX, y);
-          miniGameCtx.lineTo(innerX, bottomY - cornerRadius);
-          miniGameCtx.quadraticCurveTo(innerX, bottomY, innerCornerX, bottomY);
-          miniGameCtx.lineTo(outerX, bottomY);
-     }
-
-     miniGameCtx.closePath();
-     miniGameCtx.fill();
-
-     miniGameCtx.strokeStyle = getCssColor("--color-white", "#ffffff");
-     miniGameCtx.lineWidth = borderWidth;
-     miniGameCtx.beginPath();
-
-     if (isBottomEdge) {
-          miniGameCtx.moveTo(strokeInnerX, bottomY);
-          miniGameCtx.lineTo(strokeInnerX, y + cornerRadius);
-          miniGameCtx.quadraticCurveTo(strokeInnerX, y + (borderWidth / 2), strokeCornerX, y + (borderWidth / 2));
-          miniGameCtx.lineTo(outerX, y + (borderWidth / 2));
-     } else {
-          miniGameCtx.moveTo(strokeInnerX, y);
-          miniGameCtx.lineTo(strokeInnerX, bottomY - cornerRadius);
-          miniGameCtx.quadraticCurveTo(strokeInnerX, bottomY - (borderWidth / 2), strokeCornerX, bottomY - (borderWidth / 2));
-          miniGameCtx.lineTo(outerX, bottomY - (borderWidth / 2));
-     }
-
-     miniGameCtx.stroke();
-     miniGameCtx.restore();
-}
-
-function getHudBarLayout(theme) {
-     const canvasSpacing = getTextStyle(theme, "canvasSpacing");
-     const circleMeterStyle = getTextStyle(theme, "circleMeters");
-     const levelStatusStyle = getTextStyle(theme, "levelStatus");
-     const scoreReadyStyle = getTextStyle(theme, "scoreReady");
-     const popupTitleStyle = getTextStyle(theme, "levelPopupTitle");
-     const circleAdvance =
-          (circleMeterStyle.fontSize * circleMeterStyle.advanceScale) +
-          (circleMeterStyle.letterSpacing || 0);
-     const circleInkMetrics = getCircleMeterInkMetrics(circleMeterStyle);
-     const levelCircleSlots = maxLevelProgressUnits / progressUnitsPerCircle;
-     const healthCircleSlots = (maxVisibleHearts * progressUnitsPerCircle) / progressUnitsPerCircle;
-     const titleGap = canvasSpacing.hudTitleGap ?? canvasSpacing.circleTitleGap;
-     const rowGap = canvasSpacing.hudRowGap ?? canvasSpacing.uiRowGap;
-     const panelPadding = canvasSpacing.hudPadding ?? canvasSpacing.uiPadding;
-     const isCompact = window.matchMedia("(max-width: 42rem)").matches;
-     const levelMeterWidth =
-          ((levelCircleSlots - 1) * circleAdvance) +
-          circleInkMetrics.right -
-          circleInkMetrics.left;
-     const healthMeterWidth =
-          ((healthCircleSlots - 1) * circleAdvance) +
-          circleInkMetrics.right -
-          circleInkMetrics.left;
-     const meterHeight = circleInkMetrics.bottom - circleInkMetrics.top;
-     const compactRowHeight = Math.max(levelStatusStyle.fontSize, meterHeight, scoreReadyStyle.fontSize);
-     const compactPopupHeight = popupTitleStyle.fontSize + rowGap + scoreReadyStyle.fontSize;
-
-     if (isCompact) {
-          const barHeight =
-               panelPadding +
-               compactRowHeight +
-               rowGap +
-               compactPopupHeight +
-               rowGap +
-               compactRowHeight +
-               panelPadding;
-          const barY = miniGameHeight - barHeight;
-          const levelRowY = barY + panelPadding + (compactRowHeight / 2);
-          const popupCenterY = levelRowY + (compactRowHeight / 2) + rowGap + (compactPopupHeight / 2);
-          const statusRowY = popupCenterY + (compactPopupHeight / 2) + rowGap + (compactRowHeight / 2);
-
-          return {
-               isCompact,
-               barHeight,
-               barY,
-               panelPadding,
-               circleAdvance,
-               circleInkMetrics,
-               levelCircleSlots,
-               healthCircleSlots,
-               levelMeterWidth,
-               healthMeterWidth,
-               rowGap,
-               compactRowHeight,
-               compactPopupHeight,
-               levelRowY,
-               popupCenterY,
-               statusRowY
-          };
-     }
-
-     const contentHeight =
-          panelPadding +
-          levelStatusStyle.fontSize +
-          titleGap +
-          circleInkMetrics.bottom -
-          circleInkMetrics.top +
-          rowGap +
-          scoreReadyStyle.fontSize +
-          panelPadding;
-     const barHeight = contentHeight;
-     const barY = miniGameHeight - barHeight;
-     const titleY = barY + panelPadding;
-     const meterY = titleY + levelStatusStyle.fontSize + titleGap - circleInkMetrics.top;
-     const detailY = meterY + circleInkMetrics.bottom + rowGap;
-
-     return {
-          barHeight,
-          barY,
-          panelPadding,
-          circleAdvance,
-          circleInkMetrics,
-          levelCircleSlots,
-          healthCircleSlots,
-          levelMeterWidth,
-          healthMeterWidth,
-          rowGap,
-          titleY,
-          meterY,
-          detailY
-     };
-}
-
-function drawHudMeterSlots(circleMeterStyle, slots, units, centerX, topY, options = {}) {
-     miniGameCtx.save();
-     miniGameCtx.translate(centerX, topY);
-     miniGameCtx.scale(options.scale || 1, options.scale || 1);
-     miniGameCtx.textAlign = "center";
-
-     for (let i = 0; i < slots; i += 1) {
-          const fillIndex = options.reverseFill ? slots - 1 - i : i;
-          const slotUnits = Math.max(0, Math.min(progressUnitsPerCircle, units - (fillIndex * progressUnitsPerCircle)));
-          const circleX = (i - ((slots - 1) / 2)) * options.circleAdvance;
-
-          drawCircleMeterSlot(miniGameCtx, circleMeterStyle, slotUnits, circleX, 0, { rotateHalf: options.rotateHalf });
-     }
-
-     miniGameCtx.restore();
-}
-
-function getHudIconTextWidth(theme, iconStyleName, textStyleName, iconText, detailText) {
-     const iconStyle = getTextStyle(theme, iconStyleName);
-     const detailStyle = getTextStyle(theme, textStyleName);
-     const gap = iconText ? iconStyle.gap || 0 : 0;
-     let width = 0;
-
-     if (iconText) {
-          miniGameCtx.font = getTextFont(theme, iconStyleName, 400);
-          width += miniGameCtx.measureText(iconText).width + gap;
-     }
-
-     miniGameCtx.font = getTextFont(theme, textStyleName, 400);
-     width += miniGameCtx.measureText(detailText).width;
-
-     return width;
-}
-
-function drawHudIconText(theme, iconStyleName, textStyleName, iconText, detailText, x, y, options = {}) {
-     const iconStyle = getTextStyle(theme, iconStyleName);
-     const detailStyle = getTextStyle(theme, textStyleName);
-     const detailColor = options.color || detailStyle.color || theme.colors.fontColor;
-     const iconColor = iconStyle.color || detailColor;
-     const gap = iconText ? iconStyle.gap || 0 : 0;
-     const baseline = options.baseline || "middle";
-     const align = options.align || "left";
-     const width = getHudIconTextWidth(theme, iconStyleName, textStyleName, iconText, detailText);
-     let cursorX = x;
-
-     if (align === "center") {
-          cursorX = x - (width / 2);
-     } else if (align === "right") {
-          cursorX = x - width;
-     }
-
-     if (iconText) {
-          const iconFont = getTextFont(theme, iconStyleName, 400);
-          const iconOffsetX = iconStyle.xOffset || 0;
-
-          miniGameCtx.font = iconFont;
-          const iconWidth = miniGameCtx.measureText(iconText).width;
-
-          drawGlowingCanvasText(
-               miniGameCtx,
-               iconText,
-               cursorX + iconOffsetX,
-               y,
-               iconColor,
-               iconFont,
-               "left",
-               baseline,
-               theme,
-               iconStyle.glow
-          );
-
-          cursorX += iconWidth + gap;
-     }
-
-     drawGlowingCanvasText(
-          miniGameCtx,
-          detailText,
-          cursorX,
-          y,
-          detailColor,
-          getTextFont(theme, textStyleName, 400),
-          "left",
-          baseline,
-          theme,
-          detailStyle.glow
-     );
-}
-
-function drawHudBarBackground(theme, y, height) {
-     const { colors } = theme;
-     const borderWidth = (theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1) * 2;
-
-     miniGameCtx.save();
-     miniGameCtx.shadowBlur = 0;
-     miniGameCtx.fillStyle = colors.menuPanelFill;
-     miniGameCtx.fillRect(0, y, miniGameWidth, height);
-     miniGameCtx.strokeStyle = getCssColor("--color-white", "#ffffff");
-     miniGameCtx.lineWidth = borderWidth;
-     miniGameCtx.beginPath();
-     miniGameCtx.moveTo(0, y + (borderWidth / 2));
-     miniGameCtx.lineTo(miniGameWidth, y + (borderWidth / 2));
-     miniGameCtx.stroke();
-     miniGameCtx.restore();
-}
-
-function drawLevelHudSection(theme, layout) {
-     const { colors } = theme;
-     const levelStatusStyle = getTextStyle(theme, "levelStatus");
-     const scoreReadyStyle = getTextStyle(theme, "scoreReady");
-     const circleMeterStyle = getTextStyle(theme, "circleMeters");
-     const levelText = "LEVELS";
-     const starText = String(starScore).padStart(3, "0");
-     const scoreIconText = getTextStyle(theme, "scoreIcon").particle || "";
-     const levelMeterUnits = getCurrentLevelMeterUnits();
-
-     if (layout.isCompact) {
-          const meterTopY = layout.levelRowY - ((layout.circleInkMetrics.bottom - layout.circleInkMetrics.top) / 2);
-
-          drawStyledCanvasText(
-               miniGameCtx,
-               levelText,
-               layout.panelPadding,
-               layout.levelRowY,
-               "levelStatus",
-               theme,
-               {
-                    color: levelStatusStyle.color || colors.meterFull,
-                    align: "left",
-                    baseline: "middle"
-               }
-          );
-
-          drawHudMeterSlots(
-               circleMeterStyle,
-               layout.levelCircleSlots,
-               levelMeterUnits,
-               miniGameWidth / 2,
-               meterTopY,
-               {
-                    circleAdvance: layout.circleAdvance,
-                    scale: getLevelMeterPulseScale()
-               }
-          );
-
-          drawHudIconText(
-               theme,
-               "scoreIcon",
-               "scoreReady",
-               scoreIconText,
-               starText,
-               miniGameWidth - layout.panelPadding,
-               layout.levelRowY,
-               {
-                    color: scoreReadyStyle.color || colors.meterFull,
-                    align: "right",
-                    baseline: "middle"
-               }
-          );
-          return;
-     }
-
-     miniGameCtx.font = getTextFont(theme, "scoreReady", 400);
-     const scoreRowWidth = getHudIconTextWidth(theme, "scoreIcon", "scoreReady", scoreIconText, starText);
-     miniGameCtx.font = getTextFont(theme, "levelStatus", 400);
-     const levelTextWidth =
-          miniGameCtx.measureText(levelText).width +
-          ((levelStatusStyle.letterSpacing || 0) * Math.max(0, levelText.length - 1));
-     const sectionWidth = Math.max(levelTextWidth, layout.levelMeterWidth, scoreRowWidth);
-     const sectionCenterX = layout.panelPadding + (sectionWidth / 2);
-
-     drawStyledCanvasText(
-          miniGameCtx,
-          levelText,
-          sectionCenterX,
-          layout.titleY,
-          "levelStatus",
-          theme,
-          {
-               color: levelStatusStyle.color || colors.meterFull,
-               align: "center",
-               baseline: "top"
-          }
-     );
-
-     drawHudMeterSlots(
-          circleMeterStyle,
-          layout.levelCircleSlots,
-          levelMeterUnits,
-          sectionCenterX,
-          layout.meterY,
-          {
-               circleAdvance: layout.circleAdvance,
-               scale: getLevelMeterPulseScale()
-          }
-     );
-
-     drawHudIconText(
-          theme,
-          "scoreIcon",
-          "scoreReady",
-          scoreIconText,
-          starText,
-          sectionCenterX,
-          layout.detailY,
-          {
-               color: scoreReadyStyle.color || colors.meterFull,
-               align: "center",
-               baseline: "top"
-          }
-     );
-}
-
-function drawHealthHudSection(theme, layout) {
-     const { colors } = theme;
-     const circleMeterStyle = getTextStyle(theme, "circleMeters");
-     const levelStatusStyle = getTextStyle(theme, "levelStatus");
-     const scoreReadyStyle = getTextStyle(theme, "scoreReady");
-     const statusTitle = "STATUS";
-     const statusLabel = activeStatusUi.label || "READY";
-     const statusSeconds = getStatusSecondsRemaining();
-     const statusDetailText = statusSeconds ? `${statusLabel} ${statusSeconds}` : statusLabel;
-     const statusIconText = activeStatusUi.particle || "";
-     const healthUnits = playerHealth;
-
-     if (layout.isCompact) {
-          const meterTopY = layout.statusRowY - ((layout.circleInkMetrics.bottom - layout.circleInkMetrics.top) / 2);
-
-          drawStyledCanvasText(
-               miniGameCtx,
-               statusTitle,
-               layout.panelPadding,
-               layout.statusRowY,
-               "levelStatus",
-               theme,
-               {
-                    color: levelStatusStyle.color || colors.statusText,
-                    align: "left",
-                    baseline: "middle"
-               }
-          );
-
-          drawHudMeterSlots(
-               circleMeterStyle,
-               layout.healthCircleSlots,
-               healthUnits,
-               miniGameWidth / 2,
-               meterTopY,
-               {
-                    circleAdvance: layout.circleAdvance,
-                    scale: getHealthMeterPulseScale(),
-                    reverseFill: true,
-                    rotateHalf: true
-               }
-          );
-
-          drawHudIconText(
-               theme,
-               "statusIcon",
-               "scoreReady",
-               statusIconText,
-               statusDetailText,
-               miniGameWidth - layout.panelPadding,
-               layout.statusRowY,
-               {
-                    color: scoreReadyStyle.color || colors.statusText,
-                    align: "right",
-                    baseline: "middle"
-               }
-          );
-          return;
-     }
-
-     const statusLabelWidth = getHudIconTextWidth(theme, "statusIcon", "scoreReady", statusIconText, statusDetailText);
-     miniGameCtx.font = getTextFont(theme, "levelStatus", 400);
-     const statusTitleWidth =
-          miniGameCtx.measureText(statusTitle).width +
-          ((levelStatusStyle.letterSpacing || 0) * Math.max(0, statusTitle.length - 1));
-     const sectionWidth = Math.max(statusTitleWidth, layout.healthMeterWidth, statusLabelWidth);
-     const sectionCenterX = miniGameWidth - layout.panelPadding - (sectionWidth / 2);
-
-     drawStyledCanvasText(
-          miniGameCtx,
-          statusTitle,
-          sectionCenterX,
-          layout.titleY,
-          "levelStatus",
-          theme,
-          {
-               color: levelStatusStyle.color || colors.statusText,
-               align: "center",
-               baseline: "top"
-          }
-     );
-
-     drawHudMeterSlots(
-          circleMeterStyle,
-          layout.healthCircleSlots,
-          healthUnits,
-          sectionCenterX,
-          layout.meterY,
-          {
-               circleAdvance: layout.circleAdvance,
-               scale: getHealthMeterPulseScale(),
-               reverseFill: true,
-               rotateHalf: true
-          }
-     );
-
-     drawHudIconText(
-          theme,
-          "statusIcon",
-          "scoreReady",
-          statusIconText,
-          statusDetailText,
-          sectionCenterX,
-          layout.detailY,
-          {
-               color: scoreReadyStyle.color || colors.statusText,
-               align: "center",
-               baseline: "top"
-          }
-     );
-}
-
-export function drawHudBar(theme) {
-     if (!miniGameCtx) {
-          return;
-     }
-
-     const layout = getHudBarLayout(theme);
-
-     miniGameCtx.save();
-     miniGameCtx.textAlign = "left";
-     miniGameCtx.textBaseline = "top";
-
-     drawHudBarBackground(theme, layout.barY, layout.barHeight);
-     drawLevelHudSection(theme, layout);
-     drawHealthHudSection(theme, layout);
-
-     miniGameCtx.restore();
-}
-
-export function drawScore(theme) {
-     drawHudBar(theme);
-}
-
-export function drawHealth() {
-}
-
-function drawLevelPopupInline(theme) {
-     const popupText = getLevelPopupText();
-     const popupSubtext = getLevelPopupSubtext();
-     const popupIconName = getLevelPopupIcon();
-     const alpha = getLevelPopupAlpha();
-
-     if (!miniGameCtx || !popupText || alpha <= 0 || gameMenuOpen || gameOver || gameWon) {
-          return;
-     }
-
-     const layout = getHudBarLayout(theme);
-     const titleStyleName = "levelPopupTitle";
-     const titleStyle = getTextStyle(theme, titleStyleName);
-     const subtextStyle = getTextStyle(theme, "scoreReady");
-     const canvasSpacing = getTextStyle(theme, "canvasSpacing");
-     const gapBetweenLines = popupSubtext ? (canvasSpacing.hudRowGap ?? canvasSpacing.uiRowGap) : 0;
-     const titleIcon = popupIconName ? getRichTextIcon(theme, popupIconName) : null;
-     const titleIconSize = titleIcon ? getRichTextIconSize(titleIcon, titleStyle.fontSize) : 0;
-     const titleIconGap = titleIcon ? canvasSpacing.betweenButtons : 0;
-     const popupCenterY = layout.isCompact
-          ? layout.popupCenterY
-          : layout.barY + (layout.barHeight / 2);
-     const titleY = popupSubtext
-          ? popupCenterY - ((subtextStyle.fontSize + gapBetweenLines) / 2)
-          : popupCenterY;
-     const subtextY = titleY + (titleStyle.fontSize / 2) + gapBetweenLines + (subtextStyle.fontSize / 2);
-
-     miniGameCtx.save();
-     miniGameCtx.globalAlpha = alpha;
-     miniGameCtx.textAlign = "center";
-     miniGameCtx.textBaseline = "middle";
-     miniGameCtx.font = getTextFont(theme, titleStyleName, 400);
-
-     const titleWidth = miniGameCtx.measureText(popupText).width;
-     const fullTitleWidth = titleWidth + titleIconSize + titleIconGap;
-     const titleStartX = (miniGameWidth - fullTitleWidth) / 2;
-
-     if (titleIcon) {
-          const iconX = titleStartX + (titleIcon.xOffset || 0);
-          const iconY =
-               titleY -
-               (titleIconSize / 2) +
-               (titleIcon.yOffset || 0);
-
-          if (!drawTintedRichTextIcon(
-               miniGameCtx,
-               titleIcon,
-               iconX,
-               iconY,
-               titleIconSize,
-               getTextColor(theme, titleStyleName, 0)
-          )) {
-               drawGlowingCanvasText(
-                    miniGameCtx,
-                    titleIcon.particle,
-                    iconX,
-                    titleY,
-                    getTextColor(theme, titleStyleName, 0),
-                    getTextFont(theme, titleStyleName, 400, "body", titleIconSize),
-                    "left",
-                    "middle",
-                    theme,
-                    titleStyle.glow
-               );
-          }
-     }
-
-     drawStyledCanvasText(
-          miniGameCtx,
-          popupText,
-          titleStartX + titleIconSize + titleIconGap,
-          titleY,
-          titleStyleName,
-          theme,
-          {
-               align: "left",
-               baseline: "middle"
-          }
-     );
-
-     if (popupSubtext) {
-          drawGlowingCanvasText(
-               miniGameCtx,
-               popupSubtext,
-               miniGameWidth / 2,
-               subtextY,
-               subtextStyle.color || theme.colors.fontColor,
-               getTextFont(theme, "scoreReady", 400),
-               "center",
-               "middle",
-               theme,
-               subtextStyle.glow
-          );
-     }
-
-     miniGameCtx.restore();
-}
 
 export function drawFogOverlay() {
      if (!miniGameCtx || !isBoostblightActive("fog")) {
@@ -3043,10 +2369,6 @@ function drawGameStatusOverlay(theme) {
      miniGameCtx.restore();
 }
 
-function drawLevelPopup(theme) {
-     drawLevelPopupInline(theme);
-}
-
 // ==================================================
 // NOTE: MASTER DRAW ENTRY
 // ==================================================
@@ -3055,7 +2377,7 @@ export function drawGame() {
      // Draw order pseudocode:
      // 1. Paint the background and apply the selected color mode.
      // 2. If welcome is active, draw only that screen and exit.
-     // 3. Draw gameplay entities from back to front, then HUD controls.
+     // 3. Draw gameplay entities from back to front, then touch controls.
      // 4. Draw the top-most UI layer last: menu, pause/result overlay, or status popup.
      const theme = getCanvasTheme();
 
@@ -3080,10 +2402,7 @@ export function drawGame() {
 
           drawFogOverlay();
 
-          drawScore(theme);
-          drawHealth(theme);
           drawJoystick(theme);
-          drawLevelPopup(theme);
 
           if (!gamePaused && !gameMenuOpen && !gameOver && !gameWon) {
                drawTouchButtons(theme);

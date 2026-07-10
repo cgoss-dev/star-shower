@@ -179,10 +179,7 @@ export const playerFaces = {
 };
 
 const pickupAssetImages = {};
-const introducedBoostblightNames = new Set();
-let introducedStrike = false;
 let lastSpawnedBoostblightName = "";
-let boostblightIntroCallback = null;
 
 function getBoostTypes() {
      return Object.values(starShowerBoostblightIcons).filter((type) => type.category === "boost");
@@ -192,37 +189,8 @@ function getblightTypes() {
      return Object.values(starShowerBoostblightIcons).filter((type) => type.category === "blight");
 }
 
-export function setBoostblightIntroCallback(callback) {
-     boostblightIntroCallback = typeof callback === "function" ? callback : null;
-}
-
 export function resetBoostblightIntroState() {
-     introducedBoostblightNames.clear();
-     introducedStrike = false;
      lastSpawnedBoostblightName = "";
-}
-
-function announceNewBoostblightEntity(type) {
-     if (!type?.name || !boostblightIntroCallback || introducedBoostblightNames.has(type.name)) {
-          return;
-     }
-
-     introducedBoostblightNames.add(type.name);
-     boostblightIntroCallback(type);
-}
-
-function announceNewStrikeEntity() {
-     if (!boostblightIntroCallback || introducedStrike) {
-          return;
-     }
-
-     introducedStrike = true;
-     boostblightIntroCallback({
-          ...starShowerGuideIcons.iconStrike,
-          category: "strike",
-          iconName: "iconStrike",
-          popupSubtext: "Health damage"
-     });
 }
 
 function getPickupAssetImage(src) {
@@ -443,10 +411,8 @@ export function getParticleFillColor(particle) {
      return getModeParticleColor(particle.colorRole, particle.color, particle.colorIndex);
 }
 
-export function getParticleGlowColor(fillColor) {
-     return colorLevel === 2
-          ? getCssColor("--color-white", "#ffffff")
-          : fillColor;
+export function getParticleGlowColor() {
+     return getCssColor("--color-white", "#ffffff");
 }
 
 export function resetEntityColorCycle() {
@@ -981,7 +947,6 @@ function createMatchingStrikeFromStarSpawn() {
      }
 
      createStrike();
-     announceNewStrikeEntity();
 }
 
 export function updateStarSpawns() {
@@ -1102,7 +1067,6 @@ function createBoostblightPickup(type, category) {
           wobbleAmount: 5 + Math.random() * 10
      });
 
-     announceNewBoostblightEntity(type);
      lastSpawnedBoostblightName = type.name || "";
 }
 

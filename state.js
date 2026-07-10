@@ -208,19 +208,6 @@ export const menuKeyboardFocus = {
      duration: 60
 };
 
-export const meterPulse = {
-     level: {
-          timer: 0,
-          duration: 18,
-          scale: 1.2
-     },
-     health: {
-          timer: 0,
-          duration: 18,
-          scale: 1.2
-     }
-};
-
 // ==================================================
 // TOUCH CONTROLS
 // Sizes here are gameplay/UI data, not CSS styling.
@@ -388,23 +375,11 @@ export function addStarScore(value) {
 }
 
 export function setPlayerHealth(value) {
-     const nextHealth = Math.max(0, Math.min(maxPlayerHealth, value));
-
-     if (nextHealth !== playerHealth) {
-          triggerHealthMeterPulse();
-     }
-
-     playerHealth = nextHealth;
+     playerHealth = Math.max(0, Math.min(maxPlayerHealth, value));
 }
 
 export function addPlayerHealth(value) {
-     const nextHealth = Math.max(0, Math.min(maxPlayerHealth, playerHealth + value));
-
-     if (nextHealth !== playerHealth) {
-          triggerHealthMeterPulse();
-     }
-
-     playerHealth = nextHealth;
+     playerHealth = Math.max(0, Math.min(maxPlayerHealth, playerHealth + value));
 }
 
 // ==================================================
@@ -615,45 +590,6 @@ export function getMenuKeyboardFocusAlpha() {
      }
 
      return Math.max(0, Math.min(1, menuKeyboardFocus.timer / menuKeyboardFocus.duration));
-}
-
-function triggerMeterPulse(pulse) {
-     pulse.timer = pulse.duration;
-}
-
-function getMeterPulseScale(pulse) {
-     if (pulse.timer <= 0 || pulse.duration <= 0) {
-          return 1;
-     }
-
-     const progress = 1 - (pulse.timer / pulse.duration);
-     const pulseWave = 1 - Math.abs((progress * 2) - 1);
-
-     return 1 + ((pulse.scale - 1) * pulseWave);
-}
-
-export function triggerLevelMeterPulse() {
-     triggerMeterPulse(meterPulse.level);
-}
-
-export function triggerHealthMeterPulse() {
-     triggerMeterPulse(meterPulse.health);
-}
-
-export function updateMeterPulseTimers() {
-     Object.values(meterPulse).forEach((pulse) => {
-          if (pulse.timer > 0) {
-               pulse.timer -= 1;
-          }
-     });
-}
-
-export function getLevelMeterPulseScale() {
-     return getMeterPulseScale(meterPulse.level);
-}
-
-export function getHealthMeterPulseScale() {
-     return getMeterPulseScale(meterPulse.health);
 }
 
 // Boolean setters. Keep legacy simple on/off controls in sync with option levels.

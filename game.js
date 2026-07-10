@@ -40,8 +40,6 @@ import {
      setColorLevel,
      setMiniGameSize,
      updateMenuKeyboardFocusTimer,
-     updateMeterPulseTimers,
-     triggerLevelMeterPulse,
 
      resetUiActionBounds,
      resetGameState
@@ -83,8 +81,7 @@ import {
      collectStrikes,
      collectBoostblightPickups,
      updatePlayerTrail,
-     resetBoostblightIntroState,
-     setBoostblightIntroCallback
+     resetBoostblightIntroState
 } from "./entities/index.js";
 
 import {
@@ -202,8 +199,8 @@ export const starShowerGuideIcons = {
      iconWin: {
           name: "win",
           label: "WIN",
-          particle: "\u2726\uFE0E",
-          assetSrc: "./images/icons/win-level.svg",
+          particle: "🏆",
+          assetSrc: "",
           xOffset: 0
      },
 
@@ -297,15 +294,6 @@ export function getCanvasTheme() {
                glow: false
           },
 
-          levelPopupTitle: {
-               font: "marquee",
-               fontSize: uiFontSm,
-               letterSpacing: 0.25,
-               color: titleColor,
-               rainbow: true,
-               glow: false
-          },
-
           levelStatus: {
                font: "marquee",
                fontSize: uiFontSm,
@@ -315,41 +303,10 @@ export function getCanvasTheme() {
                glow: false
           },
 
-          circleMeters: {
-               fontSize: uiFontSm,
-               emptyAssetSrc: "./images/icons/meter-empty.svg",
-               halfAssetSrc: "./images/icons/meter-half.svg",
-               fullAssetSrc: "./images/icons/meter-full.svg",
-               assetScale: 1,
-               advanceScale: 0.75,
-               letterSpacing: 0.25
-          },
-
           scoreReady: {
                font: "body",
                fontSize: uiFontSm,
                letterSpacing: 0,
-               color: bodyColor,
-               rainbow: false,
-               glow: false
-          },
-
-          scoreIcon: {
-               font: "symbol",
-               fontSize: uiFontSm,
-               particle: "⭐️",
-               gap: uiFontSm * 0.5,
-               xOffset: 0,
-               color: bodyColor,
-               rainbow: false,
-               glow: false
-          },
-
-          statusIcon: {
-               font: "body",
-               fontSize: uiFontSm,
-               gap: uiFontSm * 0.5,
-               xOffset: 0,
                color: bodyColor,
                rainbow: false,
                glow: false
@@ -560,7 +517,6 @@ export function getCssPixelSize(variableName, fallback = 10) {
 export const winScore = 1500;
 export const startOverlayDuration = 120;
 export const overlayFadeFrames = 30;
-export const levelPopupDuration = 600;
 export const maxLevelProgressUnits = 10;
 export const progressUnitsPerCircle = 2;
 const levelScoreMins = [
@@ -784,19 +740,6 @@ export function getCurrentLevelData() {
      return currentLevelData;
 }
 
-export function getCurrentLevelMeterUnits() {
-     const currentLevelData = getCurrentLevelData();
-     const nextLevelData = levelRules[currentLevelData.levelNumber] || null;
-     const pointsIntoLevel = starScore - currentLevelData.scoreMin;
-     const completedLevels = currentLevelData.levelNumber - 1;
-     const currentLevelRange = nextLevelData
-          ? nextLevelData.scoreMin - currentLevelData.scoreMin
-          : winScore - currentLevelData.scoreMin;
-     const halfwayToNextLevel = currentLevelRange > 0 && pointsIntoLevel >= currentLevelRange / 2 ? 1 : 0;
-
-     return Math.min(maxLevelProgressUnits, completedLevels + halfwayToNextLevel);
-}
-
 export function getCurrentLevelNumber() {
      return getCurrentLevelData().levelNumber;
 }
@@ -960,12 +903,6 @@ let screenLayerActive = true;
 let screenLayerTimer = -1;
 let screenLayerDuration = -1;
 let gameScreenMode = "screenWelcome";
-let activeLevelNumber = 1;
-let levelPopupText = "";
-let levelPopupSubtext = "";
-let levelPopupIcon = "";
-let levelPopupTimer = 0;
-let levelPopupDurationFrames = 0;
 
 // ==================================================
 // SCREEN MODE HELPERS
@@ -1164,7 +1101,6 @@ export function startNewGameRound() {
      resetTouchControls();
      resetEntityColorCycle();
      resetBoostblightIntroState();
-     resetLevelProgressState();
 
      syncCanvasResolutionAndUiBounds();
      resetPlayerPosition();
@@ -1303,95 +1239,6 @@ export function clearGameOverlay() {
      setGameOverlayDuration(0);
 }
 
-function resetLevelProgressState() {
-     activeLevelNumber = getCurrentLevelNumber();
-     levelPopupText = "";
-     levelPopupSubtext = "";
-     levelPopupIcon = "";
-     levelPopupTimer = 0;
-     levelPopupDurationFrames = 0;
-}
-
-function showNewEntityPopup(entityType) {
-     if (!entityType) {
-          return;
-     }
-
-     const categoryLabel = entityType.category === "blight"
-          ? "blight"
-          : entityType.category === "strike"
-               ? "strike"
-               : "boost";
-     const popupIcons = {
-          ...starShowerBoostblightIcons,
-          ...starShowerGuideIcons
-     };
-     const popupSubtext = entityType.popupSubtext || `New ${categoryLabel}`;
-
-     levelPopupText = entityType.label || "";
-     levelPopupSubtext = popupSubtext;
-     levelPopupIcon = entityType.iconName || Object.keys(popupIcons).find(
-          (iconName) => popupIcons[iconName] === entityType
-     ) || "";
-     levelPopupTimer = levelPopupDuration;
-     levelPopupDurationFrames = levelPopupDuration;
-}
-
-function updateLevelPopupTimer() {
-     if (levelPopupTimer <= 0) {
-          return;
-     }
-
-     if (gamePaused) {
-          return;
-     }
-
-     levelPopupTimer -= 1;
-
-     if (levelPopupTimer <= 0) {
-          levelPopupText = "";
-          levelPopupSubtext = "";
-          levelPopupIcon = "";
-          levelPopupTimer = 0;
-          levelPopupDurationFrames = 0;
-     }
-}
-
-function syncLevelProgressState() {
-     const currentLevelNumber = getCurrentLevelNumber();
-
-     if (currentLevelNumber <= activeLevelNumber) {
-          return;
-     }
-
-     activeLevelNumber = currentLevelNumber;
-     triggerLevelMeterPulse();
-}
-
-export function getLevelPopupText() {
-     return levelPopupText;
-}
-
-export function getLevelPopupSubtext() {
-     return levelPopupSubtext;
-}
-
-export function getLevelPopupIcon() {
-     return levelPopupIcon;
-}
-
-export function getLevelPopupAlpha() {
-     if (!levelPopupText || levelPopupTimer <= 0 || levelPopupDurationFrames <= 0) {
-          return 0;
-     }
-
-     const elapsed = levelPopupDurationFrames - levelPopupTimer;
-     const fadeIn = Math.min(1, elapsed / overlayFadeFrames);
-     const fadeOut = Math.min(1, levelPopupTimer / overlayFadeFrames);
-
-     return Math.max(0, Math.min(1, Math.min(fadeIn, fadeOut)));
-}
-
 export function showTimedGameOverlay(text, sub = "", duration = startOverlayDuration) {
      setGameOverlayText(text);
      setGameOverlaySubtext(sub);
@@ -1445,9 +1292,7 @@ export function updateGame() {
      // 4. Finish by checking lose/win conditions and switching to the matching result screen.
      updatePauseButtonState();
      updateGameOverlayTimer();
-     updateLevelPopupTimer();
      updateMenuKeyboardFocusTimer();
-     updateMeterPulseTimers();
 
      if (screenLayerActive) {
           updateScreenTitleColorState();
@@ -1487,7 +1332,6 @@ export function updateGame() {
      collectStars();
      collectStrikes();
      collectBoostblightPickups();
-     syncLevelProgressState();
 
      if (playerHealth <= 0) {
           setGameOver(true);
@@ -1527,7 +1371,6 @@ function gameLoop() {
 
 export function startStarShower() {
      loadAndApplySavedOptions();
-     setBoostblightIntroCallback(showNewEntityPopup);
 
      resetGameState();
      resetTouchControls();

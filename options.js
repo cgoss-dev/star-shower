@@ -117,7 +117,6 @@ export const optionDefinitions = {
 
 export const gameplayStartingHealth = 3;
 export const maxPlayerHealth = 10;
-export const maxVisibleHearts = maxPlayerHealth / 2;
 export const strikeHealthDamage = 1;
 export const magnetCollisionRadiusMultiplier = 3;
 
