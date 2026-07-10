@@ -60,8 +60,8 @@ export const playerTrailLengthMax = 32;
 export const playerTrailLengthMin = 2;
 export const playerTrailAnchorYOffset = -4;
 
-export const starParticles = ["✦", "✧"];
-export const strikeParticles = ["\u2716\uFE0E", "\u2715\uFE0E"];
-export const strikeAssetSrc = "./images/icons/strike.svg";
+export const starParticles = ["⭐️"];
+export const strikeParticles = ["❌"];
+export const strikeAssetSrc = "";
 
 export const burstChars = ["✦", "✧", "·", "•"];

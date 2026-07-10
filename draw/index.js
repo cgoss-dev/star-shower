@@ -1644,6 +1644,77 @@ function drawHudMeterSlots(circleMeterStyle, slots, units, centerX, topY, option
      miniGameCtx.restore();
 }
 
+function getHudIconTextWidth(theme, iconStyleName, textStyleName, iconText, detailText) {
+     const iconStyle = getTextStyle(theme, iconStyleName);
+     const detailStyle = getTextStyle(theme, textStyleName);
+     const gap = iconText ? iconStyle.gap || 0 : 0;
+     let width = 0;
+
+     if (iconText) {
+          miniGameCtx.font = getTextFont(theme, iconStyleName, 400);
+          width += miniGameCtx.measureText(iconText).width + gap;
+     }
+
+     miniGameCtx.font = getTextFont(theme, textStyleName, 400);
+     width += miniGameCtx.measureText(detailText).width;
+
+     return width;
+}
+
+function drawHudIconText(theme, iconStyleName, textStyleName, iconText, detailText, x, y, options = {}) {
+     const iconStyle = getTextStyle(theme, iconStyleName);
+     const detailStyle = getTextStyle(theme, textStyleName);
+     const detailColor = options.color || detailStyle.color || theme.colors.fontColor;
+     const iconColor = iconStyle.color || detailColor;
+     const gap = iconText ? iconStyle.gap || 0 : 0;
+     const baseline = options.baseline || "middle";
+     const align = options.align || "left";
+     const width = getHudIconTextWidth(theme, iconStyleName, textStyleName, iconText, detailText);
+     let cursorX = x;
+
+     if (align === "center") {
+          cursorX = x - (width / 2);
+     } else if (align === "right") {
+          cursorX = x - width;
+     }
+
+     if (iconText) {
+          const iconFont = getTextFont(theme, iconStyleName, 400);
+          const iconOffsetX = iconStyle.xOffset || 0;
+
+          miniGameCtx.font = iconFont;
+          const iconWidth = miniGameCtx.measureText(iconText).width;
+
+          drawGlowingCanvasText(
+               miniGameCtx,
+               iconText,
+               cursorX + iconOffsetX,
+               y,
+               iconColor,
+               iconFont,
+               "left",
+               baseline,
+               theme,
+               iconStyle.glow
+          );
+
+          cursorX += iconWidth + gap;
+     }
+
+     drawGlowingCanvasText(
+          miniGameCtx,
+          detailText,
+          cursorX,
+          y,
+          detailColor,
+          getTextFont(theme, textStyleName, 400),
+          "left",
+          baseline,
+          theme,
+          detailStyle.glow
+     );
+}
+
 function drawHudBarBackground(theme, y, height) {
      const { colors } = theme;
      const borderWidth = (theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1) * 2;
@@ -1668,6 +1739,7 @@ function drawLevelHudSection(theme, layout) {
      const circleMeterStyle = getTextStyle(theme, "circleMeters");
      const levelText = "LEVELS";
      const starText = String(starScore).padStart(3, "0");
+     const scoreIconText = getTextStyle(theme, "scoreIcon").particle || "";
      const levelMeterUnits = getCurrentLevelMeterUnits();
 
      if (layout.isCompact) {
@@ -1699,23 +1771,25 @@ function drawLevelHudSection(theme, layout) {
                }
           );
 
-          drawGlowingCanvasText(
-               miniGameCtx,
+          drawHudIconText(
+               theme,
+               "scoreIcon",
+               "scoreReady",
+               scoreIconText,
                starText,
                miniGameWidth - layout.panelPadding,
                layout.levelRowY,
-               scoreReadyStyle.color || colors.meterFull,
-               getTextFont(theme, "scoreReady", 400),
-               "right",
-               "middle",
-               theme,
-               scoreReadyStyle.glow
+               {
+                    color: scoreReadyStyle.color || colors.meterFull,
+                    align: "right",
+                    baseline: "middle"
+               }
           );
           return;
      }
 
      miniGameCtx.font = getTextFont(theme, "scoreReady", 400);
-     const scoreRowWidth = miniGameCtx.measureText(starText).width;
+     const scoreRowWidth = getHudIconTextWidth(theme, "scoreIcon", "scoreReady", scoreIconText, starText);
      miniGameCtx.font = getTextFont(theme, "levelStatus", 400);
      const levelTextWidth =
           miniGameCtx.measureText(levelText).width +
@@ -1749,17 +1823,19 @@ function drawLevelHudSection(theme, layout) {
           }
      );
 
-     drawGlowingCanvasText(
-          miniGameCtx,
+     drawHudIconText(
+          theme,
+          "scoreIcon",
+          "scoreReady",
+          scoreIconText,
           starText,
           sectionCenterX,
           layout.detailY,
-          scoreReadyStyle.color || colors.meterFull,
-          getTextFont(theme, "scoreReady", 400),
-          "center",
-          "top",
-          theme,
-          scoreReadyStyle.glow
+          {
+               color: scoreReadyStyle.color || colors.meterFull,
+               align: "center",
+               baseline: "top"
+          }
      );
 }
 
@@ -1772,6 +1848,7 @@ function drawHealthHudSection(theme, layout) {
      const statusLabel = activeStatusUi.label || "READY";
      const statusSeconds = getStatusSecondsRemaining();
      const statusDetailText = statusSeconds ? `${statusLabel} ${statusSeconds}` : statusLabel;
+     const statusIconText = activeStatusUi.particle || "";
      const healthUnits = playerHealth;
 
      if (layout.isCompact) {
@@ -1805,25 +1882,24 @@ function drawHealthHudSection(theme, layout) {
                }
           );
 
-          drawGlowingCanvasText(
-               miniGameCtx,
+          drawHudIconText(
+               theme,
+               "statusIcon",
+               "scoreReady",
+               statusIconText,
                statusDetailText,
                miniGameWidth - layout.panelPadding,
                layout.statusRowY,
-               scoreReadyStyle.color || colors.statusText,
-               getTextFont(theme, "scoreReady", 400),
-               "right",
-               "middle",
-               theme,
-               scoreReadyStyle.glow
+               {
+                    color: scoreReadyStyle.color || colors.statusText,
+                    align: "right",
+                    baseline: "middle"
+               }
           );
           return;
      }
 
-     const statusLabelWidth = (() => {
-          miniGameCtx.font = getTextFont(theme, "scoreReady", 400);
-          return miniGameCtx.measureText(statusDetailText).width;
-     })();
+     const statusLabelWidth = getHudIconTextWidth(theme, "statusIcon", "scoreReady", statusIconText, statusDetailText);
      miniGameCtx.font = getTextFont(theme, "levelStatus", 400);
      const statusTitleWidth =
           miniGameCtx.measureText(statusTitle).width +
@@ -1859,17 +1935,19 @@ function drawHealthHudSection(theme, layout) {
           }
      );
 
-     drawGlowingCanvasText(
-          miniGameCtx,
+     drawHudIconText(
+          theme,
+          "statusIcon",
+          "scoreReady",
+          statusIconText,
           statusDetailText,
           sectionCenterX,
           layout.detailY,
-          scoreReadyStyle.color || colors.statusText,
-          getTextFont(theme, "scoreReady", 400),
-          "center",
-          "top",
-          theme,
-          scoreReadyStyle.glow
+          {
+               color: scoreReadyStyle.color || colors.statusText,
+               align: "center",
+               baseline: "top"
+          }
      );
 }
 

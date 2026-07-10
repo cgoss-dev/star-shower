@@ -49,12 +49,12 @@ Level 6+: health + magnet + double + freeze + daze + fog
 
 Current boost/blight effects:
 
-- Health: increases health.
-- Magnet: triples pickup range.
-- Double: stars count twice.
-- Freeze: freezes player movement.
-- Daze: reverses movement.
-- Fog: limits visible area.
+- Health 💚: increases health.
+- Magnet 🧲: triples pickup range.
+- Double 🌟: stars count twice.
+- Freeze 🥶: freezes player movement.
+- Daze 😵‍💫: reverses movement.
+- Fog 😵: limits visible area.
 
 ## Game Files
 
