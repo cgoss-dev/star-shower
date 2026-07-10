@@ -33,7 +33,6 @@ import {
      gameWon,
      blightLevel,
      movementLevel,
-     colorLevel,
      gameMenuUi,
      touchControls,
      screenActionUi,
@@ -74,8 +73,7 @@ import {
      isJoystickEnabled,
      movementOptionIndexes,
      maxOptionLevelIndex,
-     getMaxMovementOptionIndex,
-     maxColorOptionIndex
+     getMaxMovementOptionIndex
 } from "./options.js";
 
 import {
@@ -96,9 +94,7 @@ import {
      decreaseSoundEffectsLevel,
      increaseSoundEffectsLevel,
      decreaseMovementLevel,
-     increaseMovementLevel,
-     decreaseColorLevel,
-     increaseColorLevel
+     increaseMovementLevel
 } from "./game.js";
 
 import {
@@ -234,10 +230,6 @@ function isScrollableMenuView() {
 }
 
 function getOptionsBackRowIndex() {
-     return isJoystickEnabled() ? 3 : 2;
-}
-
-function getOptionsColorRowIndex() {
      return isJoystickEnabled() ? 2 : 1;
 }
 
@@ -378,10 +370,6 @@ function activateOptionAdjustment(optionName, direction) {
           direction < 0 ? decreaseMovementLevel() : increaseMovementLevel();
      }
 
-     if (optionName === "color") {
-          direction < 0 ? decreaseColorLevel() : increaseColorLevel();
-     }
-
      syncUiBounds();
 }
 
@@ -519,22 +507,6 @@ function handleOptionsPointerDown(x, y) {
           return true;
      }
 
-     if (colorLevel > 0 && isPointInsideBox(x, y, gameMenuUi.colorDecreaseButton)) {
-          setOptionsSelectionRow(getOptionsColorRowIndex());
-          setOptionsSelectionCol(0);
-          decreaseColorLevel();
-          syncUiBounds();
-          return true;
-     }
-
-     if (colorLevel < maxColorOptionIndex && isPointInsideBox(x, y, gameMenuUi.colorIncreaseButton)) {
-          setOptionsSelectionRow(getOptionsColorRowIndex());
-          setOptionsSelectionCol(1);
-          increaseColorLevel();
-          syncUiBounds();
-          return true;
-     }
-
      return true;
 }
 
@@ -552,8 +524,7 @@ function handleOptionsDetailPointerDown(x, y) {
      if (
           gameMenuView !== "options_difficulty" &&
           gameMenuView !== "options_audio" &&
-          gameMenuView !== "options_movement" &&
-          gameMenuView !== "options_color"
+          gameMenuView !== "options_movement"
      ) {
           return true;
      }
@@ -591,26 +562,6 @@ function handleOptionsDetailPointerDown(x, y) {
                setOptionsSelectionRow(0);
                setOptionsSelectionCol(1);
                increaseMovementLevel();
-               syncUiBounds();
-               return true;
-          }
-
-          return true;
-     }
-
-     if (gameMenuView === "options_color") {
-          if (isPointInsideBox(x, y, gameMenuUi.colorDecreaseButton)) {
-               setOptionsSelectionRow(0);
-               setOptionsSelectionCol(0);
-               decreaseColorLevel();
-               syncUiBounds();
-               return true;
-          }
-
-          if (isPointInsideBox(x, y, gameMenuUi.colorIncreaseButton)) {
-               setOptionsSelectionRow(0);
-               setOptionsSelectionCol(1);
-               increaseColorLevel();
                syncUiBounds();
                return true;
           }
@@ -881,8 +832,7 @@ function activateOptionsSelection() {
 
      const optionName =
           optionsSelection.row === 0 ? "blight" :
-          optionsSelection.row === 1 && isJoystickEnabled() ? "movement" :
-          "color";
+          "movement";
      const direction = optionsSelection.col === 0 ? -1 : 1;
 
      activateOptionAdjustment(optionName, direction);
@@ -924,16 +874,6 @@ function activateOptionsDetailSelection() {
           activateOptionAdjustment("movement", direction);
      }
 
-     if (gameMenuView === "options_color") {
-          if (optionsSelection.row === 1) {
-               setGameMenuView("options");
-               syncUiBounds();
-               return;
-          }
-
-          const direction = optionsSelection.col === 0 ? -1 : 1;
-          activateOptionAdjustment("color", direction);
-     }
 }
 
 function handleWelcomeNavigation(event) {

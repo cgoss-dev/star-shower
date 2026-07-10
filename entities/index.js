@@ -75,7 +75,6 @@ import {
 
 import {
      areStrikesUnlockedForCurrentLevel,
-     progressUnitsPerCircle,
      getCurrentLevelNumber,
      getUnlockedBoostNamesForCurrentLevel,
      getUnlockedblightNamesForCurrentLevel,
@@ -90,6 +89,8 @@ import {
      playerBaseHealth,
      playerBaseSpeed,
      playerSpeedPerHeart,
+     playerSpeedMinScale,
+     playerSpeedMaxScale,
      playerBaseSize,
      playerBaseRadius,
      framesPerSecond,
@@ -131,6 +132,8 @@ export {
      playerBaseHealth,
      playerBaseSpeed,
      playerSpeedPerHeart,
+     playerSpeedMinScale,
+     playerSpeedMaxScale,
      playerBaseSize,
      playerBaseRadius,
      framesPerSecond,
@@ -218,6 +221,17 @@ function getSpawnDensityScale() {
      }
 
      return clampSpawnDensityScale((miniGameWidth * miniGameHeight) / spawnDensityBaselineArea);
+}
+
+function getScreenAreaScale(minScale, maxScale) {
+     if (miniGameWidth <= 0 || miniGameHeight <= 0) {
+          return minScale;
+     }
+
+     const areaRatio = (miniGameWidth * miniGameHeight) / spawnDensityBaselineArea;
+     const areaScale = Math.sqrt(areaRatio);
+
+     return Math.max(minScale, Math.min(maxScale, areaScale));
 }
 
 function clampFallSpeedScale(value) {
@@ -509,7 +523,10 @@ export function refreshPlayerFaceFromHealth() {
 
 export function updatePlayerSpeedFromHealth() {
      const diff = playerHealth - playerBaseHealth;
-     player.speed = Math.max(0, playerBaseSpeed + (diff * playerSpeedPerHeart));
+     const healthAdjustedSpeed = playerBaseSpeed + (diff * playerSpeedPerHeart);
+     const screenScale = getScreenAreaScale(playerSpeedMinScale, playerSpeedMaxScale);
+
+     player.speed = Math.max(0, healthAdjustedSpeed * screenScale);
 }
 
 export function syncPlayerHealthState() {
@@ -541,6 +558,7 @@ export function triggerPlayerFacePop(scale = 1.1) {
 export function syncPlayerSize() {
      player.size = playerBaseSize;
      player.radius = playerBaseRadius;
+     updatePlayerSpeedFromHealth();
      clampPlayerToCanvas();
 }
 
@@ -852,7 +870,7 @@ export function updateBoostblightState() {
 
 function applyBoostPickup(type) {
      if (type.name === "health") {
-          addPlayerHealth(progressUnitsPerCircle);
+          addPlayerHealth(1);
           syncPlayerHealthState();
           return;
      }
@@ -879,11 +897,7 @@ function getStarCollisionRadiusMultiplier() {
           return 1;
      }
 
-     const areaScale = Math.sqrt(getSpawnDensityScale());
-     const magnetScale = Math.max(
-          magnetRadiusMinScale,
-          Math.min(magnetRadiusMaxScale, areaScale)
-     );
+     const magnetScale = getScreenAreaScale(magnetRadiusMinScale, magnetRadiusMaxScale);
 
      return magnetCollisionRadiusMultiplier * magnetScale;
 }

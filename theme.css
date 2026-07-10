@@ -49,7 +49,7 @@
           --mocha-12: #f5c2e7;
 
      /* TYPOGRAPHY */
-          --font-body: "Noto Sans Mono", monospace;
+          --font-body: "Annotation Mono", monospace;
           --font-display: "Bungee Shade", monospace;
           --font-size-lg: clamp(3rem, min(20vw, 12dvh), 8rem);
           --font-size-md: clamp(2rem, min(4vw, 4dvh), 4rem);

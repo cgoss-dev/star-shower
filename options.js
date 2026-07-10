@@ -115,7 +115,7 @@ export const optionDefinitions = {
 // These are configuration values rather than live state.
 // ====================================================================================================
 
-export const maxPlayerHealth = 10;
+export const maxPlayerHealth = 5;
 export const gameplayStartingHealth = maxPlayerHealth;
 export const strikeHealthDamage = 1;
 export const magnetCollisionRadiusMultiplier = 3;

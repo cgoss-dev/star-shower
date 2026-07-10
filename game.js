@@ -366,7 +366,7 @@ export function getCanvasTheme() {
      return {
           fonts: {
                marquee: getCssString("--font-display", "\"Bungee Shade\", cursive"),
-               body: getCssString("--font-body", "\"Noto Sans Mono\", monospace"),
+               body: getCssString("--font-body", "\"Annotation Mono\", monospace"),
                symbol: "\"Segoe UI Symbol\", \"Apple Color Emoji\", \"Noto Color Emoji\", sans-serif"
           },
 

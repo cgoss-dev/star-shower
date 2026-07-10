@@ -69,13 +69,11 @@ import {
 import {
      maxOptionLevelIndex,
      getMaxMovementOptionIndex,
-     maxColorOptionIndex,
      maxPlayerHealth,
      movementOptionIndexes,
      isJoystickEnabled,
      getOptionLevelLabel,
      getMovementOptionLabel,
-     getColorOptionLabel,
      getUnifiedButtonFont,
      getUnifiedButtonWidth,
      getUnifiedButtonHeight,
@@ -114,7 +112,6 @@ import {
      getCurrentLevelNumber,
      getCurrentLevelProgressRatio,
      maxLevelProgressUnits,
-     progressUnitsPerCircle,
      getCurrentScreenActionTexts,
      getCurrentPausedActionTexts,
      getWelcomeInstructionLines,
@@ -124,7 +121,6 @@ import {
      getDifficultyOptionLines,
      getAudioOptionLines,
      getMovementOptionLines,
-     getColorOptionLines,
      isScreenWelcomeActive,
      isOverlayScreenActive,
      getCurrentScreenTitleLines,
@@ -278,13 +274,6 @@ function getHoverableCanvasButtons() {
                     buttons.push(gameMenuUi.movementIncreaseButton);
                }
 
-               if (colorLevel > 0) {
-                    buttons.push(gameMenuUi.colorDecreaseButton);
-               }
-
-               if (colorLevel < maxColorOptionIndex) {
-                    buttons.push(gameMenuUi.colorIncreaseButton);
-               }
           }
      }
 
@@ -384,16 +373,13 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
                setButtonBounds(gameMenuUi.movementIncreaseButton, 0, 0, 0, 0);
           }
 
-          optionRows.push({
-               row: gameMenuUi.colorRow,
-               decreaseButton: gameMenuUi.colorDecreaseButton,
-               increaseButton: gameMenuUi.colorIncreaseButton
-          });
-
           setButtonBounds(gameMenuUi.optionsDifficultyButton, 0, 0, 0, 0);
           setButtonBounds(gameMenuUi.optionsAudioButton, 0, 0, 0, 0);
           setButtonBounds(gameMenuUi.optionsMovementButton, 0, 0, 0, 0);
           setButtonBounds(gameMenuUi.optionsColorButton, 0, 0, 0, 0);
+          setButtonBounds(gameMenuUi.colorRow, 0, 0, 0, 0);
+          setButtonBounds(gameMenuUi.colorDecreaseButton, 0, 0, 0, 0);
+          setButtonBounds(gameMenuUi.colorIncreaseButton, 0, 0, 0, 0);
 
           optionRows.forEach((item, index) => {
                setOptionRowBounds(
@@ -416,8 +402,7 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
      if (
           gameMenuView !== "options_difficulty" &&
           gameMenuView !== "options_audio" &&
-          gameMenuView !== "options_movement" &&
-          gameMenuView !== "options_color"
+          gameMenuView !== "options_movement"
      ) {
           return;
      }
@@ -441,20 +426,6 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
                gameMenuUi.movementRow,
                gameMenuUi.movementDecreaseButton,
                gameMenuUi.movementIncreaseButton,
-               layout.buttonX,
-               layout.contentTopY,
-               layout.buttonWidth,
-               layout.buttonHeight
-          );
-
-          return;
-     }
-
-     if (gameMenuView === "options_color") {
-          setOptionRowBounds(
-               gameMenuUi.colorRow,
-               gameMenuUi.colorDecreaseButton,
-               gameMenuUi.colorIncreaseButton,
                layout.buttonX,
                layout.contentTopY,
                layout.buttonWidth,
@@ -918,12 +889,6 @@ function getShortMovementOptionLabel(levelIndex) {
      return labels[levelIndex] || getMovementOptionLabel(levelIndex).toUpperCase();
 }
 
-function getShortColorOptionLabel(levelIndex) {
-     const labels = ["Bright", "Pastel", "Monochrome"];
-
-     return labels[levelIndex] || getColorOptionLabel(levelIndex).toUpperCase();
-}
-
 function getCanvasColorModeFilter() {
      return "none";
 }
@@ -1110,8 +1075,8 @@ function formatHudUnitValue(value) {
 }
 
 function getHealthBadgeText() {
-     const currentHearts = Math.max(0, Math.min(maxPlayerHealth, playerHealth)) / progressUnitsPerCircle;
-     const maxHearts = maxPlayerHealth / progressUnitsPerCircle;
+     const currentHearts = Math.max(0, Math.min(maxPlayerHealth, playerHealth));
+     const maxHearts = maxPlayerHealth;
 
      return `💚 ${formatHudUnitValue(currentHearts)}/${formatHudUnitValue(maxHearts)}`;
 }
@@ -1807,8 +1772,7 @@ function drawOptionsScreen(theme) {
      const layout = getMenuScreenLayout(theme);
      const focused = optionsSelection;
      const showMovementOption = isJoystickEnabled();
-     const colorRowIndex = showMovementOption ? 2 : 1;
-     const backRowIndex = showMovementOption ? 3 : 2;
+     const backRowIndex = showMovementOption ? 2 : 1;
 
      miniGameCtx.save();
      miniGameCtx.fillStyle = colors.menuScreenFill;
@@ -1842,19 +1806,6 @@ function drawOptionsScreen(theme) {
                getMaxMovementOptionIndex()
           );
      }
-
-     drawOptionStepper(
-          gameMenuUi.colorRow,
-          gameMenuUi.colorDecreaseButton,
-          gameMenuUi.colorIncreaseButton,
-          "COLOR",
-          getShortColorOptionLabel(colorLevel),
-          colorLevel,
-          theme,
-          focused.row === colorRowIndex,
-          focused.row === colorRowIndex ? focused.col : -1,
-          maxColorOptionIndex
-     );
 
      drawMenuBackButton(gameMenuUi.backButton, theme, focused.row === backRowIndex);
 
@@ -1966,40 +1917,6 @@ function drawMovementOptionsScreen(theme) {
           focused.row === 0,
           focused.row === 0 ? focused.col : -1,
           getMaxMovementOptionIndex()
-     );
-
-     drawMenuDetailLines(theme, optionLines, getOptionDescriptionY(layout, 1));
-     drawMenuBackButton(gameMenuUi.backButton, theme, focused.row === 1);
-     miniGameCtx.restore();
-}
-
-function drawColorOptionsScreen(theme) {
-     if (!miniGameCtx) {
-          return;
-     }
-
-     const { colors } = theme;
-     const layout = getMenuScreenLayout(theme);
-     const focused = optionsSelection;
-     const optionLines = getColorOptionLines();
-
-     miniGameCtx.save();
-     miniGameCtx.fillStyle = colors.menuScreenFill;
-     miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
-
-     drawMenuScreenTitle("COLOR", theme, layout.titleCenterX, layout.titleY);
-
-     drawOptionStepper(
-          gameMenuUi.colorRow,
-          gameMenuUi.colorDecreaseButton,
-          gameMenuUi.colorIncreaseButton,
-          "Color",
-          getShortColorOptionLabel(colorLevel),
-          colorLevel,
-          theme,
-          focused.row === 0,
-          focused.row === 0 ? focused.col : -1,
-          maxColorOptionIndex
      );
 
      drawMenuDetailLines(theme, optionLines, getOptionDescriptionY(layout, 1));
