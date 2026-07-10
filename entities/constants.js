@@ -5,6 +5,8 @@ import {
 export const playerBaseHealth = gameplayStartingHealth;
 export const playerBaseSpeed = 1.5;
 export const playerSpeedPerHeart = 0.25;
+export const playerSpeedMinScale = 1;
+export const playerSpeedMaxScale = 1.5;
 export const playerBaseSize = 64;
 export const playerBaseRadius = 30;
 
