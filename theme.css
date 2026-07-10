@@ -51,9 +51,9 @@
      /* TYPOGRAPHY */
           --font-body: "Annotation Mono", monospace;
           --font-display: "Bungee Shade", monospace;
-          --font-size-lg: clamp(3rem, min(20vw, 12dvh), 8rem);
-          --font-size-md: clamp(2rem, min(4vw, 4dvh), 4rem);
-          --font-size-sm: clamp(0.8rem, min(2vw, 2dvh), 1rem);
+          --font-size-sm: clamp(1rem, min(2vw, 2dvh), 1.2rem);
+          --font-size-md: calc(var(--font-size-sm) * 2);
+          --font-size-lg: calc(var(--font-size-md) * 2);
           --marquee-font-size: var(--font-size-lg);
           --marquee-font-color: var(--color-gray3);
           --marquee-letter-spacing: 0.25px;
@@ -128,6 +128,10 @@ body {
      min-width: 320px;
      min-height: 100%;
      margin: 0;
+}
+
+html {
+     font-size: 10px;
 }
 
 body {

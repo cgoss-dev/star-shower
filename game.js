@@ -251,7 +251,7 @@ export function getCanvasTheme() {
                uiRowGap: uiFontSm * 0.75,
                circleTitleGap: uiFontSm,
                hudPadding: uiFontSm * 0.5,
-               hudRowGap: uiFontSm * 0.5,
+               hudRowGap: 0,
                hudTitleGap: uiFontSm * 0.5,
                menuPadding: uiFontMd,
                betweenButtons: uiFontSm,

@@ -6,12 +6,14 @@ This repo is intentionally separate from the main portfolio site so the game can
 
 ## Gameplay
 
-The player collects stars to gain points and speed. Strikes damage health. Boosts help the player, while blights create temporary hazards.
+The player collects stars to gain points and speed. Strikes cost one life. Boosts help the player, while blights create temporary hazards.
 
 Goal:
 
 - Reach level 10 to win.
 - The win score is `1500`.
+- Health starts at `💚 5/5`.
+- Each strike costs `1` life.
 
 Controls:
 
@@ -50,26 +52,40 @@ Level 6+: health + magnet + double + freeze + daze + fog
 Current boost/blight effects:
 
 - Health 💚: increases health.
-- Magnet 🧲: triples pickup range.
+- Magnet 🧲: triples pickup range, with range scaling up on larger screens.
 - Double 🌟: stars count twice.
 - Freeze 🥶: freezes player movement.
 - Daze 😵‍💫: reverses movement.
 - Fog 😵: limits visible area.
 
+HUD:
+
+- `🏆 current/10`: current level.
+- `⭐ score`: current score.
+- `💚 current/5`: current lives.
+- Top-center constellation: progress toward the next level.
+- Right-side status: pause control plus active boost/blight timers.
+
+Responsive tuning:
+
+- Star, strike, and pickup density scale with canvas area.
+- Player speed scales up on larger screens and stays unchanged on small screens.
+- Magnet range scales up on larger screens and stays unchanged on small screens.
+
 ## Game Files
 
 - `index.html`: standalone page shell.
-- `theme.css`: global theme variables, fonts, colors, glow, and page-level layout.
+- `theme.css`: global theme variables, Annotation Mono font fallback, colors, glow, and page-level layout.
 - `star-shower.css`: game canvas sizing, border, responsive fullscreen behavior, and Star Shower-specific layout.
 - `site.js`: page helpers and falling background particles outside the game canvas.
 - `game.js`: game orchestration, progression rules, canvas theme config, popup state, audio, startup, and win/lose flow.
 - `state.js`: shared mutable runtime state and state setters.
-- `options.js`: saved options, difficulty values, movement/color options, tunables, and shared layout helpers.
+- `options.js`: saved options, difficulty values, movement options, health/magnet tunables, and shared layout helpers.
 - `input.js`: keyboard, pointer, touch, joystick, menu, and pause input.
 - `draw/`: canvas rendering.
 - `entities/`: player, stars, strikes, boosts, blights, collision bursts, and entity tuning constants.
 
-## $\textcolor{darkred}{Dev \ Notes}$
+## Dev Notes
 
 The project uses native JavaScript modules and has no build step. Keep imports relative and browser-safe.
 
