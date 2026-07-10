@@ -744,6 +744,23 @@ export function getCurrentLevelNumber() {
      return getCurrentLevelData().levelNumber;
 }
 
+export function getCurrentLevelProgressRatio() {
+     const currentLevelData = getCurrentLevelData();
+     const nextLevelData = levelRules[currentLevelData.levelNumber] || null;
+
+     if (!nextLevelData) {
+          return 1;
+     }
+
+     const levelRange = nextLevelData.scoreMin - currentLevelData.scoreMin;
+
+     if (levelRange <= 0) {
+          return 1;
+     }
+
+     return Math.max(0, Math.min(1, (starScore - currentLevelData.scoreMin) / levelRange));
+}
+
 export function areStrikesUnlockedForCurrentLevel() {
      return getCurrentLevelData().strikesUnlocked;
 }

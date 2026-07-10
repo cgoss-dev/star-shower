@@ -1,6 +1,3 @@
-export const pauseButtonIcon = new Image();
-pauseButtonIcon.src = "./images/icons/not-started.svg";
-
 export const stepperLeftIcon = new Image();
 stepperLeftIcon.src = "./images/icons/chevron-left.svg";
 

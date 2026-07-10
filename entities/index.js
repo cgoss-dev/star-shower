@@ -1016,6 +1016,7 @@ export function collectStars() {
           stars.splice(i, 1);
 
           addStarScore(1);
+          createFloatingFeedback(`+⭐`, player.x, player.y - player.radius - 14, "star");
           applyTemporaryPlayerFace(playerFaces.star, 60);
           triggerPlayerFacePop(1.25);
           playSoundEffect("star");
@@ -1034,6 +1035,7 @@ export function collectStrikes() {
           strikes.splice(i, 1);
 
           addPlayerHealth(-strikeHealthDamage);
+          createFloatingFeedback(`-💚`, player.x, player.y - player.radius - 14, "strike");
           syncPlayerHealthState();
           applyTemporaryPlayerFace(playerFaces.blight, 30);
           triggerPlayerFacePop(1.25);
@@ -1200,6 +1202,7 @@ function collectBoostPickup(pickup, index) {
      boostblightPickups.splice(index, 1);
 
      applyBoostPickup(pickup.type);
+     createFloatingFeedback(`+${pickup.type?.particle || "⭐"}`, player.x, player.y - player.radius - 14, "boost");
      applyTemporaryPlayerFace(playerFaces.star, 45);
      triggerPlayerFacePop(1.2);
      playSoundEffect("boost");
@@ -1210,6 +1213,7 @@ function collectblightPickup(pickup, index) {
      boostblightPickups.splice(index, 1);
 
      applyblightPickup(pickup.type);
+     createFloatingFeedback(`${pickup.type?.particle || "😵"}`, player.x, player.y - player.radius - 14, "blight");
      syncPlayerHealthState();
      applyTemporaryPlayerFace(playerFaces.blight, 30);
      triggerPlayerFacePop(1.25);
@@ -1260,13 +1264,33 @@ export function createCollisionBurst(x, y, color, burstType, colorRole = null) {
      }
 }
 
+function createFloatingFeedback(text, x, y, colorRole = "star") {
+     const life = 52;
+
+     collisionBursts.push({
+          x,
+          y,
+          dx: randomNumber(-0.18, 0.18),
+          dy: -0.72,
+          life,
+          maxLife: life,
+          size: 15,
+          particle: text,
+          colorRole,
+          colorIndex: getNextPastelColorIndex(),
+          color: getCssColor("--color-white", "#fff"),
+          glowBoost: 1,
+          isFeedbackText: true
+     });
+}
+
 export function updateCollisionBursts() {
      for (let i = collisionBursts.length - 1; i >= 0; i -= 1) {
           const burst = collisionBursts[i];
 
           burst.x += burst.dx;
           burst.y += burst.dy;
-          burst.dy += 0.015;
+          burst.dy += burst.isFeedbackText ? 0 : 0.015;
           burst.life -= 1;
 
           if (burst.life <= 0) {

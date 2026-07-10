@@ -27,6 +27,8 @@ import {
      miniGameHeight,
      player,
      touchControls,
+     playerHealth,
+     starScore,
      gameStarted,
      gamePaused,
      gameMenuOpen,
@@ -67,6 +69,7 @@ import {
      maxOptionLevelIndex,
      getMaxMovementOptionIndex,
      maxColorOptionIndex,
+     maxPlayerHealth,
      movementOptionIndexes,
      isJoystickEnabled,
      getOptionLevelLabel,
@@ -107,6 +110,10 @@ import {
 import {
      getCanvasTheme,
      getCssColor,
+     getCurrentLevelNumber,
+     getCurrentLevelProgressRatio,
+     maxLevelProgressUnits,
+     progressUnitsPerCircle,
      getCurrentScreenActionTexts,
      getCurrentPausedActionTexts,
      getWelcomeInstructionLines,
@@ -125,7 +132,6 @@ import {
 } from "../game.js";
 
 import {
-     pauseButtonIcon,
      stepperLeftIcon,
      stepperRightIcon,
      richTextIconAssetImages
@@ -1132,18 +1138,10 @@ function drawPauseButtonIcon(button, theme) {
 
      const { colors } = theme;
      const buttonStyle = getTextStyle(theme, "pauseButton");
-     const iconSize = Math.min(button.width, button.height) * (buttonStyle.iconScale || 0.62);
-     const iconX = button.x + ((button.width - iconSize) / 2);
-     const iconY = button.y + ((button.height - iconSize) / 2);
-
-     if (pauseButtonIcon.complete && pauseButtonIcon.naturalWidth > 0) {
-          miniGameCtx.drawImage(pauseButtonIcon, iconX, iconY, iconSize, iconSize);
-          return;
-     }
 
      drawGlowingCanvasText(
           miniGameCtx,
-          "\u23EF\uFE0E",
+          "⏯️",
           button.x + (button.width / 2),
           button.y + (button.height / 2) + 1,
           buttonStyle.color || colors.touchText,
@@ -1153,6 +1151,84 @@ function drawPauseButtonIcon(button, theme) {
           theme,
           false
      );
+}
+
+function formatHudUnitValue(value) {
+     return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function getHealthBadgeText() {
+     const currentHearts = Math.max(0, Math.min(maxPlayerHealth, playerHealth)) / progressUnitsPerCircle;
+     const maxHearts = maxPlayerHealth / progressUnitsPerCircle;
+
+     return `💚 ${formatHudUnitValue(currentHearts)}/${formatHudUnitValue(maxHearts)}`;
+}
+
+function getWinBadgeText() {
+     return `🏆 ${getCurrentLevelNumber()}/${maxLevelProgressUnits}`;
+}
+
+function getScoreBadgeText() {
+     return `⭐ ${String(starScore).padStart(3, "0")}`;
+}
+
+function getLevelProgressStars() {
+     const filledStars = Math.round(getCurrentLevelProgressRatio() * maxLevelProgressUnits);
+
+     return Array.from({ length: maxLevelProgressUnits }, (_item, index) => (
+          index < filledStars ? "★" : "☆"
+     )).join("");
+}
+
+function drawHudBadge(theme, text, x, y, align = "left") {
+     if (!miniGameCtx || !text) {
+          return;
+     }
+
+     const { colors } = theme;
+     const textStyle = getTextStyle(theme, "scoreReady");
+     const spacing = getTextStyle(theme, "canvasSpacing");
+     const paddingX = Math.max(8, spacing.uiPadding || 0);
+     const paddingY = Math.max(5, (spacing.uiPadding || 0) * 0.65);
+     const font = getTextFont(theme, "scoreReady", 400);
+
+     miniGameCtx.save();
+     miniGameCtx.font = font;
+
+     const textWidth = miniGameCtx.measureText(text).width;
+     const width = textWidth + (paddingX * 2);
+     const height = textStyle.fontSize + (paddingY * 2);
+     const badgeX = align === "center" ? x - (width / 2) : align === "right" ? x - width : x;
+     const badgeY = y;
+
+     drawPanelBox(badgeX, badgeY, width, height, theme, theme.sizes.borderWidth, colors.menuPanelFill);
+
+     drawGlowingCanvasText(
+          miniGameCtx,
+          text,
+          badgeX + (width / 2),
+          badgeY + (height / 2),
+          textStyle.color || colors.bodyText,
+          font,
+          "center",
+          "middle",
+          theme,
+          textStyle.glow
+     );
+
+     miniGameCtx.restore();
+}
+
+function drawHudBadges(theme) {
+     const spacing = getTextStyle(theme, "canvasSpacing");
+     const padding = spacing.uiPadding || 8;
+     const scoreY = touchControls.pauseButton.y + touchControls.pauseButton.height + Math.max(4, padding * 0.6);
+     const progressY = scoreY + getTextStyle(theme, "scoreReady").fontSize + Math.max(8, padding * 0.75);
+
+     drawHudBadge(theme, getHealthBadgeText(), padding, padding, "left");
+     drawHudBadge(theme, getWinBadgeText(), miniGameWidth - padding, padding, "right");
+     drawHudBadge(theme, getScoreBadgeText(), miniGameWidth / 2, scoreY, "center");
+     drawHudBadge(theme, getLevelProgressStars(), miniGameWidth / 2, progressY, "center");
 }
 
 // ==================================================
@@ -1214,6 +1290,33 @@ export function drawPlayer() {
 
      miniGameCtx.fillText(player.char, player.x, player.y + playerYOffset);
      miniGameCtx.restore();
+}
+
+function drawPlayerHaloRing(radius, alpha, lineWidth, color = "#ffffff") {
+     miniGameCtx.save();
+     miniGameCtx.globalAlpha = alpha;
+     miniGameCtx.strokeStyle = color;
+     miniGameCtx.shadowColor = color;
+     miniGameCtx.shadowBlur = 12;
+     miniGameCtx.lineWidth = lineWidth;
+     miniGameCtx.beginPath();
+     miniGameCtx.arc(player.x, player.y, radius, 0, Math.PI * 2);
+     miniGameCtx.stroke();
+     miniGameCtx.restore();
+}
+
+export function drawPlayerHalo() {
+     if (!miniGameCtx) {
+          return;
+     }
+
+     const healthRatio = Math.max(0, Math.min(1, playerHealth / maxPlayerHealth));
+     const levelRatio = Math.max(0, Math.min(1, getCurrentLevelNumber() / maxLevelProgressUnits));
+     const pulse = 0.5 + (Math.sin(performance.now() / 220) * 0.5);
+     const baseRadius = player.radius + 8;
+
+     drawPlayerHaloRing(baseRadius, 0.16 + (healthRatio * 0.2), 2 + (healthRatio * 2), "rgba(255, 255, 255, 0.95)");
+     drawPlayerHaloRing(baseRadius + 8 + (pulse * 3), 0.08 + (levelRatio * 0.16), 1.5, "rgba(255, 255, 255, 0.8)");
 }
 
 // ==================================================
@@ -2398,9 +2501,14 @@ export function drawGame() {
           drawBoostblightPickups();
           drawCollisionBursts();
           drawPlayerTrail();
+          drawPlayerHalo();
           drawPlayer();
 
           drawFogOverlay();
+
+          if (!gameMenuOpen && !gameOver && !gameWon) {
+               drawHudBadges(theme);
+          }
 
           drawJoystick(theme);
 
