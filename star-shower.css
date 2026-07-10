@@ -93,6 +93,10 @@ body {
      align-items: stretch;
      justify-content: stretch;
      touch-action: none;
+     user-select: none;
+     -webkit-user-select: none;
+     -webkit-touch-callout: none;
+     -webkit-tap-highlight-color: transparent;
 }
 
 @media (min-width: 42rem) and (min-height: 36rem) {
@@ -109,6 +113,21 @@ body {
           --game-board-height: 100dvh;
           --game-board-top: 0px;
           --header-top: 0px;
+     }
+
+     html,
+     body,
+     .body-ody,
+     .main-squeeze {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+     }
+
+     html::-webkit-scrollbar,
+     body::-webkit-scrollbar,
+     .body-ody::-webkit-scrollbar,
+     .main-squeeze::-webkit-scrollbar {
+          display: none;
      }
 
      .body-ody {
@@ -155,6 +174,10 @@ body {
      display: block;
      border-radius: inherit;
      touch-action: none;
+     user-select: none;
+     -webkit-user-select: none;
+     -webkit-touch-callout: none;
+     -webkit-tap-highlight-color: transparent;
 }
 
 body.game-running,

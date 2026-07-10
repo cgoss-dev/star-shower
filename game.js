@@ -312,6 +312,15 @@ export function getCanvasTheme() {
                glow: true
           },
 
+          hudProgress: {
+               font: "body",
+               fontSize: uiFontSm * 1.5,
+               letterSpacing: 0,
+               color: "#fff",
+               rainbow: false,
+               glow: true
+          },
+
           buttonsOptions: {
                font: "body",
                fontSize: uiFontSm,

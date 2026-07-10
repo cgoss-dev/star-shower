@@ -1105,14 +1105,14 @@ function getStatusText() {
      return `${activeStatusUi.particle} ${Math.ceil(activeStatusUi.timer / 60)}s`;
 }
 
-function drawHudText(theme, text, x, y, align = "left") {
+function drawHudText(theme, text, x, y, align = "left", styleName = "scoreReady") {
      if (!miniGameCtx || !text) {
           return;
      }
 
      const { colors } = theme;
-     const textStyle = getTextStyle(theme, "scoreReady");
-     const font = getTextFont(theme, "scoreReady", 400);
+     const textStyle = getTextStyle(theme, styleName);
+     const font = getTextFont(theme, styleName, 400);
 
      miniGameCtx.save();
      drawGlowingCanvasText(
@@ -1141,7 +1141,7 @@ function drawHudBadges(theme) {
      drawHudText(theme, getWinBadgeText(), leftX, padding, "left");
      drawHudText(theme, getScoreBadgeText(), leftX, padding + lineHeight, "left");
      drawHudText(theme, getHealthBadgeText(), leftX, padding + (lineHeight * 2), "left");
-     drawHudText(theme, getLevelProgressStars(), miniGameWidth / 2, padding, "center");
+     drawHudText(theme, getLevelProgressStars(), miniGameWidth / 2, padding, "center", "hudProgress");
 
      drawHudText(theme, "⏯️", rightX, padding, "right");
 

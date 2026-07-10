@@ -159,6 +159,9 @@ export function bindPointerInput() {
 
      miniGameCanvas.addEventListener("pointerdown", handlePointerDown);
      miniGameCanvas.addEventListener("wheel", handleWheel, { passive: false });
+     miniGameCanvas.addEventListener("contextmenu", preventCanvasGestureDefault);
+     miniGameCanvas.addEventListener("selectstart", preventCanvasGestureDefault);
+     miniGameCanvas.addEventListener("dblclick", preventCanvasGestureDefault);
      window.addEventListener("pointermove", handlePointerMove, { passive: false });
      window.addEventListener("pointerup", handlePointerUp, { passive: false });
      window.addEventListener("pointercancel", handlePointerCancel, { passive: false });
@@ -201,6 +204,12 @@ function getCanvasPoint(event) {
 
 function preventPointerDefault(event) {
      if (event.cancelable && (event.pointerType === "touch" || event.type === "wheel")) {
+          event.preventDefault();
+     }
+}
+
+function preventCanvasGestureDefault(event) {
+     if (event.cancelable) {
           event.preventDefault();
      }
 }
