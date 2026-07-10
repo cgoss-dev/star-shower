@@ -119,6 +119,8 @@ export const maxPlayerHealth = 10;
 export const gameplayStartingHealth = maxPlayerHealth;
 export const strikeHealthDamage = 1;
 export const magnetCollisionRadiusMultiplier = 3;
+export const magnetRadiusMinScale = 1;
+export const magnetRadiusMaxScale = 1.65;
 
 export const touchArriveDistance = 2;
 

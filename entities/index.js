@@ -66,6 +66,8 @@ import {
      starSizeMaxFallback,
      strikeHealthDamage,
      magnetCollisionRadiusMultiplier,
+     magnetRadiusMinScale,
+     magnetRadiusMaxScale,
      statusFlashSeconds,
      touchArriveDistance,
      movementOptionIndexes
@@ -877,7 +879,13 @@ function getStarCollisionRadiusMultiplier() {
           return 1;
      }
 
-     return magnetCollisionRadiusMultiplier;
+     const areaScale = Math.sqrt(getSpawnDensityScale());
+     const magnetScale = Math.max(
+          magnetRadiusMinScale,
+          Math.min(magnetRadiusMaxScale, areaScale)
+     );
+
+     return magnetCollisionRadiusMultiplier * magnetScale;
 }
 
 function isCollidingWithStarCollectionRadius(star) {
