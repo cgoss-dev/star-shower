@@ -11,7 +11,7 @@ The player collects stars to gain points and speed. Strikes cost one life. Boost
 Goal:
 
 - Reach level 10 to win.
-- The win score is `1500`.
+- The win score is `200`.
 - Health starts at `💚 5/5`.
 - Each strike costs `1` life.
 
@@ -27,15 +27,15 @@ Levels are score-based:
 
 ```text
 Level 1: 0
-Level 2: 25
-Level 3: 75
-Level 4: 150
-Level 5: 250
-Level 6: 400
-Level 7: 600
-Level 8: 850
-Level 9: 1150
-Level 10: 1500
+Level 2: 10
+Level 3: 25
+Level 4: 50
+Level 5: 75
+Level 6: 100
+Level 7: 125
+Level 8: 150
+Level 9: 175
+Level 10: 200
 ```
 
 Boost/blight unlock schedule:

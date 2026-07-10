@@ -511,10 +511,9 @@ export function getCssPixelSize(variableName, fallback = 10) {
 
 // ====================================================================================================
 // NOTE: LEVELS
-// `scoreMin` is inclusive. Level 10 starts at the win threshold.
+// `scoreMin` is inclusive. The last level threshold is the win threshold.
 // ====================================================================================================
 
-export const winScore = 1500;
 export const startOverlayDuration = 120;
 export const overlayFadeFrames = 30;
 export const maxLevelProgressUnits = 10;
@@ -522,15 +521,16 @@ export const progressUnitsPerCircle = 2;
 const levelScoreMins = [
      0,
      10,
+     25,
      50,
+     75,
      100,
-     250,
-     500,
-     750,
-     1000,
-     1250,
-     1500
+     125,
+     150,
+     175,
+     200
 ];
+export const winScore = levelScoreMins.at(-1) ?? 0;
 
 const levelChallengeProgression = [
      {
