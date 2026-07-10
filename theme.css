@@ -51,7 +51,7 @@
      /* TYPOGRAPHY */
           --font-body: "Annotation Mono", monospace;
           --font-display: "Bungee Shade", monospace;
-          --font-size-sm: clamp(1rem, min(2vw, 2dvh), 1.2rem);
+          --font-size-sm: clamp(2rem, min(4vw, 4dvh), 2.4rem);
           --font-size-md: calc(var(--font-size-sm) * 2);
           --font-size-lg: calc(var(--font-size-md) * 2);
           --marquee-font-size: var(--font-size-lg);

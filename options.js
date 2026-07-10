@@ -118,9 +118,9 @@ export const optionDefinitions = {
 export const maxPlayerHealth = 5;
 export const gameplayStartingHealth = maxPlayerHealth;
 export const strikeHealthDamage = 1;
-export const magnetCollisionRadiusMultiplier = 3;
+export const magnetCollisionRadiusMultiplier = 3.5;
 export const magnetRadiusMinScale = 1;
-export const magnetRadiusMaxScale = 1.65;
+export const magnetRadiusMaxScale = 2.25;
 
 export const touchArriveDistance = 2;
 
