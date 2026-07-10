@@ -769,6 +769,7 @@ const timedBoostblightNames = [
      "daze",
      "fog"
 ];
+const maxTimedBoostblightStack = 2;
 
 export function secondsToFrames(seconds) {
      return Math.round(seconds * framesPerSecond);
@@ -782,12 +783,6 @@ function getStatusFlashFrames() {
      return secondsToFrames(statusFlashSeconds);
 }
 
-function clearTimedBoostblights() {
-     timedBoostblightNames.forEach((boostblightName) => {
-          setBoostblightTimer(boostblightName, 0);
-     });
-}
-
 function syncScoreMultiplierFromBoostblights() {
      const nextMultiplier = isBoostblightActive("double") ? 2 : 1;
 
@@ -796,8 +791,21 @@ function syncScoreMultiplierFromBoostblights() {
      }
 }
 
-function setSingleTimedBoostblight(boostblightName, durationFrames) {
-     clearTimedBoostblights();
+function getActiveTimedBoostblightNames() {
+     return timedBoostblightNames.filter((boostblightName) => isBoostblightActive(boostblightName));
+}
+
+function setStackedTimedBoostblight(boostblightName, durationFrames) {
+     const activeNames = getActiveTimedBoostblightNames();
+
+     if (!isBoostblightActive(boostblightName) && activeNames.length >= maxTimedBoostblightStack) {
+          const expiringName = activeNames.reduce((lowestName, currentName) => (
+               boostblightTimers[currentName] < boostblightTimers[lowestName] ? currentName : lowestName
+          ), activeNames[0]);
+
+          setBoostblightTimer(expiringName, 0);
+     }
+
      setBoostblightTimer(boostblightName, durationFrames);
      syncScoreMultiplierFromBoostblights();
 }
@@ -831,22 +839,34 @@ function getBoostblightTypeByName(boostblightName) {
 }
 
 function syncActiveStatusUiFromBoostblights() {
-     const activeBoostblightName = getHighestPriorityActiveBoostblight();
+     const activeBoostblightNames = [
+          getHighestPriorityActiveBoostblight(),
+          ...getActiveTimedBoostblightNames()
+     ].filter((boostblightName, index, names) => (
+          boostblightName && names.indexOf(boostblightName) === index
+     )).slice(0, maxTimedBoostblightStack);
 
-     if (!activeBoostblightName) {
+     if (activeBoostblightNames.length === 0) {
           clearActiveStatusUi();
           return;
      }
 
-     const type = getBoostblightTypeByName(activeBoostblightName);
+     const type = getBoostblightTypeByName(activeBoostblightNames[0]);
 
      if (!type) {
           clearActiveStatusUi();
           return;
      }
 
+     const statusText = activeBoostblightNames.map((boostblightName) => {
+          const statusType = getBoostblightTypeByName(boostblightName);
+          const secondsLeft = Math.ceil((boostblightTimers[boostblightName] || 0) / framesPerSecond);
+
+          return statusType ? `${statusType.particle} ${secondsLeft}s` : "";
+     }).filter(Boolean).join("  ");
+
      if (type.lastsUntilUsed) {
-          setActiveStatusUi(type.label, type.particle, 0, 0);
+          setActiveStatusUi(type.label, type.particle, 0, 0, statusText);
           return;
      }
 
@@ -854,7 +874,8 @@ function syncActiveStatusUiFromBoostblights() {
           type.label,
           type.particle,
           boostblightTimers[type.name] || 0,
-          getBoostblightDurationFrames(type)
+          getBoostblightDurationFrames(type),
+          statusText
      );
 }
 
@@ -875,12 +896,14 @@ function applyBoostPickup(type) {
           return;
      }
 
-     setSingleTimedBoostblight(type.name, getBoostblightDurationFrames(type));
+     setStackedTimedBoostblight(type.name, getBoostblightDurationFrames(type));
      syncActiveStatusUiFromBoostblights();
 }
 
 function applyblightPickup(type) {
-     setSingleTimedBoostblight(type.name, getBoostblightDurationFrames(type));
+     addPlayerHealth(-strikeHealthDamage);
+     setStackedTimedBoostblight(type.name, getBoostblightDurationFrames(type));
+     syncPlayerHealthState();
      syncActiveStatusUiFromBoostblights();
 }
 
@@ -1235,8 +1258,7 @@ function collectblightPickup(pickup, index) {
      boostblightPickups.splice(index, 1);
 
      applyblightPickup(pickup.type);
-     createFloatingFeedback(`${pickup.type?.particle || "😵"}`, player.x, player.y - player.radius - 14, "blight");
-     syncPlayerHealthState();
+     createFloatingFeedback(`${pickup.type?.particle || "😵"} -💚`, player.x, player.y - player.radius - 14, "blight");
      applyTemporaryPlayerFace(playerFaces.blight, 30);
      triggerPlayerFacePop(1.25);
      playSoundEffect("blight");

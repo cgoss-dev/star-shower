@@ -97,6 +97,7 @@ export const boostblightTimers = {
 export const activeStatusUi = {
      label: "CLEAR",
      particle: "",
+     text: "",
      timer: 0,
      duration: 0
 };
@@ -418,9 +419,10 @@ export function decrementBoostblightTimers() {
      }
 }
 
-export function setActiveStatusUi(label, particle = "", timer = 0, duration = timer) {
+export function setActiveStatusUi(label, particle = "", timer = 0, duration = timer, text = "") {
      activeStatusUi.label = label;
      activeStatusUi.particle = particle;
+     activeStatusUi.text = text;
      activeStatusUi.timer = Math.max(0, timer);
      activeStatusUi.duration = Math.max(0, duration);
 }
@@ -428,6 +430,7 @@ export function setActiveStatusUi(label, particle = "", timer = 0, duration = ti
 export function clearActiveStatusUi() {
      activeStatusUi.label = "CLEAR";
      activeStatusUi.particle = "";
+     activeStatusUi.text = "";
      activeStatusUi.timer = 0;
      activeStatusUi.duration = 0;
 }

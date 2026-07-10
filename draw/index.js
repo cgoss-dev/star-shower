@@ -644,6 +644,28 @@ function getTextFont(theme, styleName, fontWeight = 400, fontOverride = null, fo
      return `${fontWeight} ${fontSize}px ${fontFamily}`;
 }
 
+function getFittedTextFont(theme, styleName, text, maxWidth = Infinity, fontWeight = 400) {
+     const style = getTextStyle(theme, styleName);
+     const minFontSize = 10;
+     const baseFontSize = Math.max(minFontSize, style.fontSize ?? theme.sizes.uiFontSm);
+
+     if (!miniGameCtx || !Number.isFinite(maxWidth) || maxWidth <= 0) {
+          return getTextFont(theme, styleName, fontWeight);
+     }
+
+     miniGameCtx.font = getTextFont(theme, styleName, fontWeight, null, baseFontSize);
+
+     const measuredWidth = miniGameCtx.measureText(text).width;
+
+     if (measuredWidth <= maxWidth) {
+          return getTextFont(theme, styleName, fontWeight, null, baseFontSize);
+     }
+
+     const fittedFontSize = Math.max(minFontSize, Math.floor(baseFontSize * (maxWidth / measuredWidth)));
+
+     return getTextFont(theme, styleName, fontWeight, null, fittedFontSize);
+}
+
 function getTextColor(theme, styleName, letterIndex = 0) {
      const style = getTextStyle(theme, styleName);
 
@@ -942,6 +964,7 @@ function drawUnifiedTextButton(button, label, theme, isFocused = false, fontWeig
      const { colors } = theme;
      const buttonStyle = getTextStyle(theme, "buttonsOptions");
      const resolvedFontSize = fontSize ?? buttonStyle.fontSize;
+     const labelMaxWidth = Math.max(1, button.width - (buttonStyle.buttonPadding * 2));
      const centerX = button.x + (button.width / 2);
      const centerY = button.y + (button.height / 2);
      const cornerRadius = getControlCornerRadius(theme, button.width, button.height);
@@ -966,7 +989,22 @@ function drawUnifiedTextButton(button, label, theme, isFocused = false, fontWeig
           centerX,
           centerY + 1,
           buttonStyle.color || colors.controlText,
-          getTextFont(theme, "buttonsOptions", fontWeight, null, resolvedFontSize),
+          getFittedTextFont(
+               {
+                    ...theme,
+                    text: {
+                         ...theme.text,
+                         buttonsOptions: {
+                              ...buttonStyle,
+                              fontSize: resolvedFontSize
+                         }
+                    }
+               },
+               "buttonsOptions",
+               label,
+               labelMaxWidth,
+               fontWeight
+          ),
           "center",
           "middle",
           theme,
@@ -1097,22 +1135,34 @@ function getLevelProgressStars() {
      )).join("");
 }
 
-function getStatusText() {
-     if (!activeStatusUi.particle || activeStatusUi.timer <= 0) {
-          return "";
+function getStatusTextLines() {
+     if (activeStatusUi.text) {
+          return activeStatusUi.text.split(/\s{2,}/).filter(Boolean);
      }
 
-     return `${activeStatusUi.particle} ${Math.ceil(activeStatusUi.timer / 60)}s`;
+     if (!activeStatusUi.particle || activeStatusUi.timer <= 0) {
+          return [];
+     }
+
+     return [`${activeStatusUi.particle} ${Math.ceil(activeStatusUi.timer / 60)}s`];
 }
 
-function drawHudText(theme, text, x, y, align = "left", styleName = "scoreReady") {
+function getCompactStatusText(statusText, maxWidth) {
+     if (maxWidth >= 90) {
+          return statusText;
+     }
+
+     return statusText.split(/\s+/)[0] || statusText;
+}
+
+function drawHudText(theme, text, x, y, align = "left", styleName = "scoreReady", maxWidth = Infinity) {
      if (!miniGameCtx || !text) {
           return;
      }
 
      const { colors } = theme;
      const textStyle = getTextStyle(theme, styleName);
-     const font = getTextFont(theme, styleName, 400);
+     const font = getFittedTextFont(theme, styleName, text, maxWidth, 400);
 
      miniGameCtx.save();
      drawGlowingCanvasText(
@@ -1136,18 +1186,28 @@ function drawHudBadges(theme) {
      const lineHeight = getTextStyle(theme, "scoreReady").fontSize + spacing.hudRowGap;
      const leftX = padding;
      const rightX = miniGameWidth - padding;
-     const statusText = getStatusText();
+     const statusLines = getStatusTextLines();
+     const sideColumnWidth = Math.max(64, (miniGameWidth - (padding * 2)) * 0.3);
+     const centerWidth = Math.max(80, miniGameWidth - (padding * 2) - (sideColumnWidth * 2));
 
-     drawHudText(theme, getWinBadgeText(), leftX, padding, "left");
-     drawHudText(theme, getScoreBadgeText(), leftX, padding + lineHeight, "left");
-     drawHudText(theme, getHealthBadgeText(), leftX, padding + (lineHeight * 2), "left");
-     drawHudText(theme, getLevelProgressStars(), miniGameWidth / 2, padding, "center", "hudProgress");
+     drawHudText(theme, getWinBadgeText(), leftX, padding, "left", "scoreReady", sideColumnWidth);
+     drawHudText(theme, getScoreBadgeText(), leftX, padding + lineHeight, "left", "scoreReady", sideColumnWidth);
+     drawHudText(theme, getHealthBadgeText(), leftX, padding + (lineHeight * 2), "left", "scoreReady", sideColumnWidth);
+     drawHudText(theme, getLevelProgressStars(), miniGameWidth / 2, padding, "center", "hudProgress", centerWidth);
 
-     drawHudText(theme, "⏯️", rightX, padding, "right");
+     drawHudText(theme, "⏯️", rightX, padding, "right", "scoreReady", sideColumnWidth);
 
-     if (statusText) {
-          drawHudText(theme, statusText, rightX, padding + lineHeight, "right");
-     }
+     statusLines.forEach((statusText, index) => {
+          drawHudText(
+               theme,
+               getCompactStatusText(statusText, sideColumnWidth),
+               rightX,
+               padding + (lineHeight * (index + 1)),
+               "right",
+               "scoreReady",
+               sideColumnWidth
+          );
+     });
 }
 
 // ==================================================
@@ -1963,7 +2023,7 @@ function drawSharedActionScreen(
      const titleStyle = getTextStyle(theme, titleStyleName);
      const buttonStyle = getTextStyle(theme, "buttonsOptions");
      const canvasSpacing = getTextStyle(theme, "canvasSpacing");
-     const titleFontSize = getWelcomeMarqueeFontSize(theme, titleLines, config);
+     let titleFontSize = getWelcomeMarqueeFontSize(theme, titleLines, config);
      const titleLetterSpacing = titleStyle.letterSpacing ?? 0;
      const titleStackGap = titleStyle.stackGap;
      const titleMenuGap = canvasSpacing.menuPadding;
@@ -1972,6 +2032,8 @@ function drawSharedActionScreen(
      const instructionGap = resolvedInstructionLines.length ? canvasSpacing.uiRowGap : 0;
      const instructionLineHeight = buttonStyle.fontSize * 1.5;
      const instructionBlockHeight = resolvedInstructionLines.length * instructionLineHeight;
+     const instructionMaxWidth = Math.max(120, miniGameWidth - (canvasSpacing.uiPadding * 2));
+     const availableStackHeight = Math.max(1, miniGameHeight - (canvasSpacing.uiPadding * 2));
      const websiteActionText = "DEVELOPER";
 
      miniGameCtx.save();
@@ -1993,52 +2055,116 @@ function drawSharedActionScreen(
           ) - (buttonStyle.buttonPadding * 2)
      }));
 
-     function getActionRows() {
-          if (miniGameWidth > 520) {
-               return [measuredActions];
-          }
-
-          if (actionTexts[0] === "RESUME") {
-               return [
-                    measuredActions.slice(0, 2),
-                    measuredActions.slice(2, 4),
-                    measuredActions.slice(4)
-               ];
-          }
-
-          return [
-               measuredActions.slice(0, 3),
-               measuredActions.slice(3)
-          ];
-     }
-
      const actionGap = canvasSpacing.betweenButtons;
-     const actionRowGap = canvasSpacing.uiRowGap;
+     let actionRowGap = canvasSpacing.uiRowGap;
      const tallestButtonHeight = getUnifiedButtonHeight(
           theme,
           buttonStyle.fontSize,
           buttonStyle.buttonPadding
      );
+     const maxActionRowWidth = Math.max(120, miniGameWidth - (canvasSpacing.uiPadding * 2));
+
+     function getActionButtonWidth(item) {
+          return Math.min(
+               maxActionRowWidth,
+               item.textWidth + (buttonStyle.buttonPadding * 2)
+          );
+     }
+
+     function shouldUseFullActionRow(item) {
+          return getActionButtonWidth(item) > (maxActionRowWidth / 2);
+     }
+
+     function getActionRows() {
+          const rows = [];
+          let currentRow = [];
+          let currentRowWidth = 0;
+
+          measuredActions.forEach((item) => {
+               const buttonWidth = getActionButtonWidth(item);
+               const isFullRow = shouldUseFullActionRow(item);
+
+               if (isFullRow) {
+                    if (currentRow.length) {
+                         rows.push(currentRow);
+                         currentRow = [];
+                         currentRowWidth = 0;
+                    }
+
+                    rows.push([item]);
+                    return;
+               }
+
+               const nextRowWidth = currentRow.length
+                    ? currentRowWidth + actionGap + buttonWidth
+                    : buttonWidth;
+
+               if (currentRow.length && nextRowWidth > maxActionRowWidth) {
+                    rows.push(currentRow);
+                    currentRow = [item];
+                    currentRowWidth = buttonWidth;
+                    return;
+               }
+
+               currentRow.push(item);
+               currentRowWidth = nextRowWidth;
+          });
+
+          if (currentRow.length) {
+               rows.push(currentRow);
+          }
+
+          return rows;
+     }
+
      const actionRows = getActionRows().filter((row) => row.length);
-     const actionBlockHeight =
+     let actionBlockHeight =
           (actionRows.length * tallestButtonHeight) +
           (actionRowGap * Math.max(0, actionRows.length - 1));
 
-     const titleBlockHeight =
+     let titleBlockHeight =
           titleFontSize +
           ((titleLines.length - 1) * (titleFontSize + titleStackGap));
 
-     const totalTitleBlockHeight =
+     let totalTitleBlockHeight =
           titleBlockHeight +
           titleContentGap +
           instructionBlockHeight +
           instructionGap +
           actionBlockHeight;
 
+     while (totalTitleBlockHeight > availableStackHeight && titleFontSize > titleStyle.minSize) {
+          titleFontSize = Math.max(titleStyle.minSize, titleFontSize - (titleStyle.shrinkStep || 2));
+          titleBlockHeight =
+               titleFontSize +
+               ((titleLines.length - 1) * (titleFontSize + titleStackGap));
+          totalTitleBlockHeight =
+               titleBlockHeight +
+               titleContentGap +
+               instructionBlockHeight +
+               instructionGap +
+               actionBlockHeight;
+     }
+
+     if (totalTitleBlockHeight > availableStackHeight) {
+          actionRowGap = Math.max(2, actionRowGap / 2);
+          actionBlockHeight =
+               (actionRows.length * tallestButtonHeight) +
+               (actionRowGap * Math.max(0, actionRows.length - 1));
+          totalTitleBlockHeight =
+               titleBlockHeight +
+               titleContentGap +
+               instructionBlockHeight +
+               instructionGap +
+               actionBlockHeight;
+     }
+
      const titleCenterY = miniGameHeight / 2;
-     const stackTopY =
+     const stackTopY = Math.max(
+          canvasSpacing.uiPadding,
           titleCenterY -
-          (totalTitleBlockHeight / 2);
+          (totalTitleBlockHeight / 2)
+     );
 
      miniGameCtx.font = getTextFont(theme, titleStyleName, 400, null, titleFontSize);
      miniGameCtx.textAlign = "left";
@@ -2099,7 +2225,7 @@ function drawSharedActionScreen(
                     miniGameWidth / 2,
                     instructionY + (lineIndex * instructionLineHeight),
                     buttonStyle.color,
-                    getTextFont(theme, "buttonsOptions", 400),
+                    getFittedTextFont(theme, "buttonsOptions", line, instructionMaxWidth, 400),
                     "center",
                     "middle",
                     theme,
@@ -2119,12 +2245,12 @@ function drawSharedActionScreen(
      actionRows.forEach((rowActions, rowIndex) => {
           const actionY = firstActionY + (rowIndex * (tallestButtonHeight + actionRowGap));
           const totalActionWidth =
-               rowActions.reduce((sum, item) => sum + item.textWidth + (buttonStyle.buttonPadding * 2), 0) +
+               rowActions.reduce((sum, item) => sum + getActionButtonWidth(item), 0) +
                (actionGap * Math.max(0, rowActions.length - 1));
           let currentX = (miniGameWidth - totalActionWidth) / 2;
 
           rowActions.forEach((item) => {
-               const buttonWidth = item.textWidth + (buttonStyle.buttonPadding * 2);
+               const buttonWidth = getActionButtonWidth(item);
                const buttonHeight = tallestButtonHeight;
                const buttonX = currentX;
                const buttonY = actionY - (buttonHeight / 2);

@@ -48,7 +48,7 @@ body {
 }
 
 .body-ody {
-     width: 100vw;
+     width: 100%;
      height: 100dvh;
      min-height: 100dvh;
      overflow: hidden;
@@ -108,7 +108,7 @@ body {
 
 @media (max-width: 42rem) {
      :root {
-          --game-board-width: 100vw;
+          --game-board-width: 100%;
           --game-board-height-available: 100dvh;
           --game-board-height: 100dvh;
           --game-board-top: 0px;
@@ -119,6 +119,8 @@ body {
      body,
      .body-ody,
      .main-squeeze {
+          width: 100%;
+          max-width: 100dvw;
           scrollbar-width: none;
           -ms-overflow-style: none;
      }
@@ -132,16 +134,20 @@ body {
 
      .body-ody {
           padding: 0;
+          width: min(100%, 100dvw);
+          max-width: 100dvw;
      }
 
      .main-squeeze {
           height: 100dvh;
+          width: min(100%, 100dvw);
+          max-width: 100dvw;
      }
 
      .hero-stack,
      .game-container {
-          width: 100vw;
-          max-width: 100vw;
+          width: min(100%, 100dvw);
+          max-width: 100dvw;
           border: 0;
           border-radius: 0;
           box-shadow: none;
