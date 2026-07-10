@@ -5,8 +5,8 @@ Drop audio files in this folder using these filenames:
 - `music-loop.mp3`
 - `star.wav`
 - `strike.wav`
-- `boost-effect.wav`
-- `blight-effect.wav`
+- `help-effect.wav`
+- `hurt-effect.wav`
 - `win.wav`
 - `lose.wav`
 - `pause.wav`

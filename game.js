@@ -16,10 +16,10 @@ import {
      gameOverlayDuration,
      musicLevel,
      soundEffectsLevel,
-     blightLevel,
+     hurtLevel,
      movementLevel,
      colorLevel,
-     boostblightPickups,
+     helphurtPickups,
      starScore,
      playerHealth,
 
@@ -35,7 +35,7 @@ import {
      setGameOverlayDuration,
      setMusicLevel,
      setSoundEffectsLevel,
-     setblightLevel,
+     setHurtLevel,
      setMovementLevel,
      setColorLevel,
      setMiniGameSize,
@@ -71,17 +71,17 @@ import {
      updatePlayer,
      updatePlayerFaceState,
      resetEntityColorCycle,
-     updateBoostblightState,
+     updateHelphurtState,
      updateStarSpawns,
      updateStars,
      updateStrikes,
-     updateBoostblightPickups,
+     updateHelphurtPickups,
      updateCollisionBursts,
      collectStars,
      collectStrikes,
-     collectBoostblightPickups,
+     collectHelphurtPickups,
      updatePlayerTrail,
-     resetBoostblightIntroState
+     resetHelphurtIntroState
 } from "./entities/index.js";
 
 import {
@@ -116,12 +116,12 @@ export const starShowerRainbowPalette = [
 
 
 
-export const starShowerBoostblightIcons = {
+export const starShowerHelphurtIcons = {
 
-     // NOTE: BOOSTS
+     // NOTE: HELPS
 
      iconHealth: {
-          category: "boost",
+          category: "help",
           name: "health",
           label: "HEALTH",
           particle: "💚",
@@ -133,7 +133,7 @@ export const starShowerBoostblightIcons = {
      },
 
      iconMagnet: {
-          category: "boost",
+          category: "help",
           name: "magnet",
           label: "MAGNET",
           particle: "🧲",
@@ -145,7 +145,7 @@ export const starShowerBoostblightIcons = {
      },
 
      iconDouble: {
-          category: "boost",
+          category: "help",
           name: "double",
           label: "DOUBLE",
           particle: "🌟",
@@ -156,10 +156,10 @@ export const starShowerBoostblightIcons = {
           xOffset: -1
      },
 
-     // NOTE: blightS
+     // NOTE: HURTS
 
      iconFreeze: {
-          category: "blight",
+          category: "hurt",
           name: "freeze",
           label: "FREEZE",
           particle: "🥶",
@@ -171,7 +171,7 @@ export const starShowerBoostblightIcons = {
      },
 
      iconDaze: {
-          category: "blight",
+          category: "hurt",
           name: "daze",
           label: "DAZE",
           particle: "😵‍💫",
@@ -183,7 +183,7 @@ export const starShowerBoostblightIcons = {
      },
 
      iconFog: {
-          category: "blight",
+          category: "hurt",
           name: "fog",
           label: "FOG",
           particle: "😵",
@@ -357,7 +357,7 @@ export function getCanvasTheme() {
 
           guideIcons: {
                ...starShowerGuideIcons,
-               ...starShowerBoostblightIcons
+               ...starShowerHelphurtIcons
           }
      };
 
@@ -547,48 +547,48 @@ const levelChallengeProgression = [
           introDescription: "Increases health.",
           introIcon: "iconHealth",
           strikesUnlocked: true,
-          boostNames: ["health"],
-          blightNames: []
+          helpNames: ["health"],
+          hurtNames: []
      },
      {
           introText: "FREEZE",
           introDescription: "Freezes player.",
           introIcon: "iconFreeze",
           strikesUnlocked: true,
-          boostNames: ["health"],
-          blightNames: ["freeze"]
+          helpNames: ["health"],
+          hurtNames: ["freeze"]
      },
      {
           introText: "MAGNET",
           introDescription: "Triples pickup range.",
           introIcon: "iconMagnet",
           strikesUnlocked: true,
-          boostNames: ["health", "magnet"],
-          blightNames: ["freeze"]
+          helpNames: ["health", "magnet"],
+          hurtNames: ["freeze"]
      },
      {
           introText: "DAZE",
           introDescription: "Reverses controls.",
           introIcon: "iconDaze",
           strikesUnlocked: true,
-          boostNames: ["health", "magnet"],
-          blightNames: ["freeze", "daze"]
+          helpNames: ["health", "magnet"],
+          hurtNames: ["freeze", "daze"]
      },
      {
           introText: "DOUBLE",
           introDescription: "Stars count twice.",
           introIcon: "iconDouble",
           strikesUnlocked: true,
-          boostNames: ["health", "magnet", "double"],
-          blightNames: ["freeze", "daze"]
+          helpNames: ["health", "magnet", "double"],
+          hurtNames: ["freeze", "daze"]
      },
      {
           introText: "FOG",
           introDescription: "Limits vision.",
           introIcon: "iconFog",
           strikesUnlocked: true,
-          boostNames: ["health", "magnet", "double"],
-          blightNames: ["freeze", "daze", "fog"]
+          helpNames: ["health", "magnet", "double"],
+          hurtNames: ["freeze", "daze", "fog"]
      }
 ];
 
@@ -603,8 +603,8 @@ const levelRules = Array.from({ length: maxLevelProgressUnits }, (_, index) => {
           introDescription: index < levelChallengeProgression.length ? progression.introDescription : "",
           introIcon: index < levelChallengeProgression.length ? progression.introIcon : "",
           strikesUnlocked: progression.strikesUnlocked,
-          boostNames: progression.boostNames,
-          blightNames: progression.blightNames
+          helpNames: progression.helpNames,
+          hurtNames: progression.hurtNames
      };
 });
 
@@ -617,7 +617,7 @@ const screenActionTexts = ["NEW GAME", "TIPS", "OPTIONS", "DEVELOPER"];
 const pausedActionTexts = ["RESUME", "NEW GAME", "TIPS", "OPTIONS", "DEVELOPER"];
 const welcomeInstructionLines = [
      "Collect stars, avoid strikes.",
-     "Effects can boost or blight."
+     "Effects can help or hurt."
 ];
 
 export function getWelcomeTitleLines() {
@@ -672,7 +672,7 @@ export function getHowToPlayLines() {
      ];
 }
 
-export function getBoostLines() {
+export function getHelpLines() {
      return [
           "{iconHealth} Health: increases health.",
           "{iconMagnet} Magnet: triples pickup range.",
@@ -680,7 +680,7 @@ export function getBoostLines() {
      ];
 }
 
-export function getblightLines() {
+export function getHurtLines() {
      return [
           "{iconFreeze} Freeze: freezes player.",
           "{iconDaze} Daze: reverses movement.",
@@ -691,10 +691,10 @@ export function getblightLines() {
 export function getDifficultyOptionLines() {
      return [
           "OFF: stars and strikes.",
-          "MIN: boosts and blights 0.25x.",
-          "LOW: boosts and blights 1x.",
-          "MED: boosts and blights 2x.",
-          "MAX: boosts and blights 4x."
+          "MIN: helps and hurts 0.25x.",
+          "LOW: helps and hurts 1x.",
+          "MED: helps and hurts 2x.",
+          "MAX: helps and hurts 4x."
      ];
 }
 
@@ -725,8 +725,8 @@ export function getMovementOptionLines() {
 
 export function getColorOptionLines() {
      return [
-          "Bright: white stars; boosts and blights use bright colors.",
-          "Pastel: white stars; boosts and blights use pastel colors.",
+          "Bright: white stars; helps and hurts use bright colors.",
+          "Pastel: white stars; helps and hurts use pastel colors.",
           "Monochrome: white, gray, and black."
      ];
 }
@@ -774,12 +774,12 @@ export function areStrikesUnlockedForCurrentLevel() {
      return getCurrentLevelData().strikesUnlocked;
 }
 
-export function getUnlockedBoostNamesForCurrentLevel() {
-     return getCurrentLevelData().boostNames;
+export function getUnlockedHelpNamesForCurrentLevel() {
+     return getCurrentLevelData().helpNames;
 }
 
-export function getUnlockedblightNamesForCurrentLevel() {
-     return getCurrentLevelData().blightNames;
+export function getUnlockedHurtNamesForCurrentLevel() {
+     return getCurrentLevelData().hurtNames;
 }
 
 export function getLevelIntroText(levelNumber) {
@@ -810,8 +810,8 @@ export const starShowerAudioFiles = {
      soundEffects: {
           star: "./audio/star.wav",
           strike: "./audio/strike.wav",
-          boost: "./audio/boost-effect.wav",
-          blight: "./audio/blight-effect.wav",
+          help: "./audio/help-effect.wav",
+          hurt: "./audio/hurt-effect.wav",
           win: "./audio/win.wav",
           lose: "./audio/lose.wav",
           pause: "./audio/pause.wav",
@@ -1027,7 +1027,7 @@ export function dismissPausedToOptionsMenu() {
 export function dismissMenuBackToPreviousScreen() {
      if (
           gameMenuView === "tips_how_to_play" ||
-          gameMenuView === "tips_boosts"
+          gameMenuView === "tips_help"
      ) {
           setMenuViewAndRefresh("tips");
           return;
@@ -1126,7 +1126,7 @@ export function startNewGameRound() {
      resetGameState();
      resetTouchControls();
      resetEntityColorCycle();
-     resetBoostblightIntroState();
+     resetHelphurtIntroState();
 
      syncCanvasResolutionAndUiBounds();
      resetPlayerPosition();
@@ -1178,8 +1178,8 @@ function getNextColorOptionIndex(levelIndex) {
      return Math.min(maxColorOptionIndex, levelIndex + 1);
 }
 
-export function getblightToggleLabel() {
-     return getOptionLevelLabel(blightLevel);
+export function getHurtToggleLabel() {
+     return getOptionLevelLabel(hurtLevel);
 }
 
 export function getMusicToggleLabel() {
@@ -1218,19 +1218,19 @@ export function increaseSoundEffectsLevel() {
      saveCurrentOptions();
 }
 
-export function decreaseblightLevel() {
-     const nextLevel = getPreviousOptionLevelIndex(blightLevel);
-     setblightLevel(nextLevel);
+export function decreaseHurtLevel() {
+     const nextLevel = getPreviousOptionLevelIndex(hurtLevel);
+     setHurtLevel(nextLevel);
 
      if (nextLevel === 0) {
-          boostblightPickups.length = 0;
+          helphurtPickups.length = 0;
      }
 
      saveCurrentOptions();
 }
 
-export function increaseblightLevel() {
-     setblightLevel(getNextOptionLevelIndex(blightLevel));
+export function increaseHurtLevel() {
+     setHurtLevel(getNextOptionLevelIndex(hurtLevel));
      saveCurrentOptions();
 }
 
@@ -1347,17 +1347,17 @@ export function updateGame() {
           return;
      }
 
-     updateBoostblightState();
+     updateHelphurtState();
      updatePlayer();
      updateStarSpawns();
      updateStars();
      updateStrikes();
-     updateBoostblightPickups();
+     updateHelphurtPickups();
      updateCollisionBursts();
      updatePlayerTrail();
      collectStars();
      collectStrikes();
-     collectBoostblightPickups();
+     collectHelphurtPickups();
 
      if (playerHealth <= 0) {
           setGameOver(true);
@@ -1401,7 +1401,7 @@ export function startStarShower() {
      resetGameState();
      resetTouchControls();
      resetEntityColorCycle();
-     resetBoostblightIntroState();
+     resetHelphurtIntroState();
 
      syncCanvasResolutionAndUiBounds();
      resetPlayerPosition();

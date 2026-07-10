@@ -1,12 +1,12 @@
 # Star Shower
 
-Star Shower is a standalone browser game. Collect falling stars, avoid damaging strikes, and manage boost/blight effects while trying to reach level 10.
+Star Shower is a standalone browser game. Collect falling stars, avoid damaging strikes, and manage help/hurt effects while trying to reach level 10.
 
 This repo is intentionally separate from the main portfolio site so the game can be developed, versioned, and published on its own. The portfolio can link to the finished game without owning the game source.
 
 ## Gameplay
 
-The player collects stars to gain points and speed. Strikes cost one life. Boosts help the player, while blights create temporary hazards.
+The player collects stars to gain points and speed. Strikes cost one life. Helps benefit the player, while hurts create temporary hazards.
 
 Goal:
 
@@ -38,7 +38,7 @@ Level 9: 175
 Level 10: 200
 ```
 
-Boost/blight unlock schedule:
+Help/hurt unlock schedule:
 
 ```text
 Level 1: health
@@ -49,7 +49,7 @@ Level 5: health + magnet + double + freeze + daze
 Level 6+: health + magnet + double + freeze + daze + fog
 ```
 
-Current boost/blight effects:
+Current help/hurt effects:
 
 - Health 💚: increases health.
 - Magnet 🧲: triples pickup range, with range scaling up on larger screens.
@@ -64,7 +64,7 @@ HUD:
 - `⭐ score`: current score.
 - `💚 current/5`: current lives.
 - Top-center constellation: progress toward the next level.
-- Right-side status: pause control plus active boost/blight timers.
+- Right-side status: pause control plus active help/hurt timers.
 
 Responsive tuning:
 
@@ -83,7 +83,7 @@ Responsive tuning:
 - `options.js`: saved options, difficulty values, movement options, health/magnet tunables, and shared layout helpers.
 - `input.js`: keyboard, pointer, touch, joystick, menu, and pause input.
 - `draw/`: canvas rendering.
-- `entities/`: player, stars, strikes, boosts, blights, collision bursts, and entity tuning constants.
+- `entities/`: player, stars, strikes, helps, hurts, collision bursts, and entity tuning constants.
 
 ## Dev Notes
 
@@ -118,6 +118,6 @@ Useful pseudocode template:
 Recommended next cleanup areas:
 
 - Split HUD drawing out of `draw/index.js`.
-- Split boost/blight logic out of `entities/index.js`.
+- Split help/hurt logic out of `entities/index.js`.
 - Remove compatibility exports once imports are fully direct.
 - Future audio placeholders fail quietly so the game stays playable while assets are in progress. At the moment, `audio/music-loop.mp3` may 404 during local preview until a music file is added.

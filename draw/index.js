@@ -40,7 +40,7 @@ import {
      gameMenuUi,
      musicLevel,
      soundEffectsLevel,
-     blightLevel,
+     hurtLevel,
      movementLevel,
      colorLevel,
      screenActionUi,
@@ -52,7 +52,7 @@ import {
      gameMenuScroll,
      activeStatusUi,
      getMenuKeyboardFocusAlpha,
-     isBoostblightActive,
+     isHelphurtActive,
      hoverCanvasX,
      hoverCanvasY,
      isCanvasPointerInside,
@@ -87,7 +87,7 @@ import {
 import {
      drawStars,
      drawStrikes,
-     drawBoostblightPickups,
+     drawHelphurtPickups,
      drawCollisionBursts,
      playerFaces,
      playerTrail,
@@ -116,8 +116,8 @@ import {
      getCurrentPausedActionTexts,
      getWelcomeInstructionLines,
      getHowToPlayLines,
-     getBoostLines,
-     getblightLines,
+     getHelpLines,
+     getHurtLines,
      getDifficultyOptionLines,
      getAudioOptionLines,
      getMovementOptionLines,
@@ -258,12 +258,12 @@ function getHoverableCanvasButtons() {
           }
 
           if (gameMenuView === "options") {
-               if (blightLevel > 0) {
-                    buttons.push(gameMenuUi.blightDecreaseButton);
+               if (hurtLevel > 0) {
+                    buttons.push(gameMenuUi.hurtDecreaseButton);
                }
 
-               if (blightLevel < maxOptionLevelIndex) {
-                    buttons.push(gameMenuUi.blightIncreaseButton);
+               if (hurtLevel < maxOptionLevelIndex) {
+                    buttons.push(gameMenuUi.hurtIncreaseButton);
                }
 
                if (isJoystickEnabled() && movementLevel > 0) {
@@ -344,7 +344,7 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
 
      if (gameMenuView === "tips") {
           setButtonBounds(gameMenuUi.tipsHowToPlayButton, 0, 0, 0, 0);
-          setButtonBounds(gameMenuUi.tipsBoostsButton, 0, 0, 0, 0);
+          setButtonBounds(gameMenuUi.tipsHelpButton, 0, 0, 0, 0);
 
           return;
      }
@@ -355,9 +355,9 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
           const showMovementOption = isJoystickEnabled();
           const optionRows = [
                {
-                    row: gameMenuUi.blightRow,
-                    decreaseButton: gameMenuUi.blightDecreaseButton,
-                    increaseButton: gameMenuUi.blightIncreaseButton
+                    row: gameMenuUi.hurtRow,
+                    decreaseButton: gameMenuUi.hurtDecreaseButton,
+                    increaseButton: gameMenuUi.hurtIncreaseButton
                }
           ];
 
@@ -409,9 +409,9 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
 
      if (gameMenuView === "options_difficulty") {
           setOptionRowBounds(
-               gameMenuUi.blightRow,
-               gameMenuUi.blightDecreaseButton,
-               gameMenuUi.blightIncreaseButton,
+               gameMenuUi.hurtRow,
+               gameMenuUi.hurtDecreaseButton,
+               gameMenuUi.hurtIncreaseButton,
                layout.buttonX,
                layout.contentTopY,
                layout.buttonWidth,
@@ -1456,7 +1456,7 @@ export function drawMiniGameBackground() {
 
 
 export function drawFogOverlay() {
-     if (!miniGameCtx || !isBoostblightActive("fog")) {
+     if (!miniGameCtx || !isHelphurtActive("fog")) {
           return;
      }
 
@@ -1540,11 +1540,11 @@ function drawTipsMenuScreen(theme) {
           "TIPS",
           ...getHowToPlayLines(),
           "",
-          "BOOSTS",
-          ...getBoostLines(),
+          "HELPS",
+          ...getHelpLines(),
           "",
-          "blightS",
-          ...getblightLines()
+          "HURTS",
+          ...getHurtLines()
      ];
 
      miniGameCtx.save();
@@ -1608,7 +1608,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
      const iconX = screenLayout.sidePadding + (iconGutterWidth * 0.25);
      const detailTextX = screenLayout.sidePadding + iconGutterWidth;
      const detailTextWidth = miniGameWidth - detailTextX - screenLayout.sidePadding;
-     const sectionHeadings = new Set(["TIPS", "BOOSTS", "blightS"]);
+     const sectionHeadings = new Set(["TIPS", "HELPS", "HURTS"]);
      const shouldCenterContent = Boolean(options.centerContent);
 
      miniGameCtx.fillStyle = detailStyle.color || colors.fontColor;
@@ -1841,12 +1841,12 @@ function drawOptionsScreen(theme) {
      drawMenuScreenTitle("OPTIONS", theme, layout.titleCenterX, layout.titleY);
 
      drawOptionStepper(
-          gameMenuUi.blightRow,
-          gameMenuUi.blightDecreaseButton,
-          gameMenuUi.blightIncreaseButton,
+          gameMenuUi.hurtRow,
+          gameMenuUi.hurtDecreaseButton,
+          gameMenuUi.hurtIncreaseButton,
           "DIFFICULTY",
-          getDifficultyOptionDescription(blightLevel),
-          blightLevel,
+          getDifficultyOptionDescription(hurtLevel),
+          hurtLevel,
           theme,
           focused.row === 0,
           focused.row === 0 ? focused.col : -1
@@ -1889,12 +1889,12 @@ function drawDifficultyOptionsScreen(theme) {
      drawMenuScreenTitle("DIFFICULTY", theme, layout.titleCenterX, layout.titleY);
 
      drawOptionStepper(
-          gameMenuUi.blightRow,
-          gameMenuUi.blightDecreaseButton,
-          gameMenuUi.blightIncreaseButton,
+          gameMenuUi.hurtRow,
+          gameMenuUi.hurtDecreaseButton,
+          gameMenuUi.hurtIncreaseButton,
           "Difficulty",
-          getShortOptionLevelLabel(blightLevel),
-          blightLevel,
+          getShortOptionLevelLabel(hurtLevel),
+          hurtLevel,
           theme,
           focused.row === 0,
           focused.row === 0 ? focused.col : -1
@@ -2454,7 +2454,7 @@ export function drawGame() {
      if (gameStarted) {
           drawStars();
           drawStrikes();
-          drawBoostblightPickups();
+          drawHelphurtPickups();
           drawCollisionBursts();
           drawPlayerTrail();
           drawPlayer();

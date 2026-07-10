@@ -31,7 +31,7 @@ import {
      gameMenuView,
      gameOver,
      gameWon,
-     blightLevel,
+     hurtLevel,
      movementLevel,
      gameMenuUi,
      touchControls,
@@ -87,8 +87,8 @@ import {
      isScreenWelcomeActive,
      isOverlayScreenActive,
      startNewGameRound,
-     decreaseblightLevel,
-     increaseblightLevel,
+     decreaseHurtLevel,
+     increaseHurtLevel,
      decreaseMusicLevel,
      increaseMusicLevel,
      decreaseSoundEffectsLevel,
@@ -363,8 +363,8 @@ function closeMenuAndRefresh() {
 }
 
 function activateOptionAdjustment(optionName, direction) {
-     if (optionName === "blight") {
-          direction < 0 ? decreaseblightLevel() : increaseblightLevel();
+     if (optionName === "hurt") {
+          direction < 0 ? decreaseHurtLevel() : increaseHurtLevel();
      }
 
      if (optionName === "music") {
@@ -484,18 +484,18 @@ function handleOptionsPointerDown(x, y) {
           return true;
      }
 
-     if (blightLevel > 0 && isPointInsideBox(x, y, gameMenuUi.blightDecreaseButton)) {
+     if (hurtLevel > 0 && isPointInsideBox(x, y, gameMenuUi.hurtDecreaseButton)) {
           setOptionsSelectionRow(0);
           setOptionsSelectionCol(0);
-          decreaseblightLevel();
+          decreaseHurtLevel();
           syncUiBounds();
           return true;
      }
 
-     if (blightLevel < maxOptionLevelIndex && isPointInsideBox(x, y, gameMenuUi.blightIncreaseButton)) {
+     if (hurtLevel < maxOptionLevelIndex && isPointInsideBox(x, y, gameMenuUi.hurtIncreaseButton)) {
           setOptionsSelectionRow(0);
           setOptionsSelectionCol(1);
-          increaseblightLevel();
+          increaseHurtLevel();
           syncUiBounds();
           return true;
      }
@@ -539,18 +539,18 @@ function handleOptionsDetailPointerDown(x, y) {
      }
 
      if (gameMenuView === "options_difficulty") {
-          if (isPointInsideBox(x, y, gameMenuUi.blightDecreaseButton)) {
+          if (isPointInsideBox(x, y, gameMenuUi.hurtDecreaseButton)) {
                setOptionsSelectionRow(0);
                setOptionsSelectionCol(0);
-               decreaseblightLevel();
+               decreaseHurtLevel();
                syncUiBounds();
                return true;
           }
 
-          if (isPointInsideBox(x, y, gameMenuUi.blightIncreaseButton)) {
+          if (isPointInsideBox(x, y, gameMenuUi.hurtIncreaseButton)) {
                setOptionsSelectionRow(0);
                setOptionsSelectionCol(1);
-               increaseblightLevel();
+               increaseHurtLevel();
                syncUiBounds();
                return true;
           }
@@ -840,7 +840,7 @@ function activateOptionsSelection() {
      }
 
      const optionName =
-          optionsSelection.row === 0 ? "blight" :
+          optionsSelection.row === 0 ? "hurt" :
           "movement";
      const direction = optionsSelection.col === 0 ? -1 : 1;
 
@@ -856,7 +856,7 @@ function activateOptionsDetailSelection() {
           }
 
           const direction = optionsSelection.col === 0 ? -1 : 1;
-          activateOptionAdjustment("blight", direction);
+          activateOptionAdjustment("hurt", direction);
           return;
      }
 

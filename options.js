@@ -26,12 +26,12 @@ import {
      miniGameHeight,
      musicLevel,
      soundEffectsLevel,
-     blightLevel,
+     hurtLevel,
      movementLevel,
      colorLevel,
      setMusicLevel,
      setSoundEffectsLevel,
-     setblightLevel,
+     setHurtLevel,
      setMovementLevel,
      setColorLevel
 } from "./state.js";
@@ -79,8 +79,8 @@ export function getMaxMovementOptionIndex() {
 }
 
 export const optionDefinitions = {
-     blight: {
-          id: "blight",
+     hurt: {
+          id: "hurt",
           label: "Difficulty",
           defaultLevel: defaultOptionLevelIndex
      },
@@ -195,7 +195,7 @@ export function getDefaultOptionSnapshot() {
      return {
           music: optionDefinitions.music.defaultLevel,
           soundEffects: optionDefinitions.soundEffects.defaultLevel,
-          blight: optionDefinitions.blight.defaultLevel,
+          hurt: optionDefinitions.hurt.defaultLevel,
           movement: optionDefinitions.movement.defaultLevel,
           color: optionDefinitions.color.defaultLevel
      };
@@ -205,7 +205,7 @@ export function getCurrentOptionSnapshot() {
      return {
           music: musicLevel,
           soundEffects: soundEffectsLevel,
-          blight: blightLevel,
+          hurt: hurtLevel,
           movement: movementLevel,
           color: colorLevel
      };
@@ -389,7 +389,7 @@ export function normalizeOptionSnapshot(snapshot = {}) {
      return {
           music: clampOptionLevelIndex(snapshot.music ?? defaults.music),
           soundEffects: clampOptionLevelIndex(snapshot.soundEffects ?? defaults.soundEffects),
-          blight: clampOptionLevelIndex(snapshot.blight ?? defaults.blight),
+          hurt: clampOptionLevelIndex(snapshot.hurt ?? defaults.hurt),
           movement: clampMovementOptionIndex(snapshot.movement ?? defaults.movement),
           color: clampColorOptionIndex(snapshot.color ?? defaults.color)
      };
@@ -452,7 +452,7 @@ export function applyOptionSnapshot(snapshot = loadSavedOptionSnapshot()) {
 
      setMusicLevel(normalizedSnapshot.music);
      setSoundEffectsLevel(normalizedSnapshot.soundEffects);
-     setblightLevel(normalizedSnapshot.blight);
+     setHurtLevel(normalizedSnapshot.hurt);
      setMovementLevel(normalizedSnapshot.movement);
      setColorLevel(normalizedSnapshot.color);
 
@@ -488,8 +488,8 @@ export function setAndPersistSoundEffectsLevel(levelIndex) {
      saveCurrentOptions();
 }
 
-export function setAndPersistblightLevel(levelIndex) {
-     setblightLevel(clampOptionLevelIndex(levelIndex));
+export function setAndPersistHurtLevel(levelIndex) {
+     setHurtLevel(clampOptionLevelIndex(levelIndex));
      saveCurrentOptions();
 }
 

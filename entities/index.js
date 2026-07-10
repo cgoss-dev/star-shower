@@ -1,11 +1,11 @@
 // NOTE: entities/index
-// Player behavior, stars, boost/blight pickups, collision bursts, and boost/blight state for Star Shower.
+// Player behavior, stars, help/hurt pickups, collision bursts, and help/hurt state for Star Shower.
 //
 // Owned here:
 // - player reset / clamping / movement / face-state sync / trail-state updates
 // - star spawning / updates / collection
-// - boost and blight pickup definitions
-// - active boost/blight timers and status sync
+// - help and hurt pickup definitions
+// - active help/hurt timers and status sync
 // - collision burst creation / updates
 // - shared falling-object color cycle
 //
@@ -33,25 +33,25 @@ import {
      scoreMultiplier,
      stars,
      strikes,
-     boostblightPickups,
+     helphurtPickups,
      collisionBursts,
      starSpawnTimer,
      starSpawnCount,
-     boostblightPickupSpawnTimer,
-     blightLevel,
+     helphurtPickupSpawnTimer,
+     hurtLevel,
      movementLevel,
      colorLevel,
-     boostblightTimers,
+     helphurtTimers,
      setStarSpawnTimer,
      addStarSpawnCount,
-     setBoostblightPickupSpawnTimer,
+     setHelphurtPickupSpawnTimer,
      addStarScore,
      setScoreMultiplier,
      addPlayerHealth,
      setPlayerHealth,
-     setBoostblightTimer,
-     isBoostblightActive,
-     decrementBoostblightTimers,
+     setHelphurtTimer,
+     isHelphurtActive,
+     decrementHelphurtTimers,
      setActiveStatusUi,
      clearActiveStatusUi,
      randomItem,
@@ -76,9 +76,9 @@ import {
 import {
      areStrikesUnlockedForCurrentLevel,
      getCurrentLevelNumber,
-     getUnlockedBoostNamesForCurrentLevel,
-     getUnlockedblightNamesForCurrentLevel,
-     starShowerBoostblightIcons,
+     getUnlockedHelpNamesForCurrentLevel,
+     getUnlockedHurtNamesForCurrentLevel,
+     starShowerHelphurtIcons,
      starShowerGuideIcons,
      starShowerRainbowPalette,
      getCssColor,
@@ -98,8 +98,8 @@ import {
      starSpawnCap,
      strikeSpawnRatio,
      openingStrikeGraceStarSpawns,
-     openingBoostblightGraceStarSpawns,
-     boostblightPickupCap,
+     openingHelphurtGraceStarSpawns,
+     helphurtPickupCap,
      collisionBurstParticleCount,
      fallingObjectSpeedMin,
      fallingObjectSpeedMax,
@@ -109,8 +109,8 @@ import {
      fallSpeedMinScale,
      fallSpeedMaxScale,
      fallingObjectSpeedStep,
-     boostblightBaseSpawnStarsByLevel,
-     boostblightDifficultyMultipliers,
+     helphurtBaseSpawnStarsByLevel,
+     helphurtDifficultyMultipliers,
      playerTrailCountMax,
      playerTrailCountMin,
      playerTrailLifeMax,
@@ -141,13 +141,13 @@ export {
      starSpawnCap,
      strikeSpawnRatio,
      openingStrikeGraceStarSpawns,
-     openingBoostblightGraceStarSpawns,
-     boostblightPickupCap,
+     openingHelphurtGraceStarSpawns,
+     helphurtPickupCap,
      collisionBurstParticleCount,
      fallingObjectSpeedMin,
      fallingObjectSpeedMax,
-     boostblightBaseSpawnStarsByLevel,
-     boostblightDifficultyMultipliers,
+     helphurtBaseSpawnStarsByLevel,
+     helphurtDifficultyMultipliers,
      playerTrailCountMax,
      playerTrailCountMin,
      playerTrailLifeMax,
@@ -175,7 +175,7 @@ export const playerFaces = {
      neutral: "😐",
      smile: "🙂",
      star: "😁",
-     blight: "😫",
+     hurt: "😫",
      maxHealth: "🤩",
      lowHealth: "😰",
      dead: "☠️",
@@ -184,18 +184,18 @@ export const playerFaces = {
 };
 
 const pickupAssetImages = {};
-let lastSpawnedBoostblightName = "";
+let lastSpawnedHelphurtName = "";
 
-function getBoostTypes() {
-     return Object.values(starShowerBoostblightIcons).filter((type) => type.category === "boost");
+function getHelpTypes() {
+     return Object.values(starShowerHelphurtIcons).filter((type) => type.category === "help");
 }
 
-function getblightTypes() {
-     return Object.values(starShowerBoostblightIcons).filter((type) => type.category === "blight");
+function getHurtTypes() {
+     return Object.values(starShowerHelphurtIcons).filter((type) => type.category === "hurt");
 }
 
-export function resetBoostblightIntroState() {
-     lastSpawnedBoostblightName = "";
+export function resetHelphurtIntroState() {
+     lastSpawnedHelphurtName = "";
 }
 
 function getPickupAssetImage(src) {
@@ -267,8 +267,8 @@ function getScaledStrikeSpawnCap() {
      return Math.max(1, Math.round(getScaledStarSpawnCap() * strikeSpawnRatio));
 }
 
-function getScaledBoostblightPickupCap() {
-     return Math.max(1, Math.round(boostblightPickupCap * getSpawnDensityScale()));
+function getScaledHelphurtPickupCap() {
+     return Math.max(1, Math.round(helphurtPickupCap * getSpawnDensityScale()));
 }
 
 function getFallingObjectSpeed() {
@@ -282,28 +282,28 @@ function getFallingObjectSpeed() {
      return randomNumber(speedMin, speedMax);
 }
 
-function getBoostblightSpawnChance() {
+function getHelphurtSpawnChance() {
      const levelIndex = Math.max(0, getCurrentLevelNumber() - 1);
-     const starsPerBoostblight = boostblightBaseSpawnStarsByLevel[levelIndex] ?? boostblightBaseSpawnStarsByLevel.at(-1);
-     const difficultyMultiplier = boostblightDifficultyMultipliers[blightLevel] ?? 0;
+     const starsPerHelphurt = helphurtBaseSpawnStarsByLevel[levelIndex] ?? helphurtBaseSpawnStarsByLevel.at(-1);
+     const difficultyMultiplier = helphurtDifficultyMultipliers[hurtLevel] ?? 0;
 
-     if (!Number.isFinite(starsPerBoostblight) || starsPerBoostblight <= 0 || difficultyMultiplier <= 0) {
+     if (!Number.isFinite(starsPerHelphurt) || starsPerHelphurt <= 0 || difficultyMultiplier <= 0) {
           return 0;
      }
 
-     return difficultyMultiplier / starsPerBoostblight;
+     return difficultyMultiplier / starsPerHelphurt;
 }
 
-function getBoostblightSpawnInterval() {
+function getHelphurtSpawnInterval() {
      const levelIndex = Math.max(0, getCurrentLevelNumber() - 1);
-     const starsPerBoostblight = boostblightBaseSpawnStarsByLevel[levelIndex] ?? boostblightBaseSpawnStarsByLevel.at(-1);
-     const difficultyMultiplier = boostblightDifficultyMultipliers[blightLevel] ?? 0;
+     const starsPerHelphurt = helphurtBaseSpawnStarsByLevel[levelIndex] ?? helphurtBaseSpawnStarsByLevel.at(-1);
+     const difficultyMultiplier = helphurtDifficultyMultipliers[hurtLevel] ?? 0;
 
-     if (!Number.isFinite(starsPerBoostblight) || starsPerBoostblight <= 0 || difficultyMultiplier <= 0) {
+     if (!Number.isFinite(starsPerHelphurt) || starsPerHelphurt <= 0 || difficultyMultiplier <= 0) {
           return Infinity;
      }
 
-     return Math.max(2, Math.round(starsPerBoostblight / difficultyMultiplier));
+     return Math.max(2, Math.round(starsPerHelphurt / difficultyMultiplier));
 }
 
 // ====================================================================================================
@@ -410,11 +410,11 @@ export function getModeParticleColor(colorRole, fallback = "#ffffff", colorIndex
                return getCssColor("--color-gray2", "#666");
           }
 
-          if (colorRole === "strike" || colorRole === "blight") {
+          if (colorRole === "strike" || colorRole === "hurt") {
                return getCssColor("--color-black", "#000");
           }
 
-          if (colorRole === "boost") {
+          if (colorRole === "help") {
                return getCssColor("--color-white", "#fff");
           }
 
@@ -445,7 +445,7 @@ export function resetEntityColorCycle() {
 // ==================================================
 
 function getPlayerMovementMultiplier() {
-     if (isBoostblightActive("freeze")) {
+     if (isHelphurtActive("freeze")) {
           return 0;
      }
 
@@ -498,11 +498,11 @@ export function getDefaultPlayerFace() {
           return playerFaces.dead;
      }
 
-     if (isBoostblightActive("freeze")) {
+     if (isHelphurtActive("freeze")) {
           return playerFaces.frozen;
      }
 
-     if (isBoostblightActive("daze")) {
+     if (isHelphurtActive("daze")) {
           return playerFaces.dazed;
      }
 
@@ -539,8 +539,8 @@ export function applyTemporaryPlayerFace(face, duration) {
           playerHealth <= 0 ||
           playerHealth === maxPlayerHealth ||
           playerHealth <= 2 ||
-          isBoostblightActive("freeze") ||
-          isBoostblightActive("daze")
+          isHelphurtActive("freeze") ||
+          isHelphurtActive("daze")
      ) {
           player.starFaceTimer = 0;
           refreshPlayerFaceFromHealth();
@@ -612,7 +612,7 @@ function movePlayerTowardPointerTarget() {
           return true;
      }
 
-     const reverseMultiplier = isBoostblightActive("daze") ? -1 : 1;
+     const reverseMultiplier = isHelphurtActive("daze") ? -1 : 1;
      const step = Math.min(player.speed * getPlayerMovementMultiplier(), distance);
 
      player.x += (dx / distance) * step * reverseMultiplier;
@@ -650,7 +650,7 @@ function movePlayerFromKeyboard() {
      }
 
      const length = Math.hypot(dx, dy);
-     const reverseMultiplier = isBoostblightActive("daze") ? -1 : 1;
+     const reverseMultiplier = isHelphurtActive("daze") ? -1 : 1;
      const speed = player.speed * getPlayerMovementMultiplier();
 
      player.x += (dx / length) * speed * reverseMultiplier;
@@ -680,7 +680,7 @@ function movePlayerFromJoystick() {
           return true;
      }
 
-     const reverseMultiplier = isBoostblightActive("daze") ? -1 : 1;
+     const reverseMultiplier = isHelphurtActive("daze") ? -1 : 1;
      const speed = player.speed * getPlayerMovementMultiplier();
 
      player.x += joystick.dx * speed * reverseMultiplier;
@@ -762,55 +762,55 @@ export function updatePlayerTrail() {
 // EFFECT HELPERS
 // ==================================================
 
-const timedBoostblightNames = [
+const timedHelphurtNames = [
      "magnet",
      "double",
      "freeze",
      "daze",
      "fog"
 ];
-const maxTimedBoostblightStack = 2;
+const maxTimedHelphurtStack = 2;
 
 export function secondsToFrames(seconds) {
      return Math.round(seconds * framesPerSecond);
 }
 
-function getBoostblightDurationFrames(boostblightType) {
-     return secondsToFrames(boostblightType.durationSeconds || 0);
+function getHelphurtDurationFrames(helphurtType) {
+     return secondsToFrames(helphurtType.durationSeconds || 0);
 }
 
 function getStatusFlashFrames() {
      return secondsToFrames(statusFlashSeconds);
 }
 
-function syncScoreMultiplierFromBoostblights() {
-     const nextMultiplier = isBoostblightActive("double") ? 2 : 1;
+function syncScoreMultiplierFromHelphurts() {
+     const nextMultiplier = isHelphurtActive("double") ? 2 : 1;
 
      if (scoreMultiplier !== nextMultiplier) {
           setScoreMultiplier(nextMultiplier);
      }
 }
 
-function getActiveTimedBoostblightNames() {
-     return timedBoostblightNames.filter((boostblightName) => isBoostblightActive(boostblightName));
+function getActiveTimedHelphurtNames() {
+     return timedHelphurtNames.filter((helphurtName) => isHelphurtActive(helphurtName));
 }
 
-function setStackedTimedBoostblight(boostblightName, durationFrames) {
-     const activeNames = getActiveTimedBoostblightNames();
+function setStackedTimedHelphurt(helphurtName, durationFrames) {
+     const activeNames = getActiveTimedHelphurtNames();
 
-     if (!isBoostblightActive(boostblightName) && activeNames.length >= maxTimedBoostblightStack) {
+     if (!isHelphurtActive(helphurtName) && activeNames.length >= maxTimedHelphurtStack) {
           const expiringName = activeNames.reduce((lowestName, currentName) => (
-               boostblightTimers[currentName] < boostblightTimers[lowestName] ? currentName : lowestName
+               helphurtTimers[currentName] < helphurtTimers[lowestName] ? currentName : lowestName
           ), activeNames[0]);
 
-          setBoostblightTimer(expiringName, 0);
+          setHelphurtTimer(expiringName, 0);
      }
 
-     setBoostblightTimer(boostblightName, durationFrames);
-     syncScoreMultiplierFromBoostblights();
+     setHelphurtTimer(helphurtName, durationFrames);
+     syncScoreMultiplierFromHelphurts();
 }
 
-function getHighestPriorityActiveBoostblight() {
+function getHighestPriorityActiveHelphurt() {
      const statusPriority = [
           "freeze",
           "fog",
@@ -820,47 +820,47 @@ function getHighestPriorityActiveBoostblight() {
      ];
 
      for (let i = 0; i < statusPriority.length; i += 1) {
-          const boostblightName = statusPriority[i];
+          const helphurtName = statusPriority[i];
 
-          if (isBoostblightActive(boostblightName)) {
-               return boostblightName;
+          if (isHelphurtActive(helphurtName)) {
+               return helphurtName;
           }
      }
 
      return "";
 }
 
-function getBoostblightTypeByName(boostblightName) {
+function getHelphurtTypeByName(helphurtName) {
      return (
-          getBoostTypes().find((type) => type.name === boostblightName) ||
-          getblightTypes().find((type) => type.name === boostblightName) ||
+          getHelpTypes().find((type) => type.name === helphurtName) ||
+          getHurtTypes().find((type) => type.name === helphurtName) ||
           null
      );
 }
 
-function syncActiveStatusUiFromBoostblights() {
-     const activeBoostblightNames = [
-          getHighestPriorityActiveBoostblight(),
-          ...getActiveTimedBoostblightNames()
-     ].filter((boostblightName, index, names) => (
-          boostblightName && names.indexOf(boostblightName) === index
-     )).slice(0, maxTimedBoostblightStack);
+function syncActiveStatusUiFromHelphurts() {
+     const activeHelphurtNames = [
+          getHighestPriorityActiveHelphurt(),
+          ...getActiveTimedHelphurtNames()
+     ].filter((helphurtName, index, names) => (
+          helphurtName && names.indexOf(helphurtName) === index
+     )).slice(0, maxTimedHelphurtStack);
 
-     if (activeBoostblightNames.length === 0) {
+     if (activeHelphurtNames.length === 0) {
           clearActiveStatusUi();
           return;
      }
 
-     const type = getBoostblightTypeByName(activeBoostblightNames[0]);
+     const type = getHelphurtTypeByName(activeHelphurtNames[0]);
 
      if (!type) {
           clearActiveStatusUi();
           return;
      }
 
-     const statusText = activeBoostblightNames.map((boostblightName) => {
-          const statusType = getBoostblightTypeByName(boostblightName);
-          const secondsLeft = Math.ceil((boostblightTimers[boostblightName] || 0) / framesPerSecond);
+     const statusText = activeHelphurtNames.map((helphurtName) => {
+          const statusType = getHelphurtTypeByName(helphurtName);
+          const secondsLeft = Math.ceil((helphurtTimers[helphurtName] || 0) / framesPerSecond);
 
           return statusType ? `${statusType.particle} ${secondsLeft}s` : "";
      }).filter(Boolean).join("  ");
@@ -873,38 +873,38 @@ function syncActiveStatusUiFromBoostblights() {
      setActiveStatusUi(
           type.label,
           type.particle,
-          boostblightTimers[type.name] || 0,
-          getBoostblightDurationFrames(type),
+          helphurtTimers[type.name] || 0,
+          getHelphurtDurationFrames(type),
           statusText
      );
 }
 
-export function updateBoostblightState() {
+export function updateHelphurtState() {
      // Active effect pseudocode:
-     // 1. Count down all timed boost/blight effects.
+     // 1. Count down all timed help/hurt effects.
      // 2. Recalculate derived effects, like the score multiplier.
      // 3. Mirror the highest-priority active effect into the HUD status slot.
-     decrementBoostblightTimers();
-     syncScoreMultiplierFromBoostblights();
-     syncActiveStatusUiFromBoostblights();
+     decrementHelphurtTimers();
+     syncScoreMultiplierFromHelphurts();
+     syncActiveStatusUiFromHelphurts();
 }
 
-function applyBoostPickup(type) {
+function applyHelpPickup(type) {
      if (type.name === "health") {
           addPlayerHealth(1);
           syncPlayerHealthState();
           return;
      }
 
-     setStackedTimedBoostblight(type.name, getBoostblightDurationFrames(type));
-     syncActiveStatusUiFromBoostblights();
+     setStackedTimedHelphurt(type.name, getHelphurtDurationFrames(type));
+     syncActiveStatusUiFromHelphurts();
 }
 
-function applyblightPickup(type) {
+function applyHurtPickup(type) {
      addPlayerHealth(-strikeHealthDamage);
-     setStackedTimedBoostblight(type.name, getBoostblightDurationFrames(type));
+     setStackedTimedHelphurt(type.name, getHelphurtDurationFrames(type));
      syncPlayerHealthState();
-     syncActiveStatusUiFromBoostblights();
+     syncActiveStatusUiFromHelphurts();
 }
 
 function getObjectFallSpeedMultiplier() {
@@ -916,7 +916,7 @@ function getObjectFallSpeedMultiplier() {
 // ==================================================
 
 function getStarCollisionRadiusMultiplier() {
-     if (!isBoostblightActive("magnet")) {
+     if (!isHelphurtActive("magnet")) {
           return 1;
      }
 
@@ -998,7 +998,7 @@ export function updateStarSpawns() {
      // Spawn pseudocode:
      // 1. Advance the star timer with a little random jitter.
      // 2. Spawn a star if the timer and board cap allow it.
-     // 3. Each star spawn can also unlock matching strikes and boost/blight pickups.
+     // 3. Each star spawn can also unlock matching strikes and help/hurt pickups.
      const nextStarSpawnTimer = starSpawnTimer + 1;
      setStarSpawnTimer(nextStarSpawnTimer);
 
@@ -1009,7 +1009,7 @@ export function updateStarSpawns() {
                createStar();
                addStarSpawnCount();
                createMatchingStrikeFromStarSpawn();
-               maybeCreateBoostblightPickupsFromStarSpawn();
+               maybeCreateHelphurtPickupsFromStarSpawn();
           }
 
           setStarSpawnTimer(0);
@@ -1076,13 +1076,13 @@ export function collectStrikes() {
                continue;
           }
 
-          createCollisionBurst(strike.x, strike.y, strike.color, "blight");
+          createCollisionBurst(strike.x, strike.y, strike.color, "hurt");
           strikes.splice(i, 1);
 
           addPlayerHealth(-strikeHealthDamage);
           createFloatingFeedback(`-💚`, player.x, player.y - player.radius - 14, "strike");
           syncPlayerHealthState();
-          applyTemporaryPlayerFace(playerFaces.blight, 30);
+          applyTemporaryPlayerFace(playerFaces.hurt, 30);
           triggerPlayerFacePop(1.25);
           playSoundEffect("strike");
      }
@@ -1092,21 +1092,21 @@ export function collectStrikes() {
 // EFFECT PICKUPS
 // ==================================================
 
-function createBoostblightPickup(type, category) {
+function createHelphurtPickup(type, category) {
      const x = Math.random() * (miniGameWidth - 20) + 10;
 
-     boostblightPickups.push({
+     helphurtPickups.push({
           x,
           baseX: x,
           y: -20,
           speed: getFallingObjectSpeed(),
-          size: category === "boost"
+          size: category === "help"
                ? randomNumber(getGameParticleSizeMin() * 1.25, getGameParticleSizeMax() * 1.15)
                : randomNumber(getGameParticleSizeMin() * 1.5, getGameParticleSizeMax() * 1.25),
           particle: type.particle,
           type,
           category,
-          colorRole: category === "boost" ? "boost" : "blight",
+          colorRole: category === "help" ? "help" : "hurt",
           colorIndex: getNextPastelColorIndex(),
           color: getNextParticleColor(),
           wobbleOffset: Math.random() * Math.PI * 2,
@@ -1114,168 +1114,168 @@ function createBoostblightPickup(type, category) {
           wobbleAmount: 5 + Math.random() * 10
      });
 
-     lastSpawnedBoostblightName = type.name || "";
+     lastSpawnedHelphurtName = type.name || "";
 }
 
-function chooseBoostblightType(availableTypes) {
+function chooseHelphurtType(availableTypes) {
      if (availableTypes.length <= 1) {
           return availableTypes[0] || null;
      }
 
-     const onBoardNames = new Set(boostblightPickups.map((pickup) => pickup.type?.name).filter(Boolean));
+     const onBoardNames = new Set(helphurtPickups.map((pickup) => pickup.type?.name).filter(Boolean));
      const notOnBoardTypes = availableTypes.filter((type) => !onBoardNames.has(type.name));
      const boardFilteredTypes = notOnBoardTypes.length ? notOnBoardTypes : availableTypes;
-     const notLastTypes = boardFilteredTypes.filter((type) => type.name !== lastSpawnedBoostblightName);
+     const notLastTypes = boardFilteredTypes.filter((type) => type.name !== lastSpawnedHelphurtName);
      const finalTypes = notLastTypes.length ? notLastTypes : boardFilteredTypes;
 
      return randomItem(finalTypes);
 }
 
-function createBoostblightPickupFromTypes(availableTypes, category) {
-     const type = chooseBoostblightType(availableTypes);
+function createHelphurtPickupFromTypes(availableTypes, category) {
+     const type = chooseHelphurtType(availableTypes);
 
      if (!type) {
           return false;
      }
 
-     createBoostblightPickup(type, category);
+     createHelphurtPickup(type, category);
      return true;
 }
 
-export function createBoostPickup() {
-     const unlockedBoostNames = getUnlockedBoostNamesForCurrentLevel();
-     const availableBoostblightTypes = getBoostTypes().filter((type) => unlockedBoostNames.includes(type.name));
+export function createHelpPickup() {
+     const unlockedHelpNames = getUnlockedHelpNamesForCurrentLevel();
+     const availableHelphurtTypes = getHelpTypes().filter((type) => unlockedHelpNames.includes(type.name));
 
-     if (availableBoostblightTypes.length <= 0) {
+     if (availableHelphurtTypes.length <= 0) {
           return false;
      }
 
-     createBoostblightPickupFromTypes(availableBoostblightTypes, "boost");
+     createHelphurtPickupFromTypes(availableHelphurtTypes, "help");
      return true;
 }
 
-export function createblightPickup() {
-     const unlockedblightNames = getUnlockedblightNamesForCurrentLevel();
-     const availableBoostblightTypes = getblightTypes().filter((type) => unlockedblightNames.includes(type.name));
+export function createHurtPickup() {
+     const unlockedHurtNames = getUnlockedHurtNamesForCurrentLevel();
+     const availableHelphurtTypes = getHurtTypes().filter((type) => unlockedHurtNames.includes(type.name));
 
-     if (availableBoostblightTypes.length <= 0) {
+     if (availableHelphurtTypes.length <= 0) {
           return false;
      }
 
-     createBoostblightPickupFromTypes(availableBoostblightTypes, "blight");
+     createHelphurtPickupFromTypes(availableHelphurtTypes, "hurt");
      return true;
 }
 
-function createRandomBoostblightPickup() {
-     if (Math.random() < 0.5 && createblightPickup()) {
+function createRandomHelphurtPickup() {
+     if (Math.random() < 0.5 && createHurtPickup()) {
           return;
      }
 
-     createBoostPickup();
+     createHelpPickup();
 }
 
-export function maybeCreateBoostblightPickupsFromStarSpawn() {
-     // Boost/blight spawn pseudocode:
+export function maybeCreateHelphurtPickupsFromStarSpawn() {
+     // Help/hurt spawn pseudocode:
      // 1. Wait through the opening grace period.
      // 2. Respect the on-screen pickup cap and disabled difficulty states.
      // 3. Guarantee an early pickup after grace, then use interval/chance checks.
-     const boostblightSpawnChance = getBoostblightSpawnChance();
-     const boostblightSpawnInterval = getBoostblightSpawnInterval();
-     const nextBoostblightPickupSpawnTimer = boostblightPickupSpawnTimer + 1;
+     const helphurtSpawnChance = getHelphurtSpawnChance();
+     const helphurtSpawnInterval = getHelphurtSpawnInterval();
+     const nextHelphurtPickupSpawnTimer = helphurtPickupSpawnTimer + 1;
 
-     if (starSpawnCount < openingBoostblightGraceStarSpawns) {
-          setBoostblightPickupSpawnTimer(0);
+     if (starSpawnCount < openingHelphurtGraceStarSpawns) {
+          setHelphurtPickupSpawnTimer(0);
           return;
      }
 
-     if (boostblightPickups.length >= getScaledBoostblightPickupCap()) {
+     if (helphurtPickups.length >= getScaledHelphurtPickupCap()) {
           return;
      }
 
-     if (!Number.isFinite(boostblightSpawnInterval)) {
-          setBoostblightPickupSpawnTimer(0);
+     if (!Number.isFinite(helphurtSpawnInterval)) {
+          setHelphurtPickupSpawnTimer(0);
           return;
      }
 
-     if (starSpawnCount === openingBoostblightGraceStarSpawns) {
-          createRandomBoostblightPickup();
-          setBoostblightPickupSpawnTimer(0);
+     if (starSpawnCount === openingHelphurtGraceStarSpawns) {
+          createRandomHelphurtPickup();
+          setHelphurtPickupSpawnTimer(0);
           return;
      }
 
-     setBoostblightPickupSpawnTimer(nextBoostblightPickupSpawnTimer);
+     setHelphurtPickupSpawnTimer(nextHelphurtPickupSpawnTimer);
 
-     if (nextBoostblightPickupSpawnTimer >= boostblightSpawnInterval) {
-          createRandomBoostblightPickup();
-          setBoostblightPickupSpawnTimer(0);
+     if (nextHelphurtPickupSpawnTimer >= helphurtSpawnInterval) {
+          createRandomHelphurtPickup();
+          setHelphurtPickupSpawnTimer(0);
           return;
      }
 
-     if (boostblightSpawnChance > 0 && Math.random() <= boostblightSpawnChance) {
-          createBoostPickup();
-          setBoostblightPickupSpawnTimer(0);
+     if (helphurtSpawnChance > 0 && Math.random() <= helphurtSpawnChance) {
+          createHelpPickup();
+          setHelphurtPickupSpawnTimer(0);
      }
 
-     if (boostblightPickups.length >= getScaledBoostblightPickupCap()) {
+     if (helphurtPickups.length >= getScaledHelphurtPickupCap()) {
           return;
      }
 
-     if (boostblightSpawnChance > 0 && Math.random() <= boostblightSpawnChance) {
-          createblightPickup();
-          setBoostblightPickupSpawnTimer(0);
+     if (helphurtSpawnChance > 0 && Math.random() <= helphurtSpawnChance) {
+          createHurtPickup();
+          setHelphurtPickupSpawnTimer(0);
      }
 }
 
-export function updateBoostblightPickups() {
+export function updateHelphurtPickups() {
      const fallSpeedMultiplier = getObjectFallSpeedMultiplier();
 
-     for (let i = boostblightPickups.length - 1; i >= 0; i -= 1) {
-          const pickup = boostblightPickups[i];
+     for (let i = helphurtPickups.length - 1; i >= 0; i -= 1) {
+          const pickup = helphurtPickups[i];
 
           pickup.y += pickup.speed * fallSpeedMultiplier;
           pickup.wobbleOffset += pickup.wobbleSpeed;
           pickup.x = pickup.baseX + Math.sin(pickup.wobbleOffset) * pickup.wobbleAmount;
 
           if (pickup.y > miniGameHeight + 30) {
-               boostblightPickups.splice(i, 1);
+               helphurtPickups.splice(i, 1);
           }
      }
 }
 
-function collectBoostPickup(pickup, index) {
-     createCollisionBurst(pickup.x, pickup.y, pickup.color, "star", "boost");
-     boostblightPickups.splice(index, 1);
+function collectHelpPickup(pickup, index) {
+     createCollisionBurst(pickup.x, pickup.y, pickup.color, "star", "help");
+     helphurtPickups.splice(index, 1);
 
-     applyBoostPickup(pickup.type);
-     createFloatingFeedback(`+${pickup.type?.particle || "⭐"}`, player.x, player.y - player.radius - 14, "boost");
+     applyHelpPickup(pickup.type);
+     createFloatingFeedback(`+${pickup.type?.particle || "⭐"}`, player.x, player.y - player.radius - 14, "help");
      applyTemporaryPlayerFace(playerFaces.star, 45);
      triggerPlayerFacePop(1.2);
-     playSoundEffect("boost");
+     playSoundEffect("help");
 }
 
-function collectblightPickup(pickup, index) {
-     createCollisionBurst(pickup.x, pickup.y, pickup.color, "blight", "blight");
-     boostblightPickups.splice(index, 1);
+function collectHurtPickup(pickup, index) {
+     createCollisionBurst(pickup.x, pickup.y, pickup.color, "hurt", "hurt");
+     helphurtPickups.splice(index, 1);
 
-     applyblightPickup(pickup.type);
-     createFloatingFeedback(`${pickup.type?.particle || "😵"} -💚`, player.x, player.y - player.radius - 14, "blight");
-     applyTemporaryPlayerFace(playerFaces.blight, 30);
+     applyHurtPickup(pickup.type);
+     createFloatingFeedback(`${pickup.type?.particle || "😵"} -💚`, player.x, player.y - player.radius - 14, "hurt");
+     applyTemporaryPlayerFace(playerFaces.hurt, 30);
      triggerPlayerFacePop(1.25);
-     playSoundEffect("blight");
+     playSoundEffect("hurt");
 }
 
-export function collectBoostblightPickups() {
-     for (let i = boostblightPickups.length - 1; i >= 0; i -= 1) {
-          const pickup = boostblightPickups[i];
+export function collectHelphurtPickups() {
+     for (let i = helphurtPickups.length - 1; i >= 0; i -= 1) {
+          const pickup = helphurtPickups[i];
 
           if (!isCollidingWithStar(player, pickup)) {
                continue;
           }
 
-          if (pickup.category === "boost") {
-               collectBoostPickup(pickup, i);
+          if (pickup.category === "help") {
+               collectHelpPickup(pickup, i);
           } else {
-               collectblightPickup(pickup, i);
+               collectHurtPickup(pickup, i);
           }
      }
 }
@@ -1287,7 +1287,7 @@ export function collectBoostblightPickups() {
 export function createCollisionBurst(x, y, color, burstType, colorRole = null) {
      for (let i = 0; i < collisionBurstParticleCount; i += 1) {
           const angle = randomNumber(0, Math.PI * 2);
-          const speed = burstType === "blight"
+          const speed = burstType === "hurt"
                ? randomNumber(1.1, 2.6)
                : randomNumber(0.7, 2.1);
 
@@ -1300,10 +1300,10 @@ export function createCollisionBurst(x, y, color, burstType, colorRole = null) {
                maxLife: 50,
                size: randomNumber(20, 30),
                particle: randomItem(burstChars),
-               colorRole: colorRole || (burstType === "blight" ? "strike" : "star"),
+               colorRole: colorRole || (burstType === "hurt" ? "strike" : "star"),
                colorIndex: getNextPastelColorIndex(),
                color,
-               glowBoost: burstType === "blight" ? 1.25 : 1
+               glowHelp: burstType === "hurt" ? 1.25 : 1
           });
      }
 }
@@ -1323,7 +1323,7 @@ function createFloatingFeedback(text, x, y, colorRole = "star") {
           colorRole,
           colorIndex: getNextPastelColorIndex(),
           color: getCssColor("--color-white", "#fff"),
-          glowBoost: 1,
+          glowHelp: 1,
           isFeedbackText: true
      });
 }
@@ -1442,7 +1442,7 @@ export function drawStrikes() {
      }
 }
 
-export function drawBoostblightPickups() {
+export function drawHelphurtPickups() {
      if (!miniGameCtx) {
           return;
      }
@@ -1466,7 +1466,7 @@ export function drawBoostblightPickups() {
           miniGameCtx.save();
           miniGameCtx.shadowColor = getParticleGlowColor(fillColor);
           miniGameCtx.shadowBlur = glowBlur;
-          miniGameCtx.globalAlpha = pickup.category === "boost" ? 1 : 0.95;
+          miniGameCtx.globalAlpha = pickup.category === "help" ? 1 : 0.95;
           miniGameCtx.drawImage(tintCanvas, assetX, assetY, size, size);
 
           miniGameCtx.shadowBlur = 0;
@@ -1478,8 +1478,8 @@ export function drawBoostblightPickups() {
      miniGameCtx.textAlign = "center";
      miniGameCtx.textBaseline = "middle";
 
-     for (let i = boostblightPickups.length - 1; i >= 0; i -= 1) {
-          const pickup = boostblightPickups[i];
+     for (let i = helphurtPickups.length - 1; i >= 0; i -= 1) {
+          const pickup = helphurtPickups[i];
           const fillColor = getParticleFillColor(pickup);
 
           const pickupFontSize = Math.max(20, pickup.size);
@@ -1496,7 +1496,7 @@ export function drawBoostblightPickups() {
           miniGameCtx.shadowColor = getParticleGlowColor(fillColor);
           miniGameCtx.shadowBlur = glowBlur;
 
-          miniGameCtx.globalAlpha = pickup.category === "boost" ? 1 : 0.95;
+          miniGameCtx.globalAlpha = pickup.category === "help" ? 1 : 0.95;
           miniGameCtx.fillText(pickup.particle, pickup.x, pickup.y);
 
           miniGameCtx.shadowBlur = 0;
@@ -1528,7 +1528,7 @@ export function drawCollisionBursts() {
           miniGameCtx.font = `${burstSize}px Arial, Helvetica, sans-serif`;
           miniGameCtx.fillStyle = fillColor;
           miniGameCtx.shadowColor = getParticleGlowColor(fillColor);
-          miniGameCtx.shadowBlur = glowBlur * burst.glowBoost * lifeRatio;
+          miniGameCtx.shadowBlur = glowBlur * burst.glowHelp * lifeRatio;
 
           miniGameCtx.globalAlpha = Math.max(0, lifeRatio * 0.95);
           miniGameCtx.fillText(burst.particle, burst.x, burst.y);
