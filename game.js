@@ -521,14 +521,14 @@ export const maxLevelProgressUnits = 10;
 export const progressUnitsPerCircle = 2;
 const levelScoreMins = [
      0,
-     25,
-     75,
-     150,
+     10,
+     50,
+     100,
      250,
-     400,
-     600,
-     850,
-     1150,
+     500,
+     750,
+     1000,
+     1250,
      1500
 ];
 
