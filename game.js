@@ -241,7 +241,7 @@ export function getCanvasTheme() {
      const uiFontMd = getCssPixelSize("--font-size-md", 15);
      const uiFontSm = getCssPixelSize("--font-size-sm", 10);
 
-     const menuOverlayFill = "rgba(0, 0, 0, 0.85)";
+     const menuOverlayFill = "rgba(0, 0, 0, 0.5)";
      const controlFillFallback = getCssColor("--game-control-fill", getCssColor("--white-25", "rgba(255, 255, 255, 0.25)"));
      const outlineFallback = getCssColor("--game-outline-strong", getCssColor("--color-gray3", "#999999"));
 
@@ -305,11 +305,11 @@ export function getCanvasTheme() {
 
           scoreReady: {
                font: "body",
-               fontSize: uiFontSm,
+               fontSize: uiFontMd,
                letterSpacing: 0,
                color: bodyColor,
                rainbow: false,
-               glow: false
+               glow: true
           },
 
           buttonsOptions: {

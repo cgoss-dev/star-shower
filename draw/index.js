@@ -50,6 +50,7 @@ import {
      tipsSelectionIndex,
      optionsSelection,
      gameMenuScroll,
+     activeStatusUi,
      getMenuKeyboardFocusAlpha,
      isBoostblightActive,
      hoverCanvasX,
@@ -499,7 +500,7 @@ function updatePauseButtonBounds(theme = getCanvasTheme()) {
 
      button.width = buttonSize;
      button.height = buttonSize;
-     button.x = (miniGameWidth - button.width) / 2;
+     button.x = miniGameWidth - button.width - canvasSpacing.uiPadding;
      button.y = canvasSpacing.uiPadding;
 }
 
@@ -1104,55 +1105,6 @@ export function drawOptionStepper(
      drawStepperArrow(increaseButton, stepperRightIcon, canIncrease);
 }
 
-export function drawControlButton(button, isPressed, theme) {
-     if (!miniGameCtx || !button) {
-          return;
-     }
-
-     const { colors, glow, sizes } = theme;
-     const centerX = button.x + (button.width / 2);
-     const centerY = button.y + (button.height / 2);
-     const radius = button.width / 3;
-
-     miniGameCtx.save();
-     miniGameCtx.shadowColor = getCanvasGlowColor(colors.touchGlow);
-     miniGameCtx.shadowBlur = isPressed ? glow.uiStrongGlow : glow.uiMediumGlow;
-
-     miniGameCtx.beginPath();
-     miniGameCtx.arc(centerX, centerY, radius * 1.5, 0, Math.PI * 2);
-
-     miniGameCtx.fillStyle = colors.touchFill;
-     miniGameCtx.fill();
-
-     miniGameCtx.lineWidth = sizes.touchBorderWidth;
-     miniGameCtx.strokeStyle = colors.touchStroke;
-     miniGameCtx.stroke();
-
-     miniGameCtx.restore();
-}
-
-function drawPauseButtonIcon(button, theme) {
-     if (!miniGameCtx || !button) {
-          return;
-     }
-
-     const { colors } = theme;
-     const buttonStyle = getTextStyle(theme, "pauseButton");
-
-     drawGlowingCanvasText(
-          miniGameCtx,
-          "⏯️",
-          button.x + (button.width / 2),
-          button.y + (button.height / 2) + 1,
-          buttonStyle.color || colors.touchText,
-          getTextFont(theme, "pauseButton", 400),
-          "center",
-          "middle",
-          theme,
-          false
-     );
-}
-
 function formatHudUnitValue(value) {
      return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
@@ -1180,55 +1132,57 @@ function getLevelProgressStars() {
      )).join("");
 }
 
-function drawHudBadge(theme, text, x, y, align = "left") {
+function getStatusText() {
+     if (!activeStatusUi.particle || activeStatusUi.timer <= 0) {
+          return "";
+     }
+
+     return `${activeStatusUi.particle} ${Math.ceil(activeStatusUi.timer / 60)}s`;
+}
+
+function drawHudText(theme, text, x, y, align = "left") {
      if (!miniGameCtx || !text) {
           return;
      }
 
      const { colors } = theme;
      const textStyle = getTextStyle(theme, "scoreReady");
-     const spacing = getTextStyle(theme, "canvasSpacing");
-     const paddingX = Math.max(8, spacing.uiPadding || 0);
-     const paddingY = Math.max(5, (spacing.uiPadding || 0) * 0.65);
      const font = getTextFont(theme, "scoreReady", 400);
 
      miniGameCtx.save();
-     miniGameCtx.font = font;
-
-     const textWidth = miniGameCtx.measureText(text).width;
-     const width = textWidth + (paddingX * 2);
-     const height = textStyle.fontSize + (paddingY * 2);
-     const badgeX = align === "center" ? x - (width / 2) : align === "right" ? x - width : x;
-     const badgeY = y;
-
-     drawPanelBox(badgeX, badgeY, width, height, theme, theme.sizes.borderWidth, colors.menuPanelFill);
-
      drawGlowingCanvasText(
           miniGameCtx,
           text,
-          badgeX + (width / 2),
-          badgeY + (height / 2),
+          x,
+          y,
           textStyle.color || colors.bodyText,
           font,
-          "center",
-          "middle",
+          align,
+          "top",
           theme,
           textStyle.glow
      );
-
      miniGameCtx.restore();
 }
 
 function drawHudBadges(theme) {
      const spacing = getTextStyle(theme, "canvasSpacing");
      const padding = spacing.uiPadding || 8;
-     const scoreY = touchControls.pauseButton.y + touchControls.pauseButton.height + Math.max(4, padding * 0.6);
-     const progressY = scoreY + getTextStyle(theme, "scoreReady").fontSize + Math.max(8, padding * 0.75);
+     const lineHeight = getTextStyle(theme, "scoreReady").fontSize * 1.55;
+     const leftX = padding;
+     const rightX = miniGameWidth - padding;
+     const statusText = getStatusText();
 
-     drawHudBadge(theme, getHealthBadgeText(), padding, padding, "left");
-     drawHudBadge(theme, getWinBadgeText(), miniGameWidth - padding, padding, "right");
-     drawHudBadge(theme, getScoreBadgeText(), miniGameWidth / 2, scoreY, "center");
-     drawHudBadge(theme, getLevelProgressStars(), miniGameWidth / 2, progressY, "center");
+     drawHudText(theme, getWinBadgeText(), leftX, padding, "left");
+     drawHudText(theme, getScoreBadgeText(), leftX, padding + lineHeight, "left");
+     drawHudText(theme, getHealthBadgeText(), leftX, padding + (lineHeight * 2), "left");
+     drawHudText(theme, getLevelProgressStars(), miniGameWidth / 2, padding, "center");
+
+     drawHudText(theme, "⏯️", rightX, padding, "right");
+
+     if (statusText) {
+          drawHudText(theme, statusText, rightX, padding + lineHeight, "right");
+     }
 }
 
 // ==================================================
@@ -1290,33 +1244,6 @@ export function drawPlayer() {
 
      miniGameCtx.fillText(player.char, player.x, player.y + playerYOffset);
      miniGameCtx.restore();
-}
-
-function drawPlayerHaloRing(radius, alpha, lineWidth, color = "#ffffff") {
-     miniGameCtx.save();
-     miniGameCtx.globalAlpha = alpha;
-     miniGameCtx.strokeStyle = color;
-     miniGameCtx.shadowColor = color;
-     miniGameCtx.shadowBlur = 12;
-     miniGameCtx.lineWidth = lineWidth;
-     miniGameCtx.beginPath();
-     miniGameCtx.arc(player.x, player.y, radius, 0, Math.PI * 2);
-     miniGameCtx.stroke();
-     miniGameCtx.restore();
-}
-
-export function drawPlayerHalo() {
-     if (!miniGameCtx) {
-          return;
-     }
-
-     const healthRatio = Math.max(0, Math.min(1, playerHealth / maxPlayerHealth));
-     const levelRatio = Math.max(0, Math.min(1, getCurrentLevelNumber() / maxLevelProgressUnits));
-     const pulse = 0.5 + (Math.sin(performance.now() / 220) * 0.5);
-     const baseRadius = player.radius + 8;
-
-     drawPlayerHaloRing(baseRadius, 0.16 + (healthRatio * 0.2), 2 + (healthRatio * 2), "rgba(255, 255, 255, 0.95)");
-     drawPlayerHaloRing(baseRadius + 8 + (pulse * 3), 0.08 + (levelRatio * 0.16), 1.5, "rgba(255, 255, 255, 0.8)");
 }
 
 // ==================================================
@@ -1530,20 +1457,6 @@ export function drawFogOverlay() {
      miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
 
      miniGameCtx.restore();
-}
-
-export function drawTouchButtons(theme) {
-     if (!miniGameCtx) {
-          return;
-     }
-
-     const button = touchControls.pauseButton;
-
-     if (!button) {
-          return;
-     }
-
-     drawPauseButtonIcon(button, theme);
 }
 
 export function drawJoystick(theme) {
@@ -2501,7 +2414,6 @@ export function drawGame() {
           drawBoostblightPickups();
           drawCollisionBursts();
           drawPlayerTrail();
-          drawPlayerHalo();
           drawPlayer();
 
           drawFogOverlay();
@@ -2511,10 +2423,6 @@ export function drawGame() {
           }
 
           drawJoystick(theme);
-
-          if (!gamePaused && !gameMenuOpen && !gameOver && !gameWon) {
-               drawTouchButtons(theme);
-          }
      }
 
      if (gameMenuOpen) {
