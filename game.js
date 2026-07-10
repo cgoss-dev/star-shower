@@ -305,9 +305,9 @@ export function getCanvasTheme() {
 
           scoreReady: {
                font: "body",
-               fontSize: uiFontMd,
+               fontSize: uiFontSm,
                letterSpacing: 0,
-               color: bodyColor,
+               color: "#fff",
                rainbow: false,
                glow: true
           },

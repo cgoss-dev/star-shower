@@ -1168,7 +1168,7 @@ function drawHudText(theme, text, x, y, align = "left") {
 function drawHudBadges(theme) {
      const spacing = getTextStyle(theme, "canvasSpacing");
      const padding = spacing.uiPadding || 8;
-     const lineHeight = getTextStyle(theme, "scoreReady").fontSize * 1.55;
+     const lineHeight = getTextStyle(theme, "scoreReady").fontSize * 0.78;
      const leftX = padding;
      const rightX = miniGameWidth - padding;
      const statusText = getStatusText();
