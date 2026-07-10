@@ -27,7 +27,7 @@ Levels are score-based:
 
 ```text
 Level 1: 0
-Level 2: 10
+Level 2: 5
 Level 3: 25
 Level 4: 50
 Level 5: 75
