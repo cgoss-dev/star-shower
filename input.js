@@ -69,14 +69,14 @@ import {
      updateGameMenuScrollDrag,
      endGameMenuScrollDrag,
      showMenuKeyboardFocus
-} from "./state.js?v=20260711-29";
+} from "./state.js?v=20260711-37";
 
 import {
      isJoystickEnabled,
      movementOptionIndexes,
      maxDifficultyOptionIndex,
      getMaxMovementOptionIndex
-} from "./options.js?v=20260711-29";
+} from "./options.js?v=20260711-37";
 
 import {
      dismissScreenWelcomeToStart,
@@ -94,11 +94,11 @@ import {
      increaseHurtLevel,
      decreaseMovementLevel,
      increaseMovementLevel
-} from "./game.js?v=20260711-29";
+} from "./game.js?v=20260711-37";
 
 import {
      syncUiBounds
-} from "./draw/index.js?v=20260711-29";
+} from "./draw/index.js?v=20260711-37";
 
 const portfolioHomeUrl = "https://cgoss-dev.github.io/cgoss-dev/";
 
@@ -176,6 +176,20 @@ export function bindResizeHandler(onResize) {
      window.addEventListener("resize", () => {
           onResize();
      });
+
+     window.addEventListener("orientationchange", () => {
+          onResize();
+     });
+
+     if (window.visualViewport) {
+          window.visualViewport.addEventListener("resize", () => {
+               onResize();
+          });
+
+          window.visualViewport.addEventListener("scroll", () => {
+               onResize();
+          });
+     }
 
      setResizeHandlerBound(true);
 }

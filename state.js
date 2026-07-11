@@ -12,7 +12,7 @@ import {
      maxPlayerHealth,
      maxDifficultyOptionIndex,
      defaultDifficultyOptionIndex
-} from "./options.js?v=20260711-29";
+} from "./options.js?v=20260711-37";
 
 export const miniGameCanvas = document.getElementById("miniGameCanvas");
 
@@ -198,6 +198,10 @@ export const gameMenuScroll = {
      minVelocity: 0.08,
      maxVelocity: 42,
      pageSize: 0,
+     targetOffset: 0,
+     snapForce: 0.18,
+     snapFriction: 0.78,
+     snapMinDistance: 0.35,
      pageTurnDistance: 28,
      pageTurnVelocity: 3,
      overscrollLimit: 36,
@@ -556,19 +560,24 @@ function getGameMenuScrollPage() {
           return 0;
      }
 
-     return Math.round(gameMenuScroll.offset / gameMenuScroll.pageSize);
+     return Math.round(gameMenuScroll.targetOffset / gameMenuScroll.pageSize);
 }
 
-function setGameMenuScrollPage(page) {
+function setGameMenuScrollPage(page, immediate = false) {
      if (!isPagedGameMenuScroll()) {
           return;
      }
 
      const maxPage = Math.round(gameMenuScroll.max / gameMenuScroll.pageSize);
      const nextPage = Math.max(0, Math.min(maxPage, page));
+     const nextOffset = nextPage * gameMenuScroll.pageSize;
 
-     gameMenuScroll.offset = nextPage * gameMenuScroll.pageSize;
-     gameMenuScroll.velocity = 0;
+     gameMenuScroll.targetOffset = nextOffset;
+
+     if (immediate) {
+          gameMenuScroll.offset = nextOffset;
+          gameMenuScroll.velocity = 0;
+     }
 }
 
 export function resetGameMenuScroll() {
@@ -580,13 +589,19 @@ export function resetGameMenuScroll() {
      gameMenuScroll.dragStartOffset = 0;
      gameMenuScroll.velocity = 0;
      gameMenuScroll.pageSize = 0;
+     gameMenuScroll.targetOffset = 0;
 }
 
 export function setGameMenuScrollMax(value, pageSize = 0) {
      gameMenuScroll.max = Math.max(0, value);
      gameMenuScroll.pageSize = Math.max(0, pageSize);
+     gameMenuScroll.targetOffset = clampGameMenuScrollOffset(gameMenuScroll.targetOffset);
 
-     if (gameMenuScroll.pointerId === null && Math.abs(gameMenuScroll.velocity) < gameMenuScroll.minVelocity) {
+     if (
+          gameMenuScroll.pointerId === null &&
+          !isPagedGameMenuScroll() &&
+          Math.abs(gameMenuScroll.velocity) < gameMenuScroll.minVelocity
+     ) {
           gameMenuScroll.offset = clampGameMenuScrollOffset(gameMenuScroll.offset);
      }
 }
@@ -624,6 +639,7 @@ export function updateGameMenuScrollDrag(y) {
           const dragDelta = gameMenuScroll.dragStartY - y;
 
           gameMenuScroll.offset = clampGameMenuDragOffset(gameMenuScroll.dragStartOffset + dragDelta);
+          gameMenuScroll.targetOffset = clampGameMenuScrollOffset(gameMenuScroll.offset);
           return;
      }
 
@@ -671,7 +687,21 @@ export function updateGameMenuScrollVelocity() {
      }
 
      if (isPagedGameMenuScroll()) {
-          gameMenuScroll.velocity = 0;
+          const distance = gameMenuScroll.targetOffset - gameMenuScroll.offset;
+
+          if (Math.abs(distance) <= gameMenuScroll.snapMinDistance) {
+               gameMenuScroll.offset = gameMenuScroll.targetOffset;
+               gameMenuScroll.velocity = 0;
+               return;
+          }
+
+          const nextVelocity = clampGameMenuVelocity(
+               (gameMenuScroll.velocity + (distance * gameMenuScroll.snapForce)) *
+               gameMenuScroll.snapFriction
+          );
+
+          gameMenuScroll.velocity = nextVelocity;
+          gameMenuScroll.offset = clampGameMenuDragOffset(gameMenuScroll.offset + nextVelocity);
           return;
      }
 

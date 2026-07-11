@@ -63,7 +63,7 @@ import {
      setGameMenuScrollMax,
      isPointInsideRect,
      resetActionButtonBounds
-} from "../state.js?v=20260711-29";
+} from "../state.js?v=20260711-37";
 
 import {
      maxDifficultyOptionIndex,
@@ -83,11 +83,11 @@ import {
      fogClearRadiusBase,
      fogClearRadiusMinScale,
      fogClearRadiusMaxScale
-} from "../options.js?v=20260711-29";
+} from "../options.js?v=20260711-37";
 
 import {
      spawnDensityBaselineArea
-} from "../entities/constants.js?v=20260711-29";
+} from "../entities/constants.js?v=20260711-37";
 
 import {
      drawStars,
@@ -109,7 +109,7 @@ import {
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
      syncPlayerSize
-} from "../entities/index.js?v=20260711-29";
+} from "../entities/index.js?v=20260711-37";
 
 import {
      getCanvasTheme,
@@ -133,13 +133,13 @@ import {
      isRoundIntroActive,
      getRoundIntroAlpha,
      getRoundIntroLines
-} from "../game.js?v=20260711-29";
+} from "../game.js?v=20260711-37";
 
 import {
      stepperLeftIcon,
      stepperRightIcon,
      richTextIconAssetImages
-} from "./assets.js?v=20260711-29";
+} from "./assets.js?v=20260711-37";
 
 const siteTheme = window.SiteTheme;
 const levelProgressPulseFrames = 18;
@@ -1093,53 +1093,57 @@ export function drawOptionStepper(
           : optionTextColor;
      const arrowScale = optionsStyle.arrowScale || 1;
      const arrowIconSize = Math.min(row.height * 0.5, optionsStyle.fontSize * arrowScale);
-     const cornerRadius = getControlCornerRadius(theme, row.width, row.height);
      const borderWidth = theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1;
      const focusAlpha = getMenuKeyboardFocusAlpha();
-     const isActive = (
-          (isRowFocused && focusAlpha > 0) ||
-          (canDecrease && isButtonHovered(decreaseButton)) ||
-          (canIncrease && isButtonHovered(increaseButton))
+     const isDecreaseActive = canDecrease && (
+          isButtonHovered(decreaseButton) ||
+          (isRowFocused && focusedSide === 0 && focusAlpha > 0)
      );
+     const isIncreaseActive = canIncrease && (
+          isButtonHovered(increaseButton) ||
+          (isRowFocused && focusedSide === 1 && focusAlpha > 0)
+     );
+     const isActive = isDecreaseActive || isIncreaseActive || (isRowFocused && focusAlpha > 0);
      const activeColor = getCssColor("--color-white", "#fff");
-     const rowColor = isActive ? activeColor : (optionsStyle.color || colors.controlText);
+     const arrowColor = isActive ? activeColor : (optionsStyle.color || colors.controlText);
      const valueTextColor = isActive ? activeColor : optionTextColor;
      const resolvedLabelTextColor = isActive ? activeColor : labelTextColor;
 
-     function drawStepperArrow(button, icon, isEnabled) {
+     function drawStepperArrow(button, icon, isEnabled, isButtonActive = false) {
           if (!isEnabled) {
                return;
           }
 
           const iconX = button.x + ((button.width - arrowIconSize) / 2);
           const iconY = centerY - (arrowIconSize / 2);
+          const circleSize = Math.min(button.width, button.height, arrowIconSize * 1.45);
+          const circleX = button.x + ((button.width - circleSize) / 2);
+          const circleY = centerY - (circleSize / 2);
+          const circleRadius = circleSize / 2;
 
           miniGameCtx.save();
+
+          if (isButtonActive) {
+               fillRoundedControlRect(circleX, circleY, circleSize, circleSize, circleRadius, keyboardFocusFill);
+          }
+
+          strokeRoundedControlRect(
+               circleX,
+               circleY,
+               circleSize,
+               circleSize,
+               circleRadius,
+               borderWidth,
+               isButtonActive ? activeColor : arrowColor
+          );
+
           if (icon.complete && icon.naturalWidth > 0) {
                miniGameCtx.drawImage(icon, iconX, iconY, arrowIconSize, arrowIconSize);
           }
           miniGameCtx.restore();
      }
 
-     miniGameCtx.save();
-
-     if (isActive) {
-          fillRoundedControlRect(row.x, row.y, row.width, row.height, cornerRadius, keyboardFocusFill);
-     }
-
-     strokeRoundedControlRect(
-          row.x,
-          row.y,
-          row.width,
-          row.height,
-          cornerRadius,
-          borderWidth,
-          rowColor
-     );
-
-     miniGameCtx.restore();
-
-     drawStepperArrow(decreaseButton, stepperLeftIcon, canDecrease);
+     drawStepperArrow(decreaseButton, stepperLeftIcon, canDecrease, isDecreaseActive);
 
      drawGlowingCanvasText(
           miniGameCtx,
@@ -1167,7 +1171,7 @@ export function drawOptionStepper(
           isRowFocused && optionsStyle.glow
      );
 
-     drawStepperArrow(increaseButton, stepperRightIcon, canIncrease);
+     drawStepperArrow(increaseButton, stepperRightIcon, canIncrease, isIncreaseActive);
 }
 
 function formatHudUnitValue(value) {
@@ -1729,7 +1733,8 @@ function drawPagedInfoScreen(theme, sections) {
      const viewportTop = layout.titleY;
      const viewportBottom = layout.contentBottomY;
      const viewportHeight = Math.max(0, viewportBottom - viewportTop);
-     const pageSize = Math.max(1, viewportHeight);
+     const carouselGap = getTextStyle(theme, "canvasSpacing").bodyLineHeight;
+     const pageSize = Math.max(1, viewportHeight + carouselGap);
      const maxPageIndex = Math.max(0, sections.length - 1);
      const activePageIndex = Math.max(
           0,
@@ -1744,22 +1749,12 @@ function drawPagedInfoScreen(theme, sections) {
 
      sections.forEach((section, index) => {
           const lines = [section.title, "", ...section.lines];
-          const pageY = viewportTop + (index * pageSize) - gameMenuScroll.offset;
           const cardHeight = getPagedInfoCardHeight(theme, lines);
+          const centeredCardY = viewportTop + Math.max(0, (viewportHeight - cardHeight) / 2);
+          const pageY = centeredCardY + (index * pageSize) - gameMenuScroll.offset;
 
           if (pageY > viewportBottom || pageY + cardHeight < viewportTop) {
                return;
-          }
-
-          if (index === activePageIndex && cardHeight > 0) {
-               fillRoundedControlRect(
-                    cardX,
-                    pageY,
-                    cardWidth,
-                    cardHeight,
-                    getControlCornerRadius(theme, cardWidth, cardHeight),
-                    keyboardFocusFill
-               );
           }
 
           drawMenuDetailLines(theme, lines, pageY, {
@@ -2136,7 +2131,34 @@ function drawOptionsScreen(theme) {
      miniGameCtx.fillStyle = colors.menuScreenFill;
      miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
 
-     drawMenuScreenTitle("OPTIONS", theme, layout.titleCenterX, layout.titleY);
+     const optionsTitleY = Math.max(
+          layout.titleY,
+          (gameMenuUi.hurtRow.y - layout.titleFontSize) / 2
+     );
+     const canvasSpacing = getTextStyle(theme, "canvasSpacing");
+     const optionCardXPadding = canvasSpacing.uiPadding;
+     const optionCardYPadding = canvasSpacing.bodyLineHeight;
+     const lastOptionRow = showMovementOption ? gameMenuUi.movementRow : gameMenuUi.hurtRow;
+     const optionCardWidth = Math.min(
+          miniGameWidth - (layout.sidePadding * 2),
+          layout.buttonWidth + (optionCardXPadding * 2)
+     );
+     const optionCardX = (miniGameWidth - optionCardWidth) / 2;
+     const optionCardY = Math.max(layout.titleY, optionsTitleY - optionCardYPadding);
+     const optionCardBottomY = lastOptionRow.y + lastOptionRow.height + optionCardYPadding;
+     const optionCardHeight = Math.max(0, optionCardBottomY - optionCardY);
+
+     strokeRoundedControlRect(
+          optionCardX,
+          optionCardY,
+          optionCardWidth,
+          optionCardHeight,
+          getControlCornerRadius(theme, optionCardWidth, optionCardHeight),
+          theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1,
+          getTextStyle(theme, "buttonsOptions").color || colors.controlText
+     );
+
+     drawMenuScreenTitle("OPTIONS", theme, layout.titleCenterX, optionsTitleY);
 
      drawOptionStepper(
           gameMenuUi.hurtRow,

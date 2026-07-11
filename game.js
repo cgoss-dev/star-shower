@@ -47,7 +47,7 @@ import {
 
      resetUiActionBounds,
      resetGameState
-} from "./state.js?v=20260711-29";
+} from "./state.js?v=20260711-37";
 
 import {
      difficultyOptionLabels,
@@ -59,7 +59,7 @@ import {
      isJoystickEnabled,
      loadAndApplySavedOptions,
      saveCurrentOptions
-} from "./options.js?v=20260711-29";
+} from "./options.js?v=20260711-37";
 
 import {
      bindKeyboardInput,
@@ -67,7 +67,7 @@ import {
      bindResizeHandler,
      updateTouchControlBounds,
      resetTouchControls
-} from "./input.js?v=20260711-29";
+} from "./input.js?v=20260711-37";
 
 import {
      resetPlayerPosition,
@@ -85,14 +85,14 @@ import {
      collectHelphurtPickups,
      updatePlayerTrail,
      resetHelphurtIntroState
-} from "./entities/index.js?v=20260711-29";
+} from "./entities/index.js?v=20260711-37";
 
 import {
      syncUiBounds,
      updatePauseButtonState,
      updateScreenTitleColorState,
      drawGame
-} from "./draw/index.js?v=20260711-29";
+} from "./draw/index.js?v=20260711-37";
 
 // ====================================================================================================
 // NOTE: CONFIG / THEME
@@ -540,7 +540,7 @@ export const gameplayPopupDurationFrames = 180;
 const roundIntroMessageFrames = 60;
 const roundIntroPauseFrames = 60;
 const roundIntroSecondHoldFrames = 60;
-const roundIntroFadeFrames = 60;
+const roundIntroFadeFrames = 120;
 const roundIntroTotalFrames =
      roundIntroMessageFrames +
      roundIntroPauseFrames +
@@ -1016,6 +1016,16 @@ export function syncCanvasResolutionAndUiBounds() {
      syncUiBounds();
 }
 
+function scheduleStartupCanvasSyncs() {
+     const syncDelays = [0, 80, 250, 600];
+
+     requestAnimationFrame(syncCanvasResolutionAndUiBounds);
+
+     syncDelays.forEach((delay) => {
+          window.setTimeout(syncCanvasResolutionAndUiBounds, delay);
+     });
+}
+
 // ==================================================
 // ROUNDS
 // ==================================================
@@ -1335,6 +1345,7 @@ export function startStarShower() {
      bindKeyboardInput();
      bindPointerInput();
      bindResizeHandler(syncCanvasResolutionAndUiBounds);
+     scheduleStartupCanvasSyncs();
 
      gameLoop();
 }
