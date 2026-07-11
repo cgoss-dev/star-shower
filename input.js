@@ -67,14 +67,14 @@ import {
      updateGameMenuScrollDrag,
      endGameMenuScrollDrag,
      showMenuKeyboardFocus
-} from "./state.js";
+} from "./state.js?v=20260711-2";
 
 import {
      isJoystickEnabled,
      movementOptionIndexes,
      maxDifficultyOptionIndex,
      getMaxMovementOptionIndex
-} from "./options.js";
+} from "./options.js?v=20260711-2";
 
 import {
      dismissScreenWelcomeToStart,
@@ -87,17 +87,16 @@ import {
      isScreenWelcomeActive,
      isOverlayScreenActive,
      isRoundIntroActive,
-     dismissRoundIntro,
      startNewGameRound,
      decreaseHurtLevel,
      increaseHurtLevel,
      decreaseMovementLevel,
      increaseMovementLevel
-} from "./game.js";
+} from "./game.js?v=20260711-2";
 
 import {
      syncUiBounds
-} from "./draw/index.js";
+} from "./draw/index.js?v=20260711-2";
 
 const portfolioHomeUrl = "https://cgoss-dev.github.io/cgoss-dev/";
 
@@ -1095,11 +1094,6 @@ function handleKeyDown(event) {
      }
 
      if (isRoundIntroActive()) {
-          if (isEnterKey(event) || isSpaceKey(event)) {
-               event.preventDefault();
-               dismissRoundIntro();
-          }
-
           return;
      }
 
@@ -1174,7 +1168,6 @@ function handlePointerDown(event) {
      }
 
      if (isRoundIntroActive()) {
-          dismissRoundIntro();
           return;
      }
 

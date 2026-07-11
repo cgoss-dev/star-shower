@@ -45,7 +45,7 @@ import {
 
      resetUiActionBounds,
      resetGameState
-} from "./state.js";
+} from "./state.js?v=20260711-2";
 
 import {
      difficultyOptionLabels,
@@ -57,7 +57,7 @@ import {
      isJoystickEnabled,
      loadAndApplySavedOptions,
      saveCurrentOptions
-} from "./options.js";
+} from "./options.js?v=20260711-2";
 
 import {
      bindKeyboardInput,
@@ -65,7 +65,7 @@ import {
      bindResizeHandler,
      updateTouchControlBounds,
      resetTouchControls
-} from "./input.js";
+} from "./input.js?v=20260711-2";
 
 import {
      resetPlayerPosition,
@@ -83,14 +83,14 @@ import {
      collectHelphurtPickups,
      updatePlayerTrail,
      resetHelphurtIntroState
-} from "./entities/index.js";
+} from "./entities/index.js?v=20260711-2";
 
 import {
      syncUiBounds,
      updatePauseButtonState,
      updateScreenTitleColorState,
      drawGame
-} from "./draw/index.js";
+} from "./draw/index.js?v=20260711-2";
 
 // ====================================================================================================
 // NOTE: CONFIG / THEME
@@ -529,9 +529,13 @@ export const overlayFadeFrames = 30;
 export const gameplayPopupDurationFrames = 180;
 const roundIntroMessageFrames = 120;
 const roundIntroPauseFrames = 120;
+const roundIntroSecondHoldFrames = 120;
+const roundIntroFadeFrames = 120;
 const roundIntroTotalFrames =
      roundIntroMessageFrames +
-     roundIntroPauseFrames;
+     roundIntroPauseFrames +
+     roundIntroSecondHoldFrames +
+     roundIntroFadeFrames;
 export const maxLevelProgressUnits = 10;
 export const progressUnitsPerCircle = 2;
 const levelScoreMins = [
@@ -783,7 +787,6 @@ let screenLayerTimer = -1;
 let screenLayerDuration = -1;
 let gameScreenMode = "screenWelcome";
 let roundIntroTimer = 0;
-let roundIntroWaitingForDismiss = false;
 
 // ==================================================
 // SCREEN MODE HELPERS
@@ -810,32 +813,26 @@ export function getGameScreenMode() {
 }
 
 export function isRoundIntroActive() {
-     return roundIntroTimer > 0 || roundIntroWaitingForDismiss;
-}
-
-export function canDismissRoundIntro() {
-     return roundIntroWaitingForDismiss;
-}
-
-export function dismissRoundIntro() {
-     if (!canDismissRoundIntro()) {
-          return false;
-     }
-
-     roundIntroTimer = 0;
-     roundIntroWaitingForDismiss = false;
-     return true;
+     return roundIntroTimer > 0;
 }
 
 export function getRoundIntroAlpha() {
-     return isRoundIntroActive() ? 1 : 0;
+     if (!isRoundIntroActive()) {
+          return 0;
+     }
+
+     if (roundIntroTimer <= roundIntroFadeFrames) {
+          return Math.max(0, Math.min(1, roundIntroTimer / roundIntroFadeFrames));
+     }
+
+     return 1;
 }
 
 export function getRoundIntroLines() {
      const elapsedFrames = roundIntroTotalFrames - roundIntroTimer;
      const secondMessageStart = roundIntroMessageFrames + roundIntroPauseFrames;
 
-     if (!roundIntroWaitingForDismiss && elapsedFrames < secondMessageStart) {
+     if (elapsedFrames < secondMessageStart) {
           return roundIntroFirstLines;
      }
 
@@ -1027,7 +1024,6 @@ export function startNewGameRound() {
      setGameOver(false);
      setGameWon(false);
      roundIntroTimer = roundIntroTotalFrames;
-     roundIntroWaitingForDismiss = false;
 }
 
 // ====================================================================================================
@@ -1123,16 +1119,11 @@ export function clearGameOverlay() {
 
 function clearRoundIntro() {
      roundIntroTimer = 0;
-     roundIntroWaitingForDismiss = false;
 }
 
 function updateRoundIntroTimer() {
      if (roundIntroTimer > 0) {
           roundIntroTimer -= 1;
-
-          if (roundIntroTimer === 0) {
-               roundIntroWaitingForDismiss = true;
-          }
      }
 }
 

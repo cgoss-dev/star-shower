@@ -12,7 +12,7 @@ import {
      maxPlayerHealth,
      maxDifficultyOptionIndex,
      defaultDifficultyOptionIndex
-} from "./options.js";
+} from "./options.js?v=20260711-2";
 
 export const miniGameCanvas = document.getElementById("miniGameCanvas");
 
@@ -161,7 +161,6 @@ export const gameMenuUi = {
 export const screenActionUi = {
      startButton: { x: 0, y: 0, width: 0, height: 0 },
      tipsButton: { x: 0, y: 0, width: 0, height: 0 },
-     effectsButton: { x: 0, y: 0, width: 0, height: 0 },
      menuButton: { x: 0, y: 0, width: 0, height: 0 },
      returnButton: { x: 0, y: 0, width: 0, height: 0 }
 };
@@ -170,7 +169,6 @@ export const pausedActionUi = {
      resumeButton: { x: 0, y: 0, width: 0, height: 0 },
      newGameButton: { x: 0, y: 0, width: 0, height: 0 },
      tipsButton: { x: 0, y: 0, width: 0, height: 0 },
-     effectsButton: { x: 0, y: 0, width: 0, height: 0 },
      menuButton: { x: 0, y: 0, width: 0, height: 0 },
      returnButton: { x: 0, y: 0, width: 0, height: 0 }
 };
@@ -676,11 +674,6 @@ export function resetUiActionBounds() {
      screenActionUi.tipsButton.width = 0;
      screenActionUi.tipsButton.height = 0;
 
-     screenActionUi.effectsButton.x = 0;
-     screenActionUi.effectsButton.y = 0;
-     screenActionUi.effectsButton.width = 0;
-     screenActionUi.effectsButton.height = 0;
-
      screenActionUi.menuButton.x = 0;
      screenActionUi.menuButton.y = 0;
      screenActionUi.menuButton.width = 0;
@@ -705,11 +698,6 @@ export function resetUiActionBounds() {
      pausedActionUi.tipsButton.y = 0;
      pausedActionUi.tipsButton.width = 0;
      pausedActionUi.tipsButton.height = 0;
-
-     pausedActionUi.effectsButton.x = 0;
-     pausedActionUi.effectsButton.y = 0;
-     pausedActionUi.effectsButton.width = 0;
-     pausedActionUi.effectsButton.height = 0;
 
      pausedActionUi.menuButton.x = 0;
      pausedActionUi.menuButton.y = 0;
@@ -739,13 +727,6 @@ export function resetActionButtonBounds(actionUi, primaryButtonKey) {
      actionUi.tipsButton.y = 0;
      actionUi.tipsButton.width = 0;
      actionUi.tipsButton.height = 0;
-
-     if (actionUi.effectsButton) {
-          actionUi.effectsButton.x = 0;
-          actionUi.effectsButton.y = 0;
-          actionUi.effectsButton.width = 0;
-          actionUi.effectsButton.height = 0;
-     }
 
      actionUi.menuButton.x = 0;
      actionUi.menuButton.y = 0;

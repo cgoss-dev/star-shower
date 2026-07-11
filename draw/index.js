@@ -63,7 +63,7 @@ import {
      setGameMenuScrollMax,
      isPointInsideRect,
      resetActionButtonBounds
-} from "../state.js";
+} from "../state.js?v=20260711-2";
 
 import {
      maxDifficultyOptionIndex,
@@ -83,11 +83,11 @@ import {
      fogClearRadiusBase,
      fogClearRadiusMinScale,
      fogClearRadiusMaxScale
-} from "../options.js";
+} from "../options.js?v=20260711-2";
 
 import {
      spawnDensityBaselineArea
-} from "../entities/constants.js";
+} from "../entities/constants.js?v=20260711-2";
 
 import {
      drawStars,
@@ -109,7 +109,7 @@ import {
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
      syncPlayerSize
-} from "../entities/index.js";
+} from "../entities/index.js?v=20260711-2";
 
 import {
      getCanvasTheme,
@@ -133,13 +133,13 @@ import {
      isRoundIntroActive,
      getRoundIntroAlpha,
      getRoundIntroLines
-} from "../game.js";
+} from "../game.js?v=20260711-2";
 
 import {
      stepperLeftIcon,
      stepperRightIcon,
      richTextIconAssetImages
-} from "./assets.js";
+} from "./assets.js?v=20260711-2";
 
 const siteTheme = window.SiteTheme;
 const levelProgressPulseFrames = 18;
@@ -1049,6 +1049,9 @@ export function drawOptionStepper(
      const canDecrease = levelIndex > 0;
      const canIncrease = levelIndex < maxLevelIndex;
      const optionTextColor = optionsStyle.color || colors.controlText;
+     const labelTextColor = label.toUpperCase() === "DIFFICULTY"
+          ? getCssColor("--color-white", "#fff")
+          : optionTextColor;
      const arrowScale = optionsStyle.arrowScale || 1;
      const arrowIconSize = Math.min(row.height * 0.5, optionsStyle.fontSize * arrowScale);
      const cornerRadius = getControlCornerRadius(theme, row.width, row.height);
@@ -1097,8 +1100,8 @@ export function drawOptionStepper(
           label,
           row.x + (row.width / 2),
           titleY,
-          optionTextColor,
-          getTextFont(theme, "buttonsOptions", 700),
+          labelTextColor,
+          getTextFont(theme, "buttonsOptions", 400),
           "center",
           "middle",
           theme,
@@ -2601,7 +2604,7 @@ export function drawGame() {
 
           drawGameplayPopup(theme);
 
-          if (!gameMenuOpen) {
+          if (!gameMenuOpen && !isRoundIntroActive()) {
                drawHudBadges(theme);
                drawLevelProgressStars(theme);
           }
