@@ -184,6 +184,7 @@ export const playerFaces = {
 };
 
 const pickupAssetImages = {};
+const fallingHealthParticles = ["❤️", "🧡", "💛", "💚", "💙", "💜"];
 let lastSpawnedHelphurtName = "";
 
 function getHelpTypes() {
@@ -962,7 +963,7 @@ function createStrike() {
           baseX: x,
           y: -20,
           speed: getFallingObjectSpeed(),
-          size: randomNumber(getGameParticleSizeMin() * 1.1, getGameParticleSizeMax() * 1.15),
+          size: randomNumber(getGameParticleSizeMin(), getGameParticleSizeMax()),
           particle: strikeParticles[Math.floor(Math.random() * strikeParticles.length)],
           assetSrc: strikeAssetSrc,
           colorRole: "strike",
@@ -1090,16 +1091,17 @@ export function collectStrikes() {
 
 function createHelphurtPickup(type, category) {
      const x = Math.random() * (miniGameWidth - 20) + 10;
+     const particle = type.name === "health"
+          ? randomItem(fallingHealthParticles)
+          : type.particle;
 
      helphurtPickups.push({
           x,
           baseX: x,
           y: -20,
           speed: getFallingObjectSpeed(),
-          size: category === "help"
-               ? randomNumber(getGameParticleSizeMin() * 1.25, getGameParticleSizeMax() * 1.15)
-               : randomNumber(getGameParticleSizeMin() * 1.5, getGameParticleSizeMax() * 1.25),
-          particle: type.particle,
+          size: randomNumber(getGameParticleSizeMin(), getGameParticleSizeMax()),
+          particle,
           type,
           category,
           colorRole: category === "help" ? "help" : "hurt",

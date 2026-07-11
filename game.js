@@ -125,7 +125,7 @@ export const starShowerHelphurtIcons = {
           category: "help",
           name: "health",
           label: "HEALTH",
-          particle: "💚",
+          particle: "❤️",
           assetSrc: "",
           ability: "increaseHealth",
           lastsUntilUsed: true,

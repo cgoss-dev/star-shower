@@ -115,7 +115,6 @@ import {
      getCanvasTheme,
      getCssColor,
      getCurrentLevelNumber,
-     getCurrentLevelProgressRatio,
      maxLevelProgressUnits,
      getCurrentScreenActionTexts,
      getCurrentPausedActionTexts,
@@ -1123,11 +1122,7 @@ function getHealthBadgeText() {
      const currentHearts = Math.max(0, Math.min(maxPlayerHealth, playerHealth));
      const maxHearts = maxPlayerHealth;
 
-     return `💚 ${formatHudUnitValue(currentHearts)}/${formatHudUnitValue(maxHearts)}`;
-}
-
-function getWinBadgeText() {
-     return `🏆 ${getCurrentLevelNumber()}/${maxLevelProgressUnits}`;
+     return `❤️ ${formatHudUnitValue(currentHearts)}/${formatHudUnitValue(maxHearts)}`;
 }
 
 function getScoreBadgeText() {
@@ -1135,7 +1130,7 @@ function getScoreBadgeText() {
 }
 
 function getLevelProgressFilledUnits() {
-     return Math.round(getCurrentLevelProgressRatio() * maxLevelProgressUnits);
+     return Math.max(1, Math.min(maxLevelProgressUnits, getCurrentLevelNumber()));
 }
 
 function getLevelProgressCircles(filledUnits = getLevelProgressFilledUnits()) {
@@ -1199,9 +1194,8 @@ function drawHudBadges(theme) {
      const statusLines = getStatusTextLines();
      const sideColumnWidth = Math.max(64, (miniGameWidth - (padding * 2)) * 0.3);
 
-     drawHudText(theme, getWinBadgeText(), leftX, padding, "left", "scoreReady", sideColumnWidth);
-     drawHudText(theme, getScoreBadgeText(), leftX, padding + lineHeight, "left", "scoreReady", sideColumnWidth);
-     drawHudText(theme, getHealthBadgeText(), leftX, padding + (lineHeight * 2), "left", "scoreReady", sideColumnWidth);
+     drawHudText(theme, getScoreBadgeText(), leftX, padding, "left", "scoreReady", sideColumnWidth);
+     drawHudText(theme, getHealthBadgeText(), leftX, padding + lineHeight, "left", "scoreReady", sideColumnWidth);
 
      drawHudText(theme, "⏯️", rightX, padding, "right", "scoreReady", sideColumnWidth);
 
