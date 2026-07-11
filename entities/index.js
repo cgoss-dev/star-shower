@@ -57,7 +57,7 @@ import {
      randomItem,
      randomNumber,
      isCollidingWithStar
-} from "../state.js?v=20260711-2";
+} from "../state.js?v=20260711-6";
 
 import {
      maxPlayerHealth,
@@ -71,7 +71,7 @@ import {
      statusFlashSeconds,
      touchArriveDistance,
      movementOptionIndexes
-} from "../options.js?v=20260711-2";
+} from "../options.js?v=20260711-6";
 
 import {
      areStrikesUnlockedForCurrentLevel,
@@ -83,7 +83,7 @@ import {
      starShowerRainbowPalette,
      getCssColor,
      showGameplayPopup
-} from "../game.js?v=20260711-2";
+} from "../game.js?v=20260711-6";
 
 import {
      playerBaseHealth,
@@ -127,7 +127,7 @@ import {
      strikeParticles,
      strikeAssetSrc,
      burstChars
-} from "./constants.js?v=20260711-2";
+} from "./constants.js?v=20260711-6";
 
 export {
      playerBaseHealth,

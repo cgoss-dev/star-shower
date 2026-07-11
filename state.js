@@ -12,7 +12,7 @@ import {
      maxPlayerHealth,
      maxDifficultyOptionIndex,
      defaultDifficultyOptionIndex
-} from "./options.js?v=20260711-2";
+} from "./options.js?v=20260711-6";
 
 export const miniGameCanvas = document.getElementById("miniGameCanvas");
 
@@ -189,7 +189,9 @@ export const gameMenuScroll = {
      offset: 0,
      max: 0,
      pointerId: null,
-     lastY: 0
+     lastY: 0,
+     overscrollLimit: 36,
+     overscrollResistance: 0.35
 };
 export const menuKeyboardFocus = {
      timer: 0,
@@ -514,6 +516,23 @@ function clampGameMenuScrollOffset(value) {
      return Math.max(0, Math.min(gameMenuScroll.max, value));
 }
 
+function clampGameMenuDragOffset(value) {
+     const minOffset = -gameMenuScroll.overscrollLimit;
+     const maxOffset = gameMenuScroll.max + gameMenuScroll.overscrollLimit;
+
+     if (value < 0) {
+          return Math.max(minOffset, value * gameMenuScroll.overscrollResistance);
+     }
+
+     if (value > gameMenuScroll.max) {
+          const overscroll = value - gameMenuScroll.max;
+
+          return Math.min(maxOffset, gameMenuScroll.max + (overscroll * gameMenuScroll.overscrollResistance));
+     }
+
+     return value;
+}
+
 export function resetGameMenuScroll() {
      gameMenuScroll.offset = 0;
      gameMenuScroll.max = 0;
@@ -523,7 +542,10 @@ export function resetGameMenuScroll() {
 
 export function setGameMenuScrollMax(value) {
      gameMenuScroll.max = Math.max(0, value);
-     gameMenuScroll.offset = clampGameMenuScrollOffset(gameMenuScroll.offset);
+
+     if (gameMenuScroll.pointerId === null) {
+          gameMenuScroll.offset = clampGameMenuScrollOffset(gameMenuScroll.offset);
+     }
 }
 
 export function addGameMenuScrollOffset(delta) {
@@ -539,7 +561,7 @@ export function updateGameMenuScrollDrag(y) {
      const delta = gameMenuScroll.lastY - y;
 
      gameMenuScroll.lastY = y;
-     addGameMenuScrollOffset(delta);
+     gameMenuScroll.offset = clampGameMenuDragOffset(gameMenuScroll.offset + delta);
 }
 
 export function endGameMenuScrollDrag(pointerId = gameMenuScroll.pointerId) {
@@ -549,6 +571,7 @@ export function endGameMenuScrollDrag(pointerId = gameMenuScroll.pointerId) {
 
      gameMenuScroll.pointerId = null;
      gameMenuScroll.lastY = 0;
+     gameMenuScroll.offset = clampGameMenuScrollOffset(gameMenuScroll.offset);
      return true;
 }
 

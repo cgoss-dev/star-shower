@@ -63,7 +63,7 @@ import {
      setGameMenuScrollMax,
      isPointInsideRect,
      resetActionButtonBounds
-} from "../state.js?v=20260711-2";
+} from "../state.js?v=20260711-6";
 
 import {
      maxDifficultyOptionIndex,
@@ -83,11 +83,11 @@ import {
      fogClearRadiusBase,
      fogClearRadiusMinScale,
      fogClearRadiusMaxScale
-} from "../options.js?v=20260711-2";
+} from "../options.js?v=20260711-6";
 
 import {
      spawnDensityBaselineArea
-} from "../entities/constants.js?v=20260711-2";
+} from "../entities/constants.js?v=20260711-6";
 
 import {
      drawStars,
@@ -109,7 +109,7 @@ import {
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
      syncPlayerSize
-} from "../entities/index.js?v=20260711-2";
+} from "../entities/index.js?v=20260711-6";
 
 import {
      getCanvasTheme,
@@ -133,13 +133,13 @@ import {
      isRoundIntroActive,
      getRoundIntroAlpha,
      getRoundIntroLines
-} from "../game.js?v=20260711-2";
+} from "../game.js?v=20260711-6";
 
 import {
      stepperLeftIcon,
      stepperRightIcon,
      richTextIconAssetImages
-} from "./assets.js?v=20260711-2";
+} from "./assets.js?v=20260711-6";
 
 const siteTheme = window.SiteTheme;
 const levelProgressPulseFrames = 18;
@@ -1151,6 +1151,7 @@ function getLevelProgressCircles(filledUnits = getLevelProgressFilledUnits()) {
 
      return Array.from({ length: maxLevelProgressUnits }, (_item, index) => (
           index === maxLevelProgressUnits - 1 && index < filledUnits ? "★" :
+          index === maxLevelProgressUnits - 1 ? "☆" :
           index < filledUnits ? "●" :
           "○"
      )).join("");
@@ -1208,7 +1209,7 @@ function drawHudPauseButton(theme) {
 
      const button = touchControls.pauseButton;
 
-     drawHudText(theme, getHudPauseText(), button.x, button.y, "left", "scoreReady", button.width);
+     drawHudText(theme, getHudPauseText(), button.x, button.y, "left", "scoreReady");
 }
 
 function drawHudBadges(theme) {

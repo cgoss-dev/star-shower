@@ -30,11 +30,11 @@ import {
      setHurtLevel,
      setMovementLevel,
      setColorLevel
-} from "./state.js?v=20260711-2";
+} from "./state.js?v=20260711-6";
 
 import {
      getCssBoolean
-} from "./game.js?v=20260711-2";
+} from "./game.js?v=20260711-6";
 
 // ==================================================
 // STORAGE
