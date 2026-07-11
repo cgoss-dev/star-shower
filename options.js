@@ -104,7 +104,7 @@ export const strikeHealthDamage = 1;
 export const magnetCollisionRadiusMultiplier = 5;
 export const magnetRadiusMinScale = 1;
 export const magnetRadiusMaxScale = 3;
-export const fogClearRadiusBase = 82;
+export const fogClearRadiusBase = 64;
 export const fogClearRadiusMinScale = 1;
 export const fogClearRadiusMaxScale = 3;
 

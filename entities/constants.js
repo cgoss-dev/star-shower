@@ -4,7 +4,7 @@ import {
 
 export const playerBaseHealth = gameplayStartingHealth;
 export const playerBaseSpeed = 2;
-export const playerSpeedPerHeart = 0.5;
+export const playerSpeedPerHeart = 0.75;
 export const playerSpeedMinScale = 1;
 export const playerSpeedMaxScale = 2;
 export const playerBaseSize = 64;
@@ -46,6 +46,19 @@ export const helphurtDifficultyMultipliers = [
      0,
      1,
      3
+];
+
+export const helphurtFallSpeedMultipliersByLevel = [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1.5,
+     1.5,
+     2,
+     2,
+     2
 ];
 
 export const playerTrailCountMax = 2;

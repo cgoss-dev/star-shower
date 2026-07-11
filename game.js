@@ -537,14 +537,14 @@ export const progressUnitsPerCircle = 2;
 const levelScoreMins = [
      0,
      5,
-     35,
      65,
-     95,
      125,
-     155,
      185,
-     215,
-     250
+     245,
+     305,
+     365,
+     430,
+     500
 ];
 export const winScore = levelScoreMins.at(-1) ?? 0;
 

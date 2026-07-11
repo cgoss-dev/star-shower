@@ -111,6 +111,7 @@ import {
      fallingObjectSpeedStep,
      helphurtBaseSpawnStarsByLevel,
      helphurtDifficultyMultipliers,
+     helphurtFallSpeedMultipliersByLevel,
      playerTrailCountMax,
      playerTrailCountMin,
      playerTrailLifeMax,
@@ -148,6 +149,7 @@ export {
      fallingObjectSpeedMax,
      helphurtBaseSpawnStarsByLevel,
      helphurtDifficultyMultipliers,
+     helphurtFallSpeedMultipliersByLevel,
      playerTrailCountMax,
      playerTrailCountMin,
      playerTrailLifeMax,
@@ -912,6 +914,12 @@ function getObjectFallSpeedMultiplier() {
      return 1;
 }
 
+function getHelphurtFallSpeedMultiplier() {
+     const levelIndex = Math.max(0, getCurrentLevelNumber() - 1);
+
+     return helphurtFallSpeedMultipliersByLevel[levelIndex] ?? helphurtFallSpeedMultipliersByLevel.at(-1) ?? 1;
+}
+
 // ==================================================
 // STARS + STRIKES
 // ==================================================
@@ -1225,7 +1233,7 @@ export function maybeCreateHelphurtPickupsFromStarSpawn() {
 }
 
 export function updateHelphurtPickups() {
-     const fallSpeedMultiplier = getObjectFallSpeedMultiplier();
+     const fallSpeedMultiplier = getHelphurtFallSpeedMultiplier();
 
      for (let i = helphurtPickups.length - 1; i >= 0; i -= 1) {
           const pickup = helphurtPickups[i];
