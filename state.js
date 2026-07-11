@@ -12,7 +12,7 @@ import {
      maxPlayerHealth,
      maxDifficultyOptionIndex,
      defaultDifficultyOptionIndex
-} from "./options.js?v=20260711-17";
+} from "./options.js?v=20260711-18";
 
 export const miniGameCanvas = document.getElementById("miniGameCanvas");
 

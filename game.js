@@ -46,7 +46,7 @@ import {
 
      resetUiActionBounds,
      resetGameState
-} from "./state.js?v=20260711-17";
+} from "./state.js?v=20260711-18";
 
 import {
      difficultyOptionLabels,
@@ -58,7 +58,7 @@ import {
      isJoystickEnabled,
      loadAndApplySavedOptions,
      saveCurrentOptions
-} from "./options.js?v=20260711-17";
+} from "./options.js?v=20260711-18";
 
 import {
      bindKeyboardInput,
@@ -66,7 +66,7 @@ import {
      bindResizeHandler,
      updateTouchControlBounds,
      resetTouchControls
-} from "./input.js?v=20260711-17";
+} from "./input.js?v=20260711-18";
 
 import {
      resetPlayerPosition,
@@ -84,14 +84,14 @@ import {
      collectHelphurtPickups,
      updatePlayerTrail,
      resetHelphurtIntroState
-} from "./entities/index.js?v=20260711-17";
+} from "./entities/index.js?v=20260711-18";
 
 import {
      syncUiBounds,
      updatePauseButtonState,
      updateScreenTitleColorState,
      drawGame
-} from "./draw/index.js?v=20260711-17";
+} from "./draw/index.js?v=20260711-18";
 
 // ====================================================================================================
 // NOTE: CONFIG / THEME
@@ -256,7 +256,7 @@ export function getCanvasTheme() {
                hudPadding: uiFontSm * 0.5,
                hudRowGap: 0,
                hudTitleGap: uiFontSm * 0.5,
-               menuPadding: uiFontMd,
+               menuPadding: uiFontSm,
                betweenButtons: uiFontSm,
                bodyLineHeight: uiFontSm * 1.5,
                guideIconGutter: uiFontLg

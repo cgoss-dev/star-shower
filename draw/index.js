@@ -63,7 +63,7 @@ import {
      setGameMenuScrollMax,
      isPointInsideRect,
      resetActionButtonBounds
-} from "../state.js?v=20260711-17";
+} from "../state.js?v=20260711-18";
 
 import {
      maxDifficultyOptionIndex,
@@ -83,11 +83,11 @@ import {
      fogClearRadiusBase,
      fogClearRadiusMinScale,
      fogClearRadiusMaxScale
-} from "../options.js?v=20260711-17";
+} from "../options.js?v=20260711-18";
 
 import {
      spawnDensityBaselineArea
-} from "../entities/constants.js?v=20260711-17";
+} from "../entities/constants.js?v=20260711-18";
 
 import {
      drawStars,
@@ -109,7 +109,7 @@ import {
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
      syncPlayerSize
-} from "../entities/index.js?v=20260711-17";
+} from "../entities/index.js?v=20260711-18";
 
 import {
      getCanvasTheme,
@@ -133,13 +133,13 @@ import {
      isRoundIntroActive,
      getRoundIntroAlpha,
      getRoundIntroLines
-} from "../game.js?v=20260711-17";
+} from "../game.js?v=20260711-18";
 
 import {
      stepperLeftIcon,
      stepperRightIcon,
      richTextIconAssetImages
-} from "./assets.js?v=20260711-17";
+} from "./assets.js?v=20260711-18";
 
 const siteTheme = window.SiteTheme;
 const levelProgressPulseFrames = 18;
