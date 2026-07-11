@@ -253,7 +253,17 @@ function isNextMenuKey(event) {
 }
 
 function showMenuKeyboardFocusForDirectionalArrow(event) {
-     if (event.key.startsWith("Arrow")) {
+     if (
+          event.key.startsWith("Arrow") ||
+          event.key === "w" ||
+          event.key === "W" ||
+          event.key === "a" ||
+          event.key === "A" ||
+          event.key === "s" ||
+          event.key === "S" ||
+          event.key === "d" ||
+          event.key === "D"
+     ) {
           showMenuKeyboardFocus();
      }
 }
@@ -275,11 +285,11 @@ function isDownKey(event) {
 }
 
 function isEnterKey(event) {
-     return event.key === "Enter";
+     return event.key === "Enter" || event.key === "e" || event.key === "E";
 }
 
 function isEscapeKey(event) {
-     return event.key === "Escape";
+     return event.key === "Escape" || event.key === "q" || event.key === "Q";
 }
 
 function isSpaceKey(event) {
@@ -857,6 +867,12 @@ function handleWelcomeNavigation(event) {
 
      if (isEscapeKey(event)) {
           event.preventDefault();
+
+          if (isOverlayScreenActive()) {
+               showScreenWelcome();
+               syncUiBounds();
+          }
+
           return true;
      }
 
@@ -947,6 +963,9 @@ function handleTipsNavigation(event) {
      if (isPreviousMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
+          if (isUpKey(event)) {
+               addGameMenuScrollOffset(-36);
+          }
           setTipsSelectionIndex(0);
           return true;
      }
@@ -954,6 +973,9 @@ function handleTipsNavigation(event) {
      if (isNextMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
+          if (isDownKey(event)) {
+               addGameMenuScrollOffset(36);
+          }
           setTipsSelectionIndex(0);
           return true;
      }
@@ -1114,8 +1136,6 @@ function handleKeyDown(event) {
                return;
           }
 
-          setGamePaused(!gamePaused);
-          syncUiBounds();
           return;
      }
 

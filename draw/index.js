@@ -135,6 +135,7 @@ import {
 
 const siteTheme = window.SiteTheme;
 const levelProgressPulseFrames = 18;
+const keyboardFocusFill = "rgba(255, 255, 255, 0.25)";
 
 let lastLevelProgressFilledStars = null;
 let levelProgressPulseTimer = 0;
@@ -945,7 +946,7 @@ function drawUnifiedTextButton(button, label, theme, isFocused = false, fontWeig
 
      if (isFocused && focusAlpha > 0) {
           miniGameCtx.globalAlpha *= focusAlpha;
-          fillRoundedControlRect(button.x, button.y, button.width, button.height, cornerRadius, colors.menuPanelFill);
+          fillRoundedControlRect(button.x, button.y, button.width, button.height, cornerRadius, keyboardFocusFill);
      }
 
      strokeRoundedControlRect(button.x, button.y, button.width, button.height, cornerRadius, borderWidth, getCssColor("--color-white", "#ffffff"));
@@ -1039,7 +1040,7 @@ export function drawOptionStepper(
 
      if (isRowFocused && focusAlpha > 0) {
           miniGameCtx.globalAlpha *= focusAlpha;
-          fillRoundedControlRect(row.x, row.y, row.width, row.height, cornerRadius, colors.menuPanelFill);
+          fillRoundedControlRect(row.x, row.y, row.width, row.height, cornerRadius, keyboardFocusFill);
      }
 
      strokeRoundedControlRect(row.x, row.y, row.width, row.height, cornerRadius, borderWidth, getCssColor("--color-white", "#ffffff"));
@@ -2474,8 +2475,8 @@ export function drawGame() {
      // Draw order pseudocode:
      // 1. Paint the background and apply the selected color mode.
      // 2. If welcome is active, draw only that screen and exit.
-     // 3. Draw gameplay entities from back to front, then touch controls.
-     // 4. Draw the top-most UI layer last: menu, pause/result overlay, or status popup.
+     // 3. Draw gameplay entities from back to front.
+     // 4. Draw menus/overlays, then keep gameplay HUD on top when no menu is open.
      const theme = getCanvasTheme();
 
      ensureCanvasHoverTracking();
@@ -2499,13 +2500,7 @@ export function drawGame() {
 
           drawFogOverlay();
 
-          if (!gameMenuOpen && !gameOver && !gameWon) {
-               drawHudBadges(theme);
-          }
-
           drawGameplayPopup(theme);
-          drawLevelProgressStars(theme);
-          drawJoystick(theme);
      }
 
      if (gameMenuOpen) {
@@ -2522,6 +2517,15 @@ export function drawGame() {
           drawGameWelcomeOverlay(theme);
      } else {
           drawGameStatusOverlay(theme);
+     }
+
+     if (gameStarted && !gameMenuOpen) {
+          drawHudBadges(theme);
+          drawLevelProgressStars(theme);
+
+          if (!gamePaused && !gameOver && !gameWon) {
+               drawJoystick(theme);
+          }
      }
 
      resetCanvasColorModeFilter();

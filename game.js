@@ -532,14 +532,14 @@ export const progressUnitsPerCircle = 2;
 const levelScoreMins = [
      0,
      5,
-     20,
      35,
-     50,
-     70,
-     90,
-     110,
-     130,
-     150
+     65,
+     95,
+     125,
+     155,
+     185,
+     215,
+     250
 ];
 export const winScore = levelScoreMins.at(-1) ?? 0;
 
@@ -861,6 +861,16 @@ export function dismissScreenWelcomeToTipsMenu() {
 }
 
 export function dismissScreenWelcomeToEffectsMenu() {
+     screenLayerActive = false;
+     gameScreenMode = "screenWelcome";
+     screenLayerTimer = 0;
+     screenLayerDuration = 0;
+
+     resetGameState();
+     resetTouchControls();
+     resetEntityColorCycle();
+
+     syncCanvasResolutionAndUiBounds();
      resetPlayerPosition();
 
      setGameStarted(false);
