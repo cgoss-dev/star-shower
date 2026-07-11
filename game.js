@@ -533,7 +533,6 @@ const roundIntroFadeFrames = 120;
 const roundIntroTotalFrames =
      roundIntroMessageFrames +
      roundIntroPauseFrames +
-     roundIntroMessageFrames +
      roundIntroFadeFrames;
 export const maxLevelProgressUnits = 10;
 export const progressUnitsPerCircle = 2;
@@ -625,28 +624,8 @@ const levelRules = Array.from({ length: maxLevelProgressUnits }, (_, index) => {
 const welcomeTitleLines = ["STAR", "SHOWER"];
 const screenActionTexts = ["NEW GAME", "TIPS", "EFFECTS", "OPTIONS", "DEVELOPER"];
 const pausedActionTexts = ["RESUME", "NEW GAME", "TIPS", "EFFECTS", "OPTIONS", "DEVELOPER"];
-const roundIntroInstructionLines = [
-     "Collect stars, avoid strikes.",
-     "Effects can help or hurt."
-];
-
-function getRoundIntroInstructionSplitLines(index) {
-     const instruction = roundIntroInstructionLines[index] || "";
-
-     if (instruction.includes(", ")) {
-          return instruction.split(", ").map((line, lineIndex) =>
-               lineIndex === 0 ? `${line},` : line
-          );
-     }
-
-     const words = instruction.split(" ");
-     const splitIndex = Math.ceil(words.length / 2);
-
-     return [
-          words.slice(0, splitIndex).join(" "),
-          words.slice(splitIndex).join(" ")
-     ].filter(Boolean);
-}
+const roundIntroFirstLines = ["Collect Stars", "Avoid Strikes"];
+const roundIntroSecondLines = ["Effects Can", "Help or Hurt"];
 
 export function getWelcomeTitleLines() {
      return welcomeTitleLines;
@@ -866,18 +845,17 @@ export function getRoundIntroAlpha() {
 
 export function getRoundIntroLines() {
      const elapsedFrames = roundIntroTotalFrames - roundIntroTimer;
-     const firstMessageEnd = roundIntroMessageFrames;
-     const pauseEnd = firstMessageEnd + roundIntroPauseFrames;
+     const secondMessageStart = roundIntroMessageFrames + roundIntroPauseFrames;
 
-     if (elapsedFrames < firstMessageEnd) {
-          return getRoundIntroInstructionSplitLines(0);
+     if (elapsedFrames < secondMessageStart) {
+          return roundIntroFirstLines;
      }
 
-     if (elapsedFrames < pauseEnd) {
-          return [];
-     }
-
-     return getRoundIntroInstructionSplitLines(1);
+     return [
+          ...roundIntroFirstLines,
+          "",
+          ...roundIntroSecondLines
+     ];
 }
 
 export function getCurrentScreenTitleLines() {

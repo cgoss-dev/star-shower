@@ -2365,7 +2365,8 @@ function drawRoundIntroOverlay(theme) {
                startY + (index * (fontSize + lineGap)),
                fontSize,
                alpha,
-               true
+               false,
+               false
           );
      });
 }
@@ -2447,7 +2448,7 @@ function drawGameStatusOverlay(theme) {
      miniGameCtx.restore();
 }
 
-function drawCenteredMarqueeText(theme, text, x, y, fontSize, alpha, isRainbow = true) {
+function drawCenteredMarqueeText(theme, text, x, y, fontSize, alpha, isRainbow = true, shouldGlow = true) {
      if (!miniGameCtx || !text) {
           return;
      }
@@ -2488,7 +2489,7 @@ function drawCenteredMarqueeText(theme, text, x, y, fontSize, alpha, isRainbow =
                "left",
                "middle",
                theme,
-               true
+               shouldGlow
           );
 
           currentX += letterWidths[i] + letterSpacing;
