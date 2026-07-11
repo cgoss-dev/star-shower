@@ -69,6 +69,7 @@ import {
 
 import {
      maxOptionLevelIndex,
+     maxDifficultyOptionIndex,
      getMaxMovementOptionIndex,
      maxPlayerHealth,
      movementOptionIndexes,
@@ -127,7 +128,8 @@ import {
      getCurrentScreenTitleLines,
      getGameWelcomeAlpha,
      getGameOverlayAlpha,
-     getGameplayPopupAlpha
+     getGameplayPopupAlpha,
+     getDifficultyOptionLabel
 } from "../game.js";
 
 import {
@@ -242,6 +244,7 @@ function getHoverableCanvasButtons() {
           buttons.push(
                screenActionUi.startButton,
                screenActionUi.tipsButton,
+               screenActionUi.effectsButton,
                screenActionUi.menuButton,
                screenActionUi.returnButton
           );
@@ -251,6 +254,7 @@ function getHoverableCanvasButtons() {
           buttons.push(
                pausedActionUi.resumeButton,
                pausedActionUi.tipsButton,
+               pausedActionUi.effectsButton,
                pausedActionUi.menuButton,
                pausedActionUi.returnButton
           );
@@ -268,7 +272,7 @@ function getHoverableCanvasButtons() {
                     buttons.push(gameMenuUi.hurtDecreaseButton);
                }
 
-               if (hurtLevel < maxOptionLevelIndex) {
+               if (hurtLevel < maxDifficultyOptionIndex) {
                     buttons.push(gameMenuUi.hurtIncreaseButton);
                }
 
@@ -347,13 +351,6 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
           layout.backButtonWidth,
           layout.buttonHeight
      );
-
-     if (gameMenuView === "tips") {
-          setButtonBounds(gameMenuUi.tipsHowToPlayButton, 0, 0, 0, 0);
-          setButtonBounds(gameMenuUi.tipsHelpButton, 0, 0, 0, 0);
-
-          return;
-     }
 
      if (gameMenuView === "options") {
           const sliderRowHeight = layout.buttonHeight * 2;
@@ -907,8 +904,12 @@ function getShortOptionLevelLabel(levelIndex) {
      return getOptionLevelLabel(levelIndex).toUpperCase();
 }
 
+function getShortDifficultyOptionLabel(levelIndex) {
+     return getDifficultyOptionLabel(levelIndex).toUpperCase();
+}
+
 function getDifficultyOptionDescription(levelIndex) {
-     return getDifficultyOptionLines()[levelIndex] || getShortOptionLevelLabel(levelIndex);
+     return getDifficultyOptionLines()[levelIndex] || getShortDifficultyOptionLabel(levelIndex);
 }
 
 function getShortMovementOptionLabel(levelIndex) {
@@ -1577,18 +1578,34 @@ function drawTipsMenuScreen(theme) {
           return;
      }
 
-     const { colors } = theme;
-     const layout = getMenuScreenLayout(theme);
      const lines = [
           "TIPS",
-          ...getHowToPlayLines(),
-          "",
+          ...getHowToPlayLines()
+     ];
+
+     drawScrollableInfoScreen(theme, lines);
+}
+
+function drawEffectsMenuScreen(theme) {
+     if (!miniGameCtx) {
+          return;
+     }
+
+     const lines = [
+          "EFFECTS",
           "HELPS",
           ...getHelpLines(),
           "",
           "HURTS",
           ...getHurtLines()
      ];
+
+     drawScrollableInfoScreen(theme, lines);
+}
+
+function drawScrollableInfoScreen(theme, lines) {
+     const { colors } = theme;
+     const layout = getMenuScreenLayout(theme);
 
      miniGameCtx.save();
      miniGameCtx.fillStyle = colors.menuScreenFill;
@@ -1651,7 +1668,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
      const iconX = screenLayout.sidePadding + (iconGutterWidth * 0.25);
      const detailTextX = screenLayout.sidePadding + iconGutterWidth;
      const detailTextWidth = miniGameWidth - detailTextX - screenLayout.sidePadding;
-     const sectionHeadings = new Set(["TIPS", "HELPS", "HURTS"]);
+     const sectionHeadings = new Set(["TIPS", "EFFECTS", "HELPS", "HURTS"]);
      const shouldCenterContent = Boolean(options.centerContent);
 
      miniGameCtx.fillStyle = detailStyle.color || colors.fontColor;
@@ -1770,7 +1787,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
           }
 
           if (sectionHeadings.has(line)) {
-               if (line !== "TIPS") {
+               if (line !== "TIPS" && line !== "EFFECTS") {
                     textY += lineHeight;
                }
 
@@ -1892,7 +1909,8 @@ function drawOptionsScreen(theme) {
           hurtLevel,
           theme,
           focused.row === 0,
-          focused.row === 0 ? focused.col : -1
+          focused.row === 0 ? focused.col : -1,
+          maxDifficultyOptionIndex
      );
 
      if (showMovementOption) {
@@ -1936,11 +1954,12 @@ function drawDifficultyOptionsScreen(theme) {
           gameMenuUi.hurtDecreaseButton,
           gameMenuUi.hurtIncreaseButton,
           "Difficulty",
-          getShortOptionLevelLabel(hurtLevel),
+          getShortDifficultyOptionLabel(hurtLevel),
           hurtLevel,
           theme,
           focused.row === 0,
-          focused.row === 0 ? focused.col : -1
+          focused.row === 0 ? focused.col : -1,
+          maxDifficultyOptionIndex
      );
 
      drawMenuDetailLines(theme, optionLines, getOptionDescriptionY(layout, 1));
@@ -2321,6 +2340,10 @@ function drawSharedActionScreen(
                     setButtonBounds(actionUi.tipsButton, buttonX, buttonY, buttonWidth, buttonHeight);
                }
 
+               if (item.text === "EFFECTS" && actionUi.effectsButton) {
+                    setButtonBounds(actionUi.effectsButton, buttonX, buttonY, buttonWidth, buttonHeight);
+               }
+
                if (item.text === "OPTIONS") {
                     setButtonBounds(actionUi.menuButton, buttonX, buttonY, buttonWidth, buttonHeight);
                }
@@ -2360,8 +2383,9 @@ function drawGameWelcomeOverlay(theme) {
           {
                "NEW GAME": 0,
                "TIPS": 1,
-               "OPTIONS": 2,
-               "DEVELOPER": 3
+               "EFFECTS": 2,
+               "OPTIONS": 3,
+               "DEVELOPER": 4
           },
           alpha,
           !isWelcomeScreen,
@@ -2386,8 +2410,9 @@ function drawPausedOverlay(theme) {
                "RESUME": 0,
                "NEW GAME": 1,
                "TIPS": 2,
-               "OPTIONS": 3,
-               "DEVELOPER": 4
+               "EFFECTS": 3,
+               "OPTIONS": 4,
+               "DEVELOPER": 5
           },
           1,
           true
@@ -2588,6 +2613,8 @@ export function drawGame() {
      if (gameMenuOpen) {
           if (gameMenuView === "tips") {
                drawTipsMenuScreen(theme);
+          } else if (gameMenuView === "effects") {
+               drawEffectsMenuScreen(theme);
           } else if (gameMenuView === "options") {
                drawOptionsScreen(theme);
           }

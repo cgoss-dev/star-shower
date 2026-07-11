@@ -56,6 +56,9 @@ export const optionLevelLabels = ["Off", "Min", "Low", "Med", "Max"];
 export const optionLevelValues = [0, 0.25, 0.5, 0.75, 1];
 export const maxOptionLevelIndex = optionLevelLabels.length - 1;
 export const defaultOptionLevelIndex = 2;
+export const difficultyOptionLabels = ["Off", "Med", "Max"];
+export const maxDifficultyOptionIndex = difficultyOptionLabels.length - 1;
+export const defaultDifficultyOptionIndex = 1;
 export const movementOptionLabels = ["Touch/Click + WASD/Arrows", "Joystick Left", "Joystick Right"];
 export const movementOptionIndexes = {
      pointerKeyboard: 0,
@@ -82,7 +85,7 @@ export const optionDefinitions = {
      hurt: {
           id: "hurt",
           label: "Difficulty",
-          defaultLevel: defaultOptionLevelIndex
+          defaultLevel: defaultDifficultyOptionIndex
      },
 
      music: {
@@ -147,6 +150,16 @@ export function clampOptionLevelIndex(value) {
      return Math.max(0, Math.min(maxOptionLevelIndex, Math.round(numericValue)));
 }
 
+export function clampDifficultyOptionIndex(value) {
+     const numericValue = Number(value);
+
+     if (!Number.isFinite(numericValue)) {
+          return defaultDifficultyOptionIndex;
+     }
+
+     return Math.max(0, Math.min(maxDifficultyOptionIndex, Math.round(numericValue)));
+}
+
 export function clampMovementOptionIndex(value) {
      const numericValue = Number(value);
 
@@ -169,6 +182,10 @@ export function clampColorOptionIndex(value) {
 
 export function getOptionLevelLabel(levelIndex) {
      return optionLevelLabels[clampOptionLevelIndex(levelIndex)] || optionLevelLabels[0];
+}
+
+export function getDifficultyOptionLabel(levelIndex) {
+     return difficultyOptionLabels[clampDifficultyOptionIndex(levelIndex)] || difficultyOptionLabels[0];
 }
 
 export function getMovementOptionLabel(levelIndex) {
@@ -389,7 +406,7 @@ export function normalizeOptionSnapshot(snapshot = {}) {
      return {
           music: clampOptionLevelIndex(snapshot.music ?? defaults.music),
           soundEffects: clampOptionLevelIndex(snapshot.soundEffects ?? defaults.soundEffects),
-          hurt: clampOptionLevelIndex(snapshot.hurt ?? defaults.hurt),
+          hurt: clampDifficultyOptionIndex(snapshot.hurt ?? defaults.hurt),
           movement: clampMovementOptionIndex(snapshot.movement ?? defaults.movement),
           color: clampColorOptionIndex(snapshot.color ?? defaults.color)
      };
@@ -489,7 +506,7 @@ export function setAndPersistSoundEffectsLevel(levelIndex) {
 }
 
 export function setAndPersistHurtLevel(levelIndex) {
-     setHurtLevel(clampOptionLevelIndex(levelIndex));
+     setHurtLevel(clampDifficultyOptionIndex(levelIndex));
      saveCurrentOptions();
 }
 

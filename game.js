@@ -55,6 +55,8 @@ import {
      optionLevelLabels,
      optionLevelValues,
      maxOptionLevelIndex,
+     difficultyOptionLabels,
+     maxDifficultyOptionIndex,
      movementOptionLabels,
      getMaxMovementOptionIndex,
      colorOptionLabels,
@@ -620,8 +622,8 @@ const levelRules = Array.from({ length: maxLevelProgressUnits }, (_, index) => {
 // ====================================================================================================
 
 const welcomeTitleLines = ["STAR", "SHOWER"];
-const screenActionTexts = ["NEW GAME", "TIPS", "OPTIONS", "DEVELOPER"];
-const pausedActionTexts = ["RESUME", "NEW GAME", "TIPS", "OPTIONS", "DEVELOPER"];
+const screenActionTexts = ["NEW GAME", "TIPS", "EFFECTS", "OPTIONS", "DEVELOPER"];
+const pausedActionTexts = ["RESUME", "NEW GAME", "TIPS", "EFFECTS", "OPTIONS", "DEVELOPER"];
 const welcomeInstructionLines = [
      "Collect stars, avoid strikes.",
      "Effects can help or hurt."
@@ -697,11 +699,9 @@ export function getHurtLines() {
 
 export function getDifficultyOptionLines() {
      return [
-          "OFF: stars and strikes.",
-          "MIN: helps and hurts 0.25x.",
-          "LOW: helps and hurts 1x.",
-          "MED: helps and hurts 2x.",
-          "MAX: helps and hurts 4x."
+          "OFF: Only stars and strikes.",
+          "MED: 1x Effects.",
+          "MAX: 3x Effects."
      ];
 }
 
@@ -996,6 +996,19 @@ export function dismissScreenWelcomeToTipsMenu() {
      clearGameOverlay();
 }
 
+export function dismissScreenWelcomeToEffectsMenu() {
+     resetPlayerPosition();
+
+     setGameStarted(false);
+     setGamePaused(false);
+     setGameMenuOpen(true);
+     setMenuViewAndRefresh("effects");
+     setGameOver(false);
+     setGameWon(false);
+
+     clearGameOverlay();
+}
+
 export function dismissScreenWelcomeToOptionsMenu() {
      screenLayerActive = false;
      gameScreenMode = "screenWelcome";
@@ -1025,6 +1038,12 @@ export function dismissPausedToTipsMenu() {
      setMenuViewAndRefresh("tips");
 }
 
+export function dismissPausedToEffectsMenu() {
+     setGamePaused(true);
+     setGameMenuOpen(true);
+     setMenuViewAndRefresh("effects");
+}
+
 export function dismissPausedToOptionsMenu() {
      setGamePaused(true);
      setGameMenuOpen(true);
@@ -1032,14 +1051,6 @@ export function dismissPausedToOptionsMenu() {
 }
 
 export function dismissMenuBackToPreviousScreen() {
-     if (
-          gameMenuView === "tips_how_to_play" ||
-          gameMenuView === "tips_help"
-     ) {
-          setMenuViewAndRefresh("tips");
-          return;
-     }
-
      setGameMenuOpen(false);
      setGameMenuView("");
 
@@ -1157,6 +1168,10 @@ export function getOptionLevelLabel(levelIndex) {
      return optionLevelLabels[levelIndex] || optionLevelLabels[0];
 }
 
+export function getDifficultyOptionLabel(levelIndex) {
+     return difficultyOptionLabels[levelIndex] || difficultyOptionLabels[0];
+}
+
 export function getOptionLevelValue(levelIndex) {
      return optionLevelValues[levelIndex] ?? optionLevelValues[0];
 }
@@ -1167,6 +1182,10 @@ function getPreviousOptionLevelIndex(levelIndex) {
 
 function getNextOptionLevelIndex(levelIndex) {
      return Math.min(maxOptionLevelIndex, levelIndex + 1);
+}
+
+function getNextDifficultyOptionIndex(levelIndex) {
+     return Math.min(maxDifficultyOptionIndex, levelIndex + 1);
 }
 
 function getPreviousMovementOptionIndex(levelIndex) {
@@ -1186,7 +1205,7 @@ function getNextColorOptionIndex(levelIndex) {
 }
 
 export function getHurtToggleLabel() {
-     return getOptionLevelLabel(hurtLevel);
+     return getDifficultyOptionLabel(hurtLevel);
 }
 
 export function getMusicToggleLabel() {
@@ -1237,7 +1256,7 @@ export function decreaseHurtLevel() {
 }
 
 export function increaseHurtLevel() {
-     setHurtLevel(getNextOptionLevelIndex(hurtLevel));
+     setHurtLevel(getNextDifficultyOptionIndex(hurtLevel));
      saveCurrentOptions();
 }
 

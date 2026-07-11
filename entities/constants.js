@@ -44,10 +44,8 @@ export const helphurtBaseSpawnStarsByLevel = [
 
 export const helphurtDifficultyMultipliers = [
      0,
-     0.25,
      1,
-     2,
-     4
+     3
 ];
 
 export const playerTrailCountMax = 2;

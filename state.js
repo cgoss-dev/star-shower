@@ -11,7 +11,9 @@ import {
      gameplayStartingHealth,
      maxPlayerHealth,
      maxOptionLevelIndex,
-     defaultOptionLevelIndex
+     defaultOptionLevelIndex,
+     maxDifficultyOptionIndex,
+     defaultDifficultyOptionIndex
 } from "./options.js";
 
 export const miniGameCanvas = document.getElementById("miniGameCanvas");
@@ -75,7 +77,7 @@ export let playerHealth = gameplayStartingHealth;
 
 export let musicLevel = defaultOptionLevelIndex;
 export let soundEffectsLevel = defaultOptionLevelIndex;
-export let hurtLevel = defaultOptionLevelIndex;
+export let hurtLevel = defaultDifficultyOptionIndex;
 export let movementLevel = 0;
 export let colorLevel = 0;
 
@@ -144,9 +146,6 @@ export let gameplayPopupDuration = 0;
 export const gameMenuUi = {
      panel: { x: 0, y: 0, width: 0, height: 0 },
 
-     tipsHowToPlayButton: { x: 0, y: 0, width: 0, height: 0 },
-     tipsHelpButton: { x: 0, y: 0, width: 0, height: 0 },
-
      optionsDifficultyButton: { x: 0, y: 0, width: 0, height: 0 },
      optionsAudioButton: { x: 0, y: 0, width: 0, height: 0 },
      optionsMovementButton: { x: 0, y: 0, width: 0, height: 0 },
@@ -178,6 +177,7 @@ export const gameMenuUi = {
 export const screenActionUi = {
      startButton: { x: 0, y: 0, width: 0, height: 0 },
      tipsButton: { x: 0, y: 0, width: 0, height: 0 },
+     effectsButton: { x: 0, y: 0, width: 0, height: 0 },
      menuButton: { x: 0, y: 0, width: 0, height: 0 },
      returnButton: { x: 0, y: 0, width: 0, height: 0 }
 };
@@ -186,6 +186,7 @@ export const pausedActionUi = {
      resumeButton: { x: 0, y: 0, width: 0, height: 0 },
      newGameButton: { x: 0, y: 0, width: 0, height: 0 },
      tipsButton: { x: 0, y: 0, width: 0, height: 0 },
+     effectsButton: { x: 0, y: 0, width: 0, height: 0 },
      menuButton: { x: 0, y: 0, width: 0, height: 0 },
      returnButton: { x: 0, y: 0, width: 0, height: 0 }
 };
@@ -456,6 +457,10 @@ function clampRuntimeOptionLevelIndex(value) {
      return Math.max(0, Math.min(maxOptionLevelIndex, value));
 }
 
+function clampRuntimeDifficultyOptionIndex(value) {
+     return Math.max(0, Math.min(maxDifficultyOptionIndex, value));
+}
+
 function syncMusicEnabledFromLevel() {
      musicEnabled = musicLevel > 0;
 }
@@ -477,7 +482,7 @@ export function syncOptionFlagsFromLevels() {
 export function resetOptionsToDefaults() {
      musicLevel = defaultOptionLevelIndex;
      soundEffectsLevel = defaultOptionLevelIndex;
-     hurtLevel = defaultOptionLevelIndex;
+     hurtLevel = defaultDifficultyOptionIndex;
      movementLevel = 0;
      colorLevel = 0;
 
@@ -612,7 +617,7 @@ export function setSoundEffectsEnabled(value) {
 
 export function setHurtEnabled(value) {
      hurtEnabled = value;
-     hurtLevel = value ? maxOptionLevelIndex : 0;
+     hurtLevel = value ? maxDifficultyOptionIndex : 0;
 }
 
 // Level setters for Options UI.
@@ -627,7 +632,7 @@ export function setSoundEffectsLevel(value) {
 }
 
 export function setHurtLevel(value) {
-     hurtLevel = clampRuntimeOptionLevelIndex(value);
+     hurtLevel = clampRuntimeDifficultyOptionIndex(value);
      syncHurtEnabledFromLevel();
 }
 
@@ -728,6 +733,11 @@ export function resetUiActionBounds() {
      screenActionUi.tipsButton.width = 0;
      screenActionUi.tipsButton.height = 0;
 
+     screenActionUi.effectsButton.x = 0;
+     screenActionUi.effectsButton.y = 0;
+     screenActionUi.effectsButton.width = 0;
+     screenActionUi.effectsButton.height = 0;
+
      screenActionUi.menuButton.x = 0;
      screenActionUi.menuButton.y = 0;
      screenActionUi.menuButton.width = 0;
@@ -752,6 +762,11 @@ export function resetUiActionBounds() {
      pausedActionUi.tipsButton.y = 0;
      pausedActionUi.tipsButton.width = 0;
      pausedActionUi.tipsButton.height = 0;
+
+     pausedActionUi.effectsButton.x = 0;
+     pausedActionUi.effectsButton.y = 0;
+     pausedActionUi.effectsButton.width = 0;
+     pausedActionUi.effectsButton.height = 0;
 
      pausedActionUi.menuButton.x = 0;
      pausedActionUi.menuButton.y = 0;
@@ -781,6 +796,13 @@ export function resetActionButtonBounds(actionUi, primaryButtonKey) {
      actionUi.tipsButton.y = 0;
      actionUi.tipsButton.width = 0;
      actionUi.tipsButton.height = 0;
+
+     if (actionUi.effectsButton) {
+          actionUi.effectsButton.x = 0;
+          actionUi.effectsButton.y = 0;
+          actionUi.effectsButton.width = 0;
+          actionUi.effectsButton.height = 0;
+     }
 
      actionUi.menuButton.x = 0;
      actionUi.menuButton.y = 0;

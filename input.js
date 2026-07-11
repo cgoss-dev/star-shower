@@ -72,15 +72,17 @@ import {
 import {
      isJoystickEnabled,
      movementOptionIndexes,
-     maxOptionLevelIndex,
+     maxDifficultyOptionIndex,
      getMaxMovementOptionIndex
 } from "./options.js";
 
 import {
      dismissScreenWelcomeToStart,
      dismissScreenWelcomeToTipsMenu,
+     dismissScreenWelcomeToEffectsMenu,
      dismissScreenWelcomeToOptionsMenu,
      dismissPausedToTipsMenu,
+     dismissPausedToEffectsMenu,
      dismissPausedToOptionsMenu,
      dismissMenuBackToPreviousScreen,
      showScreenWelcome,
@@ -405,14 +407,20 @@ function handleWelcomeOrResultPointerDown(x, y) {
           return true;
      }
 
-     if (isScreenWelcomeActive() && isPointInsideBox(x, y, screenActionUi.menuButton)) {
+     if (isScreenWelcomeActive() && isPointInsideBox(x, y, screenActionUi.effectsButton)) {
           setWelcomeSelectionIndex(2);
+          dismissScreenWelcomeToEffectsMenu();
+          return true;
+     }
+
+     if (isScreenWelcomeActive() && isPointInsideBox(x, y, screenActionUi.menuButton)) {
+          setWelcomeSelectionIndex(3);
           dismissScreenWelcomeToOptionsMenu();
           return true;
      }
 
      if (isScreenWelcomeActive() && isPointInsideBox(x, y, screenActionUi.returnButton)) {
-          setWelcomeSelectionIndex(3);
+          setWelcomeSelectionIndex(4);
           returnToWebsite();
           return true;
      }
@@ -444,14 +452,20 @@ function handlePausedOverlayPointerDown(x, y) {
           return true;
      }
 
-     if (isPointInsideBox(x, y, pausedActionUi.menuButton)) {
+     if (isPointInsideBox(x, y, pausedActionUi.effectsButton)) {
           setPausedSelectionIndex(3);
+          dismissPausedToEffectsMenu();
+          return true;
+     }
+
+     if (isPointInsideBox(x, y, pausedActionUi.menuButton)) {
+          setPausedSelectionIndex(4);
           dismissPausedToOptionsMenu();
           return true;
      }
 
      if (isPointInsideBox(x, y, pausedActionUi.returnButton)) {
-          setPausedSelectionIndex(4);
+          setPausedSelectionIndex(5);
           returnToWebsite();
           return true;
      }
@@ -492,7 +506,7 @@ function handleOptionsPointerDown(x, y) {
           return true;
      }
 
-     if (hurtLevel < maxOptionLevelIndex && isPointInsideBox(x, y, gameMenuUi.hurtIncreaseButton)) {
+     if (hurtLevel < maxDifficultyOptionIndex && isPointInsideBox(x, y, gameMenuUi.hurtIncreaseButton)) {
           setOptionsSelectionRow(0);
           setOptionsSelectionCol(1);
           increaseHurtLevel();
@@ -798,10 +812,14 @@ function activateWelcomeSelection() {
      }
 
      if (selection === 2 && isScreenWelcomeActive()) {
-          dismissScreenWelcomeToOptionsMenu();
+          dismissScreenWelcomeToEffectsMenu();
      }
 
      if (selection === 3 && isScreenWelcomeActive()) {
+          dismissScreenWelcomeToOptionsMenu();
+     }
+
+     if (selection === 4 && isScreenWelcomeActive()) {
           returnToWebsite();
      }
 }
@@ -821,10 +839,14 @@ function activatePausedSelection() {
      }
 
      if (pausedSelectionIndex === 3) {
-          dismissPausedToOptionsMenu();
+          dismissPausedToEffectsMenu();
      }
 
      if (pausedSelectionIndex === 4) {
+          dismissPausedToOptionsMenu();
+     }
+
+     if (pausedSelectionIndex === 5) {
           returnToWebsite();
      }
 }
@@ -909,14 +931,14 @@ function handleWelcomeNavigation(event) {
      if (isPreviousMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
-          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex - 1, 0, 3));
+          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex - 1, 0, 4));
           return true;
      }
 
      if (isNextMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
-          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex + 1, 0, 3));
+          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex + 1, 0, 4));
           return true;
      }
 
@@ -944,14 +966,14 @@ function handlePausedNavigation(event) {
      if (isPreviousMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
-          setPausedSelectionIndex(clamp(pausedSelectionIndex - 1, 0, 4));
+          setPausedSelectionIndex(clamp(pausedSelectionIndex - 1, 0, 5));
           return true;
      }
 
      if (isNextMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
-          setPausedSelectionIndex(clamp(pausedSelectionIndex + 1, 0, 4));
+          setPausedSelectionIndex(clamp(pausedSelectionIndex + 1, 0, 5));
           return true;
      }
 
