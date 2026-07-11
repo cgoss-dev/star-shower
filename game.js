@@ -606,7 +606,7 @@ export function getWelcomeTitleLines() {
 }
 
 export function getWinGoalText() {
-     return "{iconWin} Reach level 10 to win.";
+     return "{iconWin} Level 10 to win.";
 }
 
 export function getWinTitleLines() {
@@ -643,25 +643,42 @@ export function getCurrentPausedActionTexts() {
 
 export function getHowToPlayLines() {
      return [
+          "",
           getWinGoalText(),
-          "{iconStar} Stars: gain speed & points.",
-          "{iconStrike} Strikes: deal damage."
+          "",
+          "{iconStar} Stars",
+          "Gain speed & points.",
+          "",
+          "{iconStrike} Strikes",
+          "Deal damage."
      ];
 }
 
 export function getHelpLines() {
      return [
-          "{iconHealth} Health: increases health.",
-          "{iconMagnet} Magnet: triples pickup range.",
-          "{iconDouble} Double: stars count twice."
+          "",
+          "{iconHealth} Health",
+          "Increase health.",
+          "",
+          "{iconMagnet} Magnet",
+          "Triple range.",
+          "",
+          "{iconDouble} Double",
+          "Double points."
      ];
 }
 
 export function getHurtLines() {
      return [
-          "{iconDaze} Daze: reverses movement.",
-          "{iconFreeze} Freeze: freezes player.",
-          "{iconFog} Fog: limits visible area."
+          "",
+          "{iconDaze} Daze",
+          "Reverse movement.",
+          "",
+          "{iconFreeze} Freeze",
+          "Freeze player.",
+          "",
+          "{iconFog} Fog",
+          "Shrink visibility."
      ];
 }
 

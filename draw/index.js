@@ -1185,20 +1185,77 @@ function drawHudText(theme, text, x, y, align = "left", styleName = "scoreReady"
      miniGameCtx.restore();
 }
 
+function drawHudPauseButton(theme) {
+     if (!miniGameCtx) {
+          return;
+     }
+
+     const { colors } = theme;
+     const button = touchControls.pauseButton;
+     const textStyle = getTextStyle(theme, "scoreReady");
+     const buttonStyle = getTextStyle(theme, "pauseButton");
+     const padding = getTextStyle(theme, "canvasSpacing").uiPadding || 8;
+     const labelMaxWidth = Math.max(1, button.width - (padding * 2));
+     const centerX = button.x + (button.width / 2);
+     const centerY = button.y + (button.height / 2);
+     const cornerRadius = getControlCornerRadius(theme, button.width, button.height);
+     const borderWidth = theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1;
+     const color = textStyle.color || colors.bodyText;
+
+     miniGameCtx.save();
+     strokeRoundedControlRect(
+          button.x,
+          button.y,
+          button.width,
+          button.height,
+          cornerRadius,
+          borderWidth,
+          color
+     );
+     miniGameCtx.restore();
+
+     drawGlowingCanvasText(
+          miniGameCtx,
+          "⏯️",
+          centerX,
+          centerY + 1,
+          color,
+          getFittedTextFont(
+               {
+                    ...theme,
+                    text: {
+                         ...theme.text,
+                         scoreReady: {
+                              ...textStyle,
+                              fontSize: buttonStyle.fontSize || textStyle.fontSize
+                         }
+                    }
+               },
+               "scoreReady",
+               "⏯️",
+               labelMaxWidth,
+               400
+          ),
+          "center",
+          "middle",
+          theme,
+          false
+     );
+}
+
 function drawHudBadges(theme) {
      const spacing = getTextStyle(theme, "canvasSpacing");
      const padding = spacing.uiPadding || 8;
      const lineHeight = getTextStyle(theme, "scoreReady").fontSize + spacing.hudRowGap;
      const leftX = padding;
      const rightX = miniGameWidth - padding;
-     const centerX = miniGameWidth / 2;
      const statusLines = getStatusTextLines();
      const sideColumnWidth = Math.max(64, (miniGameWidth - (padding * 2)) * 0.3);
 
      drawHudText(theme, getScoreBadgeText(), leftX, padding, "left", "scoreReady", sideColumnWidth);
      drawHudText(theme, getHealthBadgeText(), leftX, padding + lineHeight, "left", "scoreReady", sideColumnWidth);
 
-     drawHudText(theme, "⏯️", centerX, padding, "center", "scoreReady", sideColumnWidth);
+     drawHudPauseButton(theme);
 
      statusLines.forEach((statusText, index) => {
           drawHudText(
@@ -1630,7 +1687,7 @@ function drawEffectsMenuScreen(theme) {
      }
 
      const lines = [
-          "HELPS",
+          "HEALTH",
           ...getHelpLines(),
           "",
           "HURTS",
@@ -1687,7 +1744,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
      const iconX = screenLayout.sidePadding + (iconGutterWidth * 0.25);
      const detailTextX = screenLayout.sidePadding + iconGutterWidth;
      const detailTextWidth = miniGameWidth - detailTextX - screenLayout.sidePadding;
-     const sectionHeadings = new Set(["TIPS", "EFFECTS", "HELPS", "HURTS"]);
+     const sectionHeadings = new Set(["TIPS", "EFFECTS", "HELPS", "HEALTH", "HURTS"]);
      const shouldCenterContent = Boolean(options.centerContent);
      const getDetailLineColor = (line) => line.includes("{iconWin}")
           ? getCssColor("--color-white", "#fff")
@@ -1700,60 +1757,6 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
      miniGameCtx.shadowBlur = 0;
      miniGameCtx.font = getTextFont(theme, "buttonsOptions", 400);
 
-     function measureDetailLine(firstSegment, bodyText) {
-          const hasLeadingIcon = firstSegment?.type === "icon";
-          const textFont = getTextFont(theme, "buttonsOptions", 400);
-          let icon = null;
-          let iconFont = textFont;
-          let iconWidth = 0;
-          const iconGap = hasLeadingIcon ? fontSize * 0.45 : 0;
-
-          miniGameCtx.font = textFont;
-          const textWidth = miniGameCtx.measureText(bodyText).width;
-
-          if (hasLeadingIcon) {
-               icon = getRichTextIcon(theme, firstSegment.value);
-
-               if (icon) {
-                    iconFont = getTextFont(theme, "buttonsOptions", 400, "body", getRichTextIconSize(icon, fontSize));
-                    iconWidth = getRichTextIconWidth(miniGameCtx, icon, fontSize, iconFont);
-               }
-          }
-
-          return iconWidth + (icon ? iconGap : 0) + textWidth;
-     }
-
-     function getCenteredBodyBlockX() {
-          if (!shouldCenterContent) {
-               return 0;
-          }
-
-          let maxBodyLineWidth = 0;
-
-          lines.forEach((line) => {
-               if (!line.trim() || sectionHeadings.has(line)) {
-                    return;
-               }
-
-               const richSegments = parseRichTextSegments(line);
-               const firstSegment = richSegments[0];
-               const hasLeadingIcon = firstSegment?.type === "icon";
-               const bodyText = hasLeadingIcon
-                    ? richSegments
-                         .slice(1)
-                         .map((segment) => segment.value)
-                         .join("")
-                         .trimStart()
-                    : line;
-
-               maxBodyLineWidth = Math.max(maxBodyLineWidth, measureDetailLine(firstSegment, bodyText));
-          });
-
-          return (miniGameWidth - maxBodyLineWidth) / 2;
-     }
-
-     const centeredBodyBlockX = getCenteredBodyBlockX();
-
      function drawCenteredDetailLine(line, firstSegment, bodyText) {
           const hasLeadingIcon = firstSegment?.type === "icon";
           const textFont = getTextFont(theme, "buttonsOptions", 400);
@@ -1762,7 +1765,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
           let iconFont = textFont;
           let iconWidth = 0;
           const iconGap = hasLeadingIcon ? fontSize * 0.45 : 0;
-          let currentX = centeredBodyBlockX;
+          const availableWidth = Math.max(fontSize, miniGameWidth - (screenLayout.sidePadding * 2));
 
           if (hasLeadingIcon) {
                icon = getRichTextIcon(theme, firstSegment.value);
@@ -1772,6 +1775,16 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
                     iconWidth = getRichTextIconWidth(miniGameCtx, icon, fontSize, iconFont);
                }
           }
+
+          miniGameCtx.font = textFont;
+
+          const bodyMaxWidth = Math.max(fontSize, availableWidth - iconWidth - (icon ? iconGap : 0));
+          const measuredBodyWidth = miniGameCtx.measureText(bodyText || line).width;
+          const rowWidth =
+               iconWidth +
+               (icon ? iconGap : 0) +
+               Math.min(measuredBodyWidth, bodyMaxWidth);
+          let currentX = Math.max(screenLayout.sidePadding, (miniGameWidth - rowWidth) / 2);
 
           if (icon) {
                const iconX = currentX + (icon.xOffset || 0);
@@ -1799,10 +1812,17 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
 
           miniGameCtx.font = textFont;
           miniGameCtx.fillStyle = lineColor;
-          miniGameCtx.fillText(bodyText || line, currentX, textY);
+          const wrappedLineCount = drawWrappedText(
+               miniGameCtx,
+               bodyText || line,
+               currentX,
+               textY,
+               bodyMaxWidth,
+               lineHeight
+          );
           miniGameCtx.font = textFont;
 
-          return 1;
+          return wrappedLineCount;
      }
 
      lines.forEach((line) => {
@@ -1812,7 +1832,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
           }
 
           if (sectionHeadings.has(line)) {
-               if (line !== "TIPS" && line !== "EFFECTS") {
+               if (textY > startY) {
                     textY += lineHeight;
                }
 
