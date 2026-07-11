@@ -30,11 +30,11 @@ import {
      setHurtLevel,
      setMovementLevel,
      setColorLevel
-} from "./state.js?v=20260711-6";
+} from "./state.js?v=20260711-17";
 
 import {
      getCssBoolean
-} from "./game.js?v=20260711-6";
+} from "./game.js?v=20260711-17";
 
 // ==================================================
 // STORAGE
@@ -266,11 +266,16 @@ export function getMenuScreenLayout(theme) {
           buttons.fontSize,
           buttons.buttonPadding
      );
+     const backButtonHeight = getUnifiedButtonHeight(
+          theme,
+          buttons.fontSize,
+          buttons.buttonPadding * 0.5
+     );
      const backButtonWidth = getUnifiedButtonWidth(theme, "PREVIOUS", 700);
      const backButtonX = (miniGameWidth - backButtonWidth) / 2;
      const backButtonY =
           miniGameHeight -
-          buttonHeight -
+          backButtonHeight -
           topBotPadding -
           buttons.backButtonBottomOffset;
 
@@ -286,12 +291,13 @@ export function getMenuScreenLayout(theme) {
           titleCenterX,
           titleY,
           buttonHeight,
+          backButtonHeight,
           backButtonWidth,
           backButtonX,
           backButtonY,
           contentTopY: titleY + titleFontSize + optionStackGap,
           contentWidth: miniGameWidth - (sidePadding * 2),
-          contentBottomY: miniGameHeight - topBotPadding - buttonHeight - topBotPadding
+          contentBottomY: miniGameHeight - topBotPadding - backButtonHeight - topBotPadding
      };
 }
 
@@ -305,6 +311,7 @@ export function getMenuLayoutMetrics(theme, panelX, panelWidth) {
           buttonWidth,
           rowGap: sharedLayout.rowGap,
           buttonHeight: sharedLayout.buttonHeight,
+          backButtonHeight: sharedLayout.backButtonHeight,
           backButtonWidth: sharedLayout.backButtonWidth,
           backButtonX: sharedLayout.backButtonX,
           backButtonY: sharedLayout.backButtonY,

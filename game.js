@@ -41,11 +41,12 @@ import {
      setMovementLevel,
      setColorLevel,
      setMiniGameSize,
+     setWelcomeSelectionIndex,
      updateMenuKeyboardFocusTimer,
 
      resetUiActionBounds,
      resetGameState
-} from "./state.js?v=20260711-6";
+} from "./state.js?v=20260711-17";
 
 import {
      difficultyOptionLabels,
@@ -57,7 +58,7 @@ import {
      isJoystickEnabled,
      loadAndApplySavedOptions,
      saveCurrentOptions
-} from "./options.js?v=20260711-6";
+} from "./options.js?v=20260711-17";
 
 import {
      bindKeyboardInput,
@@ -65,7 +66,7 @@ import {
      bindResizeHandler,
      updateTouchControlBounds,
      resetTouchControls
-} from "./input.js?v=20260711-6";
+} from "./input.js?v=20260711-17";
 
 import {
      resetPlayerPosition,
@@ -83,14 +84,14 @@ import {
      collectHelphurtPickups,
      updatePlayerTrail,
      resetHelphurtIntroState
-} from "./entities/index.js?v=20260711-6";
+} from "./entities/index.js?v=20260711-17";
 
 import {
      syncUiBounds,
      updatePauseButtonState,
      updateScreenTitleColorState,
      drawGame
-} from "./draw/index.js?v=20260711-6";
+} from "./draw/index.js?v=20260711-17";
 
 // ====================================================================================================
 // NOTE: CONFIG / THEME
@@ -243,6 +244,7 @@ export function getCanvasTheme() {
      const uiFontSm = getCssPixelSize("--font-size-sm", 10);
 
      const menuOverlayFill = "rgba(0, 0, 0, 0.5)";
+     const actionOverlayFill = "rgba(0, 0, 0, 0.75)";
      const controlFillFallback = getCssColor("--game-control-fill", getCssColor("--white-25", "rgba(255, 255, 255, 0.25)"));
      const outlineFallback = getCssColor("--game-outline-strong", getCssColor("--color-gray3", "#999999"));
 
@@ -419,11 +421,15 @@ export function getCanvasTheme() {
 
                paused: {
                     textStyle: "marquee",
-                    overlayFill: menuOverlayFill
+                    overlayFill: actionOverlayFill
                },
 
                result: {
                     textStyle: "marquee",
+                    overlayFill: actionOverlayFill
+               },
+
+               intro: {
                     overlayFill: menuOverlayFill
                }
           },
@@ -600,8 +606,9 @@ const levelRules = Array.from({ length: maxLevelProgressUnits }, (_, index) => {
 // ====================================================================================================
 
 const welcomeTitleLines = ["STAR", "SHOWER"];
-const screenActionTexts = ["NEW GAME", "TIPS", "OPTIONS", "DEVELOPER"];
-const pausedActionTexts = ["RESUME", "NEW GAME", "TIPS", "OPTIONS", "DEVELOPER"];
+const welcomeActionTexts = ["NEW GAME", "TIPS", "OPTIONS"];
+const resultActionTexts = ["NEW GAME", "TIPS", "OPTIONS", "DEVELOPER"];
+const pausedActionTexts = ["RESUME", "NEW GAME", "TIPS", "OPTIONS"];
 const roundIntroFirstLines = ["Collect Stars,", "Avoid Strikes"];
 const roundIntroSecondLines = ["Effects Can", "Help or Hurt"];
 
@@ -634,7 +641,7 @@ export function getScreenTitleLinesForMode(gameScreenMode) {
 }
 
 export function getCurrentScreenActionTexts() {
-     return screenActionTexts;
+     return isScreenWelcomeActive() ? welcomeActionTexts : resultActionTexts;
 }
 
 export function getCurrentPausedActionTexts() {
@@ -649,6 +656,7 @@ export function getHowToPlayLines() {
      return [
           "{iconStar} Stars",
           "+1 speed/points.",
+          "",
           "{iconStrike} Strikes",
           "Deal damage."
      ];
@@ -658,8 +666,10 @@ export function getHelpLines() {
      return [
           "{iconHealth} Health",
           "Increase health.",
+          "",
           "{iconMagnet} Magnet",
           "Triple range.",
+          "",
           "{iconDouble} Double",
           "Double points."
      ];
@@ -669,8 +679,10 @@ export function getHurtLines() {
      return [
           "{iconDaze} Daze",
           "Reverse movement.",
+          "",
           "{iconFreeze} Freeze",
           "Freeze player.",
+          "",
           "{iconFog} Fog",
           "Shrink visibility."
      ];
@@ -946,6 +958,7 @@ export function showScreenTryAgain() {
      gameScreenMode = "screenTryAgain";
      screenLayerTimer = -1;
      screenLayerDuration = -1;
+     setWelcomeSelectionIndex(0);
      clearRoundIntro();
 }
 
@@ -954,6 +967,7 @@ export function showScreenYouWin() {
      gameScreenMode = "screenYouWin";
      screenLayerTimer = -1;
      screenLayerDuration = -1;
+     setWelcomeSelectionIndex(0);
      clearRoundIntro();
 }
 

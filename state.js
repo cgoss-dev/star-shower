@@ -12,7 +12,7 @@ import {
      maxPlayerHealth,
      maxDifficultyOptionIndex,
      defaultDifficultyOptionIndex
-} from "./options.js?v=20260711-6";
+} from "./options.js?v=20260711-17";
 
 export const miniGameCanvas = document.getElementById("miniGameCanvas");
 
@@ -195,7 +195,7 @@ export const gameMenuScroll = {
 };
 export const menuKeyboardFocus = {
      timer: 0,
-     duration: 60
+     duration: 180
 };
 
 // ==================================================

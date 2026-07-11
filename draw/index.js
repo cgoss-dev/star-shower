@@ -63,7 +63,7 @@ import {
      setGameMenuScrollMax,
      isPointInsideRect,
      resetActionButtonBounds
-} from "../state.js?v=20260711-6";
+} from "../state.js?v=20260711-17";
 
 import {
      maxDifficultyOptionIndex,
@@ -83,11 +83,11 @@ import {
      fogClearRadiusBase,
      fogClearRadiusMinScale,
      fogClearRadiusMaxScale
-} from "../options.js?v=20260711-6";
+} from "../options.js?v=20260711-17";
 
 import {
      spawnDensityBaselineArea
-} from "../entities/constants.js?v=20260711-6";
+} from "../entities/constants.js?v=20260711-17";
 
 import {
      drawStars,
@@ -109,7 +109,7 @@ import {
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
      syncPlayerSize
-} from "../entities/index.js?v=20260711-6";
+} from "../entities/index.js?v=20260711-17";
 
 import {
      getCanvasTheme,
@@ -133,13 +133,13 @@ import {
      isRoundIntroActive,
      getRoundIntroAlpha,
      getRoundIntroLines
-} from "../game.js?v=20260711-6";
+} from "../game.js?v=20260711-17";
 
 import {
      stepperLeftIcon,
      stepperRightIcon,
      richTextIconAssetImages
-} from "./assets.js?v=20260711-6";
+} from "./assets.js?v=20260711-17";
 
 const siteTheme = window.SiteTheme;
 const levelProgressPulseFrames = 18;
@@ -257,9 +257,9 @@ function getHoverableCanvasButtons() {
      if (gamePaused && !gameMenuOpen && !gameOver && !gameWon) {
           buttons.push(
                pausedActionUi.resumeButton,
+               pausedActionUi.newGameButton,
                pausedActionUi.tipsButton,
-               pausedActionUi.menuButton,
-               pausedActionUi.returnButton
+               pausedActionUi.menuButton
           );
      }
 
@@ -352,7 +352,7 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
           layout.backButtonX,
           layout.backButtonY,
           layout.backButtonWidth,
-          layout.buttonHeight
+          layout.backButtonHeight
      );
 
      if (gameMenuView === "options") {
@@ -953,6 +953,16 @@ function strokeRoundedControlRect(x, y, width, height, radius, lineWidth, stroke
      miniGameCtx.stroke();
 }
 
+function isButtonHovered(button) {
+     return Boolean(
+          isCanvasPointerInside &&
+          button &&
+          button.width > 0 &&
+          button.height > 0 &&
+          isPointInsideRect(hoverCanvasX, hoverCanvasY, button)
+     );
+}
+
 function drawUnifiedTextButton(button, label, theme, isFocused = false, fontWeight = 400, fontSize = null) {
      if (!miniGameCtx || !button) {
           return;
@@ -966,13 +976,14 @@ function drawUnifiedTextButton(button, label, theme, isFocused = false, fontWeig
      const centerY = button.y + (button.height / 2);
      const cornerRadius = getControlCornerRadius(theme, button.width, button.height);
      const borderWidth = theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1;
+     const focusAlpha = getMenuKeyboardFocusAlpha();
+     const isActive = isButtonHovered(button) || (isFocused && focusAlpha > 0);
+     const activeColor = getCssColor("--color-white", "#fff");
+     const buttonColor = isActive ? activeColor : (buttonStyle.color || colors.controlText);
 
      miniGameCtx.save();
 
-     const focusAlpha = getMenuKeyboardFocusAlpha();
-
-     if (isFocused && focusAlpha > 0) {
-          miniGameCtx.globalAlpha *= focusAlpha;
+     if (isActive) {
           fillRoundedControlRect(button.x, button.y, button.width, button.height, cornerRadius, keyboardFocusFill);
      }
 
@@ -983,7 +994,7 @@ function drawUnifiedTextButton(button, label, theme, isFocused = false, fontWeig
           button.height,
           cornerRadius,
           borderWidth,
-          buttonStyle.color || colors.controlText
+          buttonColor
      );
 
      miniGameCtx.restore();
@@ -993,7 +1004,7 @@ function drawUnifiedTextButton(button, label, theme, isFocused = false, fontWeig
           label,
           centerX,
           centerY + 1,
-          buttonStyle.color || colors.controlText,
+          buttonColor,
           getFittedTextFont(
                {
                     ...theme,
@@ -1056,6 +1067,16 @@ export function drawOptionStepper(
      const arrowIconSize = Math.min(row.height * 0.5, optionsStyle.fontSize * arrowScale);
      const cornerRadius = getControlCornerRadius(theme, row.width, row.height);
      const borderWidth = theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1;
+     const focusAlpha = getMenuKeyboardFocusAlpha();
+     const isActive = (
+          (isRowFocused && focusAlpha > 0) ||
+          (canDecrease && isButtonHovered(decreaseButton)) ||
+          (canIncrease && isButtonHovered(increaseButton))
+     );
+     const activeColor = getCssColor("--color-white", "#fff");
+     const rowColor = isActive ? activeColor : (optionsStyle.color || colors.controlText);
+     const valueTextColor = isActive ? activeColor : optionTextColor;
+     const resolvedLabelTextColor = isActive ? activeColor : labelTextColor;
 
      function drawStepperArrow(button, icon, isEnabled) {
           if (!isEnabled) {
@@ -1074,10 +1095,7 @@ export function drawOptionStepper(
 
      miniGameCtx.save();
 
-     const focusAlpha = getMenuKeyboardFocusAlpha();
-
-     if (isRowFocused && focusAlpha > 0) {
-          miniGameCtx.globalAlpha *= focusAlpha;
+     if (isActive) {
           fillRoundedControlRect(row.x, row.y, row.width, row.height, cornerRadius, keyboardFocusFill);
      }
 
@@ -1088,7 +1106,7 @@ export function drawOptionStepper(
           row.height,
           cornerRadius,
           borderWidth,
-          optionsStyle.color || colors.controlText
+          rowColor
      );
 
      miniGameCtx.restore();
@@ -1100,7 +1118,7 @@ export function drawOptionStepper(
           label,
           row.x + (row.width / 2),
           titleY,
-          labelTextColor,
+          resolvedLabelTextColor,
           getTextFont(theme, "buttonsOptions", 400),
           "center",
           "middle",
@@ -1113,7 +1131,7 @@ export function drawOptionStepper(
           value,
           row.x + (row.width / 2),
           valueY,
-          optionTextColor,
+          valueTextColor,
           getTextFont(theme, "buttonsOptions", 400),
           "center",
           "middle",
@@ -1140,7 +1158,7 @@ function getScoreBadgeText() {
 }
 
 function getHudPauseText() {
-     return `⏯️ ${gamePaused ? "PAUSED" : "Let's Play!"}`;
+     return `⏯️ ${gamePaused ? "PAUSED" : "PAUSE"}`;
 }
 
 function getLevelProgressFilledUnits() {
@@ -1150,8 +1168,6 @@ function getLevelProgressFilledUnits() {
 function getLevelProgressCircles(filledUnits = getLevelProgressFilledUnits()) {
 
      return Array.from({ length: maxLevelProgressUnits }, (_item, index) => (
-          index === maxLevelProgressUnits - 1 && index < filledUnits ? "★" :
-          index === maxLevelProgressUnits - 1 ? "☆" :
           index < filledUnits ? "●" :
           "○"
      )).join("");
@@ -1170,11 +1186,22 @@ function getStatusTextLines() {
 }
 
 function getCompactStatusText(statusText, maxWidth) {
-     if (maxWidth >= 90) {
-          return statusText;
+     return statusText;
+}
+
+function getHudTextWidth(theme, text, styleName = "scoreReady") {
+     if (!miniGameCtx || !text) {
+          return 0;
      }
 
-     return statusText.split(/\s+/)[0] || statusText;
+     const textStyle = getTextStyle(theme, styleName);
+
+     miniGameCtx.save();
+     miniGameCtx.font = getTextFont(theme, styleName, 400, null, textStyle.fontSize);
+     const width = miniGameCtx.measureText(text).width;
+     miniGameCtx.restore();
+
+     return width;
 }
 
 function drawHudText(theme, text, x, y, align = "left", styleName = "scoreReady", maxWidth = Infinity) {
@@ -1219,7 +1246,10 @@ function drawHudBadges(theme) {
      const leftX = padding;
      const rightX = miniGameWidth - padding;
      const statusLines = getStatusTextLines();
-     const sideColumnWidth = Math.max(64, (miniGameWidth - (padding * 2)) * 0.3);
+     const measuredStatusWidth = statusLines.reduce((width, statusText) => (
+          Math.max(width, getHudTextWidth(theme, statusText))
+     ), 0);
+     const sideColumnWidth = Math.max(80, measuredStatusWidth, (miniGameWidth - (padding * 2)) * 0.3);
 
      drawHudPauseButton(theme);
      drawHudText(theme, getScoreBadgeText(), leftX, padding + lineHeight, "left", "scoreReady", sideColumnWidth);
@@ -1643,10 +1673,15 @@ function drawTipsMenuScreen(theme) {
 
      const lines = [
           "TIPS",
+          "",
           ...getHowToPlayLines(),
+          "",
           "HELP",
+          "",
           ...getHelpLines(),
+          "",
           "HURT",
+          "",
           ...getHurtLines()
      ];
 
@@ -1783,7 +1818,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
 
      lines.forEach((line) => {
           if (!line.trim()) {
-               textY += lineHeight * 0.5;
+               textY += lineHeight;
                return;
           }
 
@@ -2324,7 +2359,7 @@ function drawGameWelcomeOverlay(theme) {
      const alpha = getGameWelcomeAlpha();
      const titleLines = getCurrentScreenTitleLines();
      const actionTexts = getCurrentScreenActionTexts();
-     const selectionIndex = isOverlayScreenActive() ? 0 : welcomeSelectionIndex;
+     const selectionIndex = welcomeSelectionIndex;
 
      drawSharedActionScreen(
           theme,
@@ -2363,8 +2398,7 @@ function drawPausedOverlay(theme) {
                "RESUME": 0,
                "NEW GAME": 1,
                "TIPS": 2,
-               "OPTIONS": 3,
-               "DEVELOPER": 4
+               "OPTIONS": 3
           },
           1,
           true
@@ -2389,7 +2423,7 @@ function drawRoundIntroOverlay(theme) {
      const introColor = getCssColor("--color-white", "#fff");
 
      miniGameCtx.save();
-     miniGameCtx.fillStyle = screens.paused.overlayFill;
+     miniGameCtx.fillStyle = screens.intro?.overlayFill || screens.paused.overlayFill;
      miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
      miniGameCtx.restore();
 

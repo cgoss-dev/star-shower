@@ -67,14 +67,14 @@ import {
      updateGameMenuScrollDrag,
      endGameMenuScrollDrag,
      showMenuKeyboardFocus
-} from "./state.js?v=20260711-6";
+} from "./state.js?v=20260711-17";
 
 import {
      isJoystickEnabled,
      movementOptionIndexes,
      maxDifficultyOptionIndex,
      getMaxMovementOptionIndex
-} from "./options.js?v=20260711-6";
+} from "./options.js?v=20260711-17";
 
 import {
      dismissScreenWelcomeToStart,
@@ -92,11 +92,11 @@ import {
      increaseHurtLevel,
      decreaseMovementLevel,
      increaseMovementLevel
-} from "./game.js?v=20260711-6";
+} from "./game.js?v=20260711-17";
 
 import {
      syncUiBounds
-} from "./draw/index.js?v=20260711-6";
+} from "./draw/index.js?v=20260711-17";
 
 const portfolioHomeUrl = "https://cgoss-dev.github.io/cgoss-dev/";
 
@@ -399,19 +399,19 @@ function handleWelcomeOrResultPointerDown(x, y) {
           return true;
      }
 
-     if (isScreenWelcomeActive() && isPointInsideBox(x, y, screenActionUi.tipsButton)) {
+     if (isPointInsideBox(x, y, screenActionUi.tipsButton)) {
           dismissScreenWelcomeToTipsMenu();
           setWelcomeSelectionIndex(1);
           return true;
      }
 
-     if (isScreenWelcomeActive() && isPointInsideBox(x, y, screenActionUi.menuButton)) {
+     if (isPointInsideBox(x, y, screenActionUi.menuButton)) {
           dismissScreenWelcomeToOptionsMenu();
           setWelcomeSelectionIndex(2);
           return true;
      }
 
-     if (isScreenWelcomeActive() && isPointInsideBox(x, y, screenActionUi.returnButton)) {
+     if (isOverlayScreenActive() && isPointInsideBox(x, y, screenActionUi.returnButton)) {
           setWelcomeSelectionIndex(3);
           returnToWebsite();
           return true;
@@ -447,12 +447,6 @@ function handlePausedOverlayPointerDown(x, y) {
      if (isPointInsideBox(x, y, pausedActionUi.menuButton)) {
           setPausedSelectionIndex(3);
           dismissPausedToOptionsMenu();
-          return true;
-     }
-
-     if (isPointInsideBox(x, y, pausedActionUi.returnButton)) {
-          setPausedSelectionIndex(4);
-          returnToWebsite();
           return true;
      }
 
@@ -752,23 +746,23 @@ function endPointerMove(event) {
 }
 
 function activateWelcomeSelection() {
-     const selection = isOverlayScreenActive() ? 0 : welcomeSelectionIndex;
+     const selection = welcomeSelectionIndex;
 
      if (selection === 0) {
           isOverlayScreenActive() ? startNewGameRound() : dismissScreenWelcomeToStart();
      }
 
-     if (selection === 1 && isScreenWelcomeActive()) {
+     if (selection === 1) {
           dismissScreenWelcomeToTipsMenu();
           setWelcomeSelectionIndex(1);
      }
 
-     if (selection === 2 && isScreenWelcomeActive()) {
+     if (selection === 2) {
           dismissScreenWelcomeToOptionsMenu();
           setWelcomeSelectionIndex(2);
      }
 
-     if (selection === 3 && isScreenWelcomeActive()) {
+     if (selection === 3 && isOverlayScreenActive()) {
           returnToWebsite();
      }
 }
@@ -791,9 +785,6 @@ function activatePausedSelection() {
           dismissPausedToOptionsMenu();
      }
 
-     if (pausedSelectionIndex === 4) {
-          returnToWebsite();
-     }
 }
 
 function activateTipsSelection() {
@@ -862,22 +853,17 @@ function handleWelcomeNavigation(event) {
           return true;
      }
 
-     if (isOverlayScreenActive()) {
-          setWelcomeSelectionIndex(0);
-          return true;
-     }
-
      if (isPreviousMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
-          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex - 1, 0, 3));
+          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex - 1, 0, isOverlayScreenActive() ? 3 : 2));
           return true;
      }
 
      if (isNextMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
-          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex + 1, 0, 3));
+          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex + 1, 0, isOverlayScreenActive() ? 3 : 2));
           return true;
      }
 
@@ -905,14 +891,14 @@ function handlePausedNavigation(event) {
      if (isPreviousMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
-          setPausedSelectionIndex(clamp(pausedSelectionIndex - 1, 0, 4));
+          setPausedSelectionIndex(clamp(pausedSelectionIndex - 1, 0, 3));
           return true;
      }
 
      if (isNextMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
-          setPausedSelectionIndex(clamp(pausedSelectionIndex + 1, 0, 4));
+          setPausedSelectionIndex(clamp(pausedSelectionIndex + 1, 0, 3));
           return true;
      }
 
