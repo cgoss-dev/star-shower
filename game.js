@@ -14,6 +14,9 @@ import {
      gameOverlayText,
      gameOverlayTimer,
      gameOverlayDuration,
+     gameplayPopupText,
+     gameplayPopupTimer,
+     gameplayPopupDuration,
      musicLevel,
      soundEffectsLevel,
      hurtLevel,
@@ -33,6 +36,9 @@ import {
      setGameOverlaySubtext,
      setGameOverlayTimer,
      setGameOverlayDuration,
+     setGameplayPopupText,
+     setGameplayPopupTimer,
+     setGameplayPopupDuration,
      setMusicLevel,
      setSoundEffectsLevel,
      setHurtLevel,
@@ -525,6 +531,7 @@ export function getCssPixelSize(variableName, fallback = 10) {
 
 export const startOverlayDuration = 120;
 export const overlayFadeFrames = 30;
+export const gameplayPopupDurationFrames = 90;
 export const maxLevelProgressUnits = 10;
 export const progressUnitsPerCircle = 2;
 const levelScoreMins = [
@@ -1306,6 +1313,41 @@ export function getGameOverlayAlpha() {
      return Math.max(0, Math.min(1, Math.min(fadeIn, fadeOut)));
 }
 
+export function clearGameplayPopup() {
+     setGameplayPopupText("");
+     setGameplayPopupTimer(0);
+     setGameplayPopupDuration(0);
+}
+
+export function showGameplayPopup(text, duration = gameplayPopupDurationFrames) {
+     setGameplayPopupText(text);
+     setGameplayPopupTimer(duration);
+     setGameplayPopupDuration(duration);
+}
+
+export function updateGameplayPopupTimer() {
+     if (gameplayPopupTimer > 0) {
+          const nextTimer = gameplayPopupTimer - 1;
+          setGameplayPopupTimer(nextTimer);
+
+          if (nextTimer === 0) {
+               clearGameplayPopup();
+          }
+     }
+}
+
+export function getGameplayPopupAlpha() {
+     if (!gameplayPopupText || gameplayPopupTimer <= 0 || gameplayPopupDuration <= 0) {
+          return 0;
+     }
+
+     const elapsed = gameplayPopupDuration - gameplayPopupTimer;
+     const fadeIn = Math.min(1, elapsed / 10);
+     const fadeOut = Math.min(1, gameplayPopupTimer / 30);
+
+     return Math.max(0, Math.min(1, Math.min(fadeIn, fadeOut)));
+}
+
 // ==================================================
 // GAME UPDATE
 // ==================================================
@@ -1318,6 +1360,7 @@ export function updateGame() {
      // 4. Finish by checking lose/win conditions and switching to the matching result screen.
      updatePauseButtonState();
      updateGameOverlayTimer();
+     updateGameplayPopupTimer();
      updateMenuKeyboardFocusTimer();
 
      if (screenLayerActive) {
@@ -1347,6 +1390,8 @@ export function updateGame() {
           return;
      }
 
+     const levelBeforeCollections = getCurrentLevelNumber();
+
      updateHelphurtState();
      updatePlayer();
      updateStarSpawns();
@@ -1358,6 +1403,12 @@ export function updateGame() {
      collectStars();
      collectStrikes();
      collectHelphurtPickups();
+
+     const levelAfterCollections = getCurrentLevelNumber();
+
+     if (levelAfterCollections > levelBeforeCollections) {
+          showGameplayPopup("Lvl Up!");
+     }
 
      if (playerHealth <= 0) {
           setGameOver(true);

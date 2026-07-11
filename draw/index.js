@@ -37,6 +37,7 @@ import {
      gameWon,
      gameOverlayText,
      gameOverlaySubtext,
+     gameplayPopupText,
      gameMenuUi,
      musicLevel,
      soundEffectsLevel,
@@ -125,7 +126,8 @@ import {
      isOverlayScreenActive,
      getCurrentScreenTitleLines,
      getGameWelcomeAlpha,
-     getGameOverlayAlpha
+     getGameOverlayAlpha,
+     getGameplayPopupAlpha
 } from "../game.js";
 
 import {
@@ -1188,12 +1190,10 @@ function drawHudBadges(theme) {
      const rightX = miniGameWidth - padding;
      const statusLines = getStatusTextLines();
      const sideColumnWidth = Math.max(64, (miniGameWidth - (padding * 2)) * 0.3);
-     const centerWidth = Math.max(80, miniGameWidth - (padding * 2) - (sideColumnWidth * 2));
 
      drawHudText(theme, getWinBadgeText(), leftX, padding, "left", "scoreReady", sideColumnWidth);
      drawHudText(theme, getScoreBadgeText(), leftX, padding + lineHeight, "left", "scoreReady", sideColumnWidth);
      drawHudText(theme, getHealthBadgeText(), leftX, padding + (lineHeight * 2), "left", "scoreReady", sideColumnWidth);
-     drawHudText(theme, getLevelProgressStars(), miniGameWidth / 2, padding, "center", "hudProgress", centerWidth);
 
      drawHudText(theme, "⏯️", rightX, padding, "right", "scoreReady", sideColumnWidth);
 
@@ -1208,6 +1208,19 @@ function drawHudBadges(theme) {
                sideColumnWidth
           );
      });
+}
+
+function drawLevelProgressStars(theme) {
+     const spacing = getTextStyle(theme, "canvasSpacing");
+     const padding = spacing.uiPadding || 8;
+     const progressStyle = getTextStyle(theme, "hudProgress");
+     const maxWidth = Math.max(80, miniGameWidth - (padding * 2));
+     const y = Math.max(
+          padding,
+          miniGameHeight - padding - progressStyle.fontSize
+     );
+
+     drawHudText(theme, getLevelProgressStars(), miniGameWidth / 2, y, "center", "hudProgress", maxWidth);
 }
 
 // ==================================================
@@ -2428,6 +2441,78 @@ function drawGameStatusOverlay(theme) {
      miniGameCtx.restore();
 }
 
+function drawCenteredMarqueeText(theme, text, x, y, fontSize, alpha, isRainbow = true) {
+     if (!miniGameCtx || !text) {
+          return;
+     }
+
+     const styleName = "marquee";
+     const textStyle = getTextStyle(theme, styleName);
+     const letterSpacing = textStyle.letterSpacing ?? 0;
+     const font = getTextFont(theme, styleName, 400, null, fontSize);
+     const graphemes = typeof Intl !== "undefined" && Intl.Segmenter
+          ? Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text), (segment) => segment.segment)
+          : Array.from(text);
+     const letterWidths = [];
+
+     miniGameCtx.font = font;
+
+     for (let i = 0; i < graphemes.length; i += 1) {
+          letterWidths.push(miniGameCtx.measureText(graphemes[i]).width);
+     }
+
+     const totalWidth =
+          letterWidths.reduce((sum, width) => sum + width, 0) +
+          (letterSpacing * Math.max(0, graphemes.length - 1));
+     let currentX = x - (totalWidth / 2);
+
+     miniGameCtx.save();
+     miniGameCtx.globalAlpha = alpha;
+
+     for (let i = 0; i < graphemes.length; i += 1) {
+          const letter = graphemes[i];
+
+          drawGlowingCanvasText(
+               miniGameCtx,
+               letter,
+               currentX,
+               y,
+               isRainbow ? getTextColor(theme, styleName, i) : getCssColor("--color-white", "#fff"),
+               font,
+               "left",
+               "middle",
+               theme,
+               true
+          );
+
+          currentX += letterWidths[i] + letterSpacing;
+     }
+
+     miniGameCtx.restore();
+}
+
+function drawGameplayPopup(theme) {
+     if (!miniGameCtx || !gameplayPopupText || gameMenuOpen || gameOver || gameWon) {
+          return;
+     }
+
+     const popupAlpha = getGameplayPopupAlpha();
+
+     if (popupAlpha <= 0) {
+          return;
+     }
+
+     const marqueeStyle = getTextStyle(theme, "marquee");
+     const fontSize = marqueeStyle.fontSize || theme.sizes.uiFontLg;
+     const isLevelPopup = gameplayPopupText === "Lvl Up!";
+     const y = Math.min(
+          miniGameHeight - fontSize,
+          miniGameHeight * 0.78
+     );
+
+     drawCenteredMarqueeText(theme, gameplayPopupText, miniGameWidth / 2, y, fontSize, popupAlpha, isLevelPopup);
+}
+
 // ==================================================
 // NOTE: MASTER DRAW ENTRY
 // ==================================================
@@ -2465,6 +2550,8 @@ export function drawGame() {
                drawHudBadges(theme);
           }
 
+          drawGameplayPopup(theme);
+          drawLevelProgressStars(theme);
           drawJoystick(theme);
      }
 

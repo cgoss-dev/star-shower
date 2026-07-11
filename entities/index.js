@@ -82,7 +82,8 @@ import {
      starShowerGuideIcons,
      starShowerRainbowPalette,
      getCssColor,
-     playSoundEffect
+     playSoundEffect,
+     showGameplayPopup
 } from "../game.js";
 
 import {
@@ -1061,7 +1062,7 @@ export function collectStars() {
           stars.splice(i, 1);
 
           addStarScore(1);
-          createFloatingFeedback(`+⭐`, player.x, player.y - player.radius - 14, "star");
+          createFloatingFeedback(`+⭐`, player.x, player.y - player.radius - 28, "star");
           applyTemporaryPlayerFace(playerFaces.star, 60);
           triggerPlayerFacePop(1.25);
           playSoundEffect("star");
@@ -1080,7 +1081,7 @@ export function collectStrikes() {
           strikes.splice(i, 1);
 
           addPlayerHealth(-strikeHealthDamage);
-          createFloatingFeedback(`-💚`, player.x, player.y - player.radius - 14, "strike");
+          createFloatingFeedback(`-💚`, player.x, player.y - player.radius - 28, "strike");
           syncPlayerHealthState();
           applyTemporaryPlayerFace(playerFaces.hurt, 30);
           triggerPlayerFacePop(1.25);
@@ -1247,7 +1248,8 @@ function collectHelpPickup(pickup, index) {
      helphurtPickups.splice(index, 1);
 
      applyHelpPickup(pickup.type);
-     createFloatingFeedback(`+${pickup.type?.particle || "⭐"}`, player.x, player.y - player.radius - 14, "help");
+     showGameplayPopup(`${pickup.type?.particle || "⭐"} ${pickup.type?.label || "HELP"}`);
+     createFloatingFeedback(`+${pickup.type?.particle || "⭐"}`, player.x, player.y - player.radius - 28, "help");
      applyTemporaryPlayerFace(playerFaces.star, 45);
      triggerPlayerFacePop(1.2);
      playSoundEffect("help");
@@ -1258,7 +1260,8 @@ function collectHurtPickup(pickup, index) {
      helphurtPickups.splice(index, 1);
 
      applyHurtPickup(pickup.type);
-     createFloatingFeedback(`${pickup.type?.particle || "😵"} -💚`, player.x, player.y - player.radius - 14, "hurt");
+     showGameplayPopup(`${pickup.type?.particle || "😵"} ${pickup.type?.label || "HURT"}`);
+     createFloatingFeedback(`${pickup.type?.particle || "😵"} -💚`, player.x, player.y - player.radius - 28, "hurt");
      applyTemporaryPlayerFace(playerFaces.hurt, 30);
      triggerPlayerFacePop(1.25);
      playSoundEffect("hurt");
@@ -1309,21 +1312,21 @@ export function createCollisionBurst(x, y, color, burstType, colorRole = null) {
 }
 
 function createFloatingFeedback(text, x, y, colorRole = "star") {
-     const life = 52;
+     const life = 72;
 
      collisionBursts.push({
           x,
           y,
           dx: randomNumber(-0.18, 0.18),
-          dy: -0.72,
+          dy: -0.48,
           life,
           maxLife: life,
-          size: 15,
+          size: 22,
           particle: text,
           colorRole,
           colorIndex: getNextPastelColorIndex(),
           color: getCssColor("--color-white", "#fff"),
-          glowHelp: 1,
+          glowHelp: 1.8,
           isFeedbackText: true
      });
 }

@@ -132,6 +132,10 @@ export let gameOverlaySubtext = "";
 export let gameOverlayTimer = 0;
 export let gameOverlayDuration = 0;
 
+export let gameplayPopupText = "";
+export let gameplayPopupTimer = 0;
+export let gameplayPopupDuration = 0;
+
 // ==================================================
 // UI HIT BOXES
 // Layout bounds that UI code and pointer/touch handling can share.
@@ -666,6 +670,18 @@ export function setGameOverlayDuration(value) {
      gameOverlayDuration = value;
 }
 
+export function setGameplayPopupText(value) {
+     gameplayPopupText = value;
+}
+
+export function setGameplayPopupTimer(value) {
+     gameplayPopupTimer = value;
+}
+
+export function setGameplayPopupDuration(value) {
+     gameplayPopupDuration = value;
+}
+
 // ==================================================
 // TOUCH BUTTON SETTERS
 // ==================================================
@@ -803,6 +819,9 @@ export function resetGameState() {
      gameOverlaySubtext = "";
      gameOverlayTimer = 0;
      gameOverlayDuration = 0;
+     gameplayPopupText = "";
+     gameplayPopupTimer = 0;
+     gameplayPopupDuration = 0;
 
      starSpawnTimer = 0;
      starSpawnCount = 0;
