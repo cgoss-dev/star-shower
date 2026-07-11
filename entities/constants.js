@@ -3,8 +3,8 @@ import {
 } from "../options.js";
 
 export const playerBaseHealth = gameplayStartingHealth;
-export const playerBaseSpeed = 2;
-export const playerSpeedPerHeart = 0.75;
+export const playerBaseSpeed = 3;
+export const playerSpeedPerHeart = 1;
 export const playerSpeedMinScale = 1;
 export const playerSpeedMaxScale = 2;
 export const playerBaseSize = 64;

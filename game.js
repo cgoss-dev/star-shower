@@ -310,7 +310,7 @@ export function getCanvasTheme() {
                letterSpacing: 0,
                color: "#fff",
                rainbow: false,
-               glow: true
+               glow: false
           },
 
           hudProgress: {

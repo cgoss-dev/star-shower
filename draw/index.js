@@ -2587,11 +2587,12 @@ function drawGameplayPopup(theme) {
      }
 
      const fontSize = theme.sizes.uiFontMd || getTextStyle(theme, "buttonsOptions").fontSize;
+     const spacing = getTextStyle(theme, "canvasSpacing");
+     const progressStyle = getTextStyle(theme, "hudProgress");
+     const padding = spacing.uiPadding || 8;
+     const progressCenterY = miniGameHeight - padding - (progressStyle.fontSize / 2);
      const isLevelPopup = gameplayPopupText === "Lvl Up!";
-     const y = Math.min(
-          miniGameHeight - fontSize,
-          miniGameHeight * 0.78
-     );
+     const y = Math.max(fontSize, progressCenterY - (fontSize * 1.35));
 
      drawCenteredMarqueeText(theme, gameplayPopupText, miniGameWidth / 2, y, fontSize, popupAlpha, isLevelPopup);
 }
