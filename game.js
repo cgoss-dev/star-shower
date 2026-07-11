@@ -602,7 +602,7 @@ const levelRules = Array.from({ length: maxLevelProgressUnits }, (_, index) => {
 const welcomeTitleLines = ["STAR", "SHOWER"];
 const screenActionTexts = ["NEW GAME", "TIPS", "EFFECTS", "OPTIONS", "DEVELOPER"];
 const pausedActionTexts = ["RESUME", "NEW GAME", "TIPS", "EFFECTS", "OPTIONS", "DEVELOPER"];
-const roundIntroFirstLines = ["Collect Stars", "Avoid Strikes"];
+const roundIntroFirstLines = ["Collect Stars,", "Avoid Strikes"];
 const roundIntroSecondLines = ["Effects Can", "Help or Hurt"];
 
 export function getWelcomeTitleLines() {

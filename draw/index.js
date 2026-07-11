@@ -146,8 +146,9 @@ const siteTheme = window.SiteTheme;
 const levelProgressPulseFrames = 18;
 const keyboardFocusFill = "rgba(255, 255, 255, 0.25)";
 
-let lastLevelProgressFilledStars = null;
+let lastLevelProgressFilledUnits = null;
 let levelProgressPulseTimer = 0;
+let levelProgressPulseIndex = -1;
 
 // Re-export moved player/entity helpers so existing imports from this file keep working.
 export {
@@ -1133,14 +1134,14 @@ function getScoreBadgeText() {
      return `⭐ ${String(starScore).padStart(3, "0")}`;
 }
 
-function getLevelProgressFilledStars() {
+function getLevelProgressFilledUnits() {
      return Math.round(getCurrentLevelProgressRatio() * maxLevelProgressUnits);
 }
 
-function getLevelProgressStars(filledStars = getLevelProgressFilledStars()) {
+function getLevelProgressCircles(filledUnits = getLevelProgressFilledUnits()) {
 
      return Array.from({ length: maxLevelProgressUnits }, (_item, index) => (
-          index < filledStars ? "★" : "☆"
+          index < filledUnits ? "●" : "○"
      )).join("");
 }
 
@@ -1222,34 +1223,76 @@ function drawLevelProgressStars(theme) {
      const padding = spacing.uiPadding || 8;
      const progressStyle = getTextStyle(theme, "hudProgress");
      const maxWidth = Math.max(80, miniGameWidth - (padding * 2));
-     const filledStars = getLevelProgressFilledStars();
-     const progressText = getLevelProgressStars(filledStars);
+     const filledUnits = getLevelProgressFilledUnits();
+     const progressText = getLevelProgressCircles(filledUnits);
      const y = Math.max(
           padding,
           miniGameHeight - padding - progressStyle.fontSize
      );
 
-     if (lastLevelProgressFilledStars === null) {
-          lastLevelProgressFilledStars = filledStars;
-     } else if (filledStars > lastLevelProgressFilledStars) {
+     if (lastLevelProgressFilledUnits === null) {
+          lastLevelProgressFilledUnits = filledUnits;
+     } else if (filledUnits > lastLevelProgressFilledUnits) {
           levelProgressPulseTimer = levelProgressPulseFrames;
-          lastLevelProgressFilledStars = filledStars;
-     } else if (filledStars < lastLevelProgressFilledStars) {
-          lastLevelProgressFilledStars = filledStars;
+          levelProgressPulseIndex = filledUnits - 1;
+          lastLevelProgressFilledUnits = filledUnits;
+     } else if (filledUnits < lastLevelProgressFilledUnits) {
+          levelProgressPulseIndex = -1;
+          lastLevelProgressFilledUnits = filledUnits;
      }
 
      const pulseRatio = levelProgressPulseTimer / levelProgressPulseFrames;
-     const scale = 1 + (0.1 * pulseRatio);
      const centerY = y + (progressStyle.fontSize / 2);
+     const textStyle = getTextStyle(theme, "hudProgress");
+     const textColor = textStyle.color || theme.colors.bodyText;
+     const font = getFittedTextFont(theme, "hudProgress", progressText, maxWidth, 400);
+     const circleGap = progressStyle.fontSize * 0.3;
+     const circles = Array.from(progressText);
+     const circleWidths = [];
+
+     miniGameCtx.save();
+     miniGameCtx.font = font;
+
+     circles.forEach((circle) => {
+          circleWidths.push(miniGameCtx.measureText(circle).width);
+     });
+
+     const totalWidth =
+          circleWidths.reduce((sum, width) => sum + width, 0) +
+          (circleGap * Math.max(0, circles.length - 1));
+     let circleX = (miniGameWidth - totalWidth) / 2;
 
      if (levelProgressPulseTimer > 0) {
           levelProgressPulseTimer -= 1;
      }
 
-     miniGameCtx.save();
-     miniGameCtx.translate(miniGameWidth / 2, centerY);
-     miniGameCtx.scale(scale, scale);
-     drawHudText(theme, progressText, 0, -(progressStyle.fontSize / 2), "center", "hudProgress", maxWidth / scale);
+     circles.forEach((circle, index) => {
+          const circleCenterX = circleX + (circleWidths[index] / 2);
+          const shouldPulse =
+               index === levelProgressPulseIndex &&
+               levelProgressPulseTimer > 0;
+          const scale = shouldPulse ? 1 + (0.1 * pulseRatio) : 1;
+
+          miniGameCtx.save();
+          miniGameCtx.translate(circleCenterX, centerY);
+          miniGameCtx.scale(scale, scale);
+          drawGlowingCanvasText(
+               miniGameCtx,
+               circle,
+               0,
+               0,
+               textColor,
+               font,
+               "center",
+               "middle",
+               theme,
+               textStyle.glow
+          );
+          miniGameCtx.restore();
+
+          circleX += circleWidths[index] + circleGap;
+     });
+
      miniGameCtx.restore();
 }
 
@@ -2362,7 +2405,7 @@ function drawRoundIntroOverlay(theme) {
 
      const { screens } = theme;
      const introLines = getRoundIntroLines();
-     const alpha = getRoundIntroAlpha();
+     const textAlpha = getRoundIntroAlpha();
      const buttonStyle = getTextStyle(theme, "buttonsOptions");
      const fontSize = buttonStyle.fontSize;
      const lineHeight = fontSize * 1.5;
@@ -2373,13 +2416,12 @@ function drawRoundIntroOverlay(theme) {
      const introColor = getCssColor("--color-white", "#fff");
 
      miniGameCtx.save();
-     miniGameCtx.globalAlpha = alpha;
      miniGameCtx.fillStyle = screens.paused.overlayFill;
      miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
      miniGameCtx.restore();
 
      miniGameCtx.save();
-     miniGameCtx.globalAlpha = alpha;
+     miniGameCtx.globalAlpha = textAlpha;
 
      introLines.forEach((line, index) => {
           if (!line) {
