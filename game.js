@@ -319,7 +319,7 @@ export function getCanvasTheme() {
                letterSpacing: 0,
                color: "#fff",
                rainbow: false,
-               glow: true
+               glow: false
           },
 
           buttonsOptions: {
@@ -529,13 +529,9 @@ export const overlayFadeFrames = 30;
 export const gameplayPopupDurationFrames = 180;
 const roundIntroMessageFrames = 120;
 const roundIntroPauseFrames = 120;
-const roundIntroSecondHoldFrames = 120;
-const roundIntroFadeFrames = 120;
 const roundIntroTotalFrames =
      roundIntroMessageFrames +
-     roundIntroPauseFrames +
-     roundIntroSecondHoldFrames +
-     roundIntroFadeFrames;
+     roundIntroPauseFrames;
 export const maxLevelProgressUnits = 10;
 export const progressUnitsPerCircle = 2;
 const levelScoreMins = [
@@ -780,6 +776,7 @@ let screenLayerTimer = -1;
 let screenLayerDuration = -1;
 let gameScreenMode = "screenWelcome";
 let roundIntroTimer = 0;
+let roundIntroWaitingForDismiss = false;
 
 // ==================================================
 // SCREEN MODE HELPERS
@@ -806,26 +803,32 @@ export function getGameScreenMode() {
 }
 
 export function isRoundIntroActive() {
-     return roundIntroTimer > 0;
+     return roundIntroTimer > 0 || roundIntroWaitingForDismiss;
+}
+
+export function canDismissRoundIntro() {
+     return roundIntroWaitingForDismiss;
+}
+
+export function dismissRoundIntro() {
+     if (!canDismissRoundIntro()) {
+          return false;
+     }
+
+     roundIntroTimer = 0;
+     roundIntroWaitingForDismiss = false;
+     return true;
 }
 
 export function getRoundIntroAlpha() {
-     if (!isRoundIntroActive()) {
-          return 0;
-     }
-
-     if (roundIntroTimer <= roundIntroFadeFrames) {
-          return Math.max(0, Math.min(1, roundIntroTimer / roundIntroFadeFrames));
-     }
-
-     return 1;
+     return isRoundIntroActive() ? 1 : 0;
 }
 
 export function getRoundIntroLines() {
      const elapsedFrames = roundIntroTotalFrames - roundIntroTimer;
      const secondMessageStart = roundIntroMessageFrames + roundIntroPauseFrames;
 
-     if (elapsedFrames < secondMessageStart) {
+     if (!roundIntroWaitingForDismiss && elapsedFrames < secondMessageStart) {
           return roundIntroFirstLines;
      }
 
@@ -1046,6 +1049,7 @@ export function startNewGameRound() {
      setGameOver(false);
      setGameWon(false);
      roundIntroTimer = roundIntroTotalFrames;
+     roundIntroWaitingForDismiss = false;
 }
 
 // ====================================================================================================
@@ -1141,11 +1145,16 @@ export function clearGameOverlay() {
 
 function clearRoundIntro() {
      roundIntroTimer = 0;
+     roundIntroWaitingForDismiss = false;
 }
 
 function updateRoundIntroTimer() {
      if (roundIntroTimer > 0) {
           roundIntroTimer -= 1;
+
+          if (roundIntroTimer === 0) {
+               roundIntroWaitingForDismiss = true;
+          }
      }
 }
 

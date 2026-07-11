@@ -450,7 +450,7 @@ function updatePauseButtonBounds(theme = getCanvasTheme()) {
 
      button.width = buttonSize;
      button.height = buttonSize;
-     button.x = miniGameWidth - button.width - canvasSpacing.uiPadding;
+     button.x = (miniGameWidth - button.width) / 2;
      button.y = canvasSpacing.uiPadding;
 }
 
@@ -1191,20 +1191,21 @@ function drawHudBadges(theme) {
      const lineHeight = getTextStyle(theme, "scoreReady").fontSize + spacing.hudRowGap;
      const leftX = padding;
      const rightX = miniGameWidth - padding;
+     const centerX = miniGameWidth / 2;
      const statusLines = getStatusTextLines();
      const sideColumnWidth = Math.max(64, (miniGameWidth - (padding * 2)) * 0.3);
 
      drawHudText(theme, getScoreBadgeText(), leftX, padding, "left", "scoreReady", sideColumnWidth);
      drawHudText(theme, getHealthBadgeText(), leftX, padding + lineHeight, "left", "scoreReady", sideColumnWidth);
 
-     drawHudText(theme, "⏯️", rightX, padding, "right", "scoreReady", sideColumnWidth);
+     drawHudText(theme, "⏯️", centerX, padding, "center", "scoreReady", sideColumnWidth);
 
      statusLines.forEach((statusText, index) => {
           drawHudText(
                theme,
                getCompactStatusText(statusText, sideColumnWidth),
                rightX,
-               padding + (lineHeight * (index + 1)),
+               padding + (lineHeight * index),
                "right",
                "scoreReady",
                sideColumnWidth
@@ -1280,7 +1281,7 @@ function drawLevelProgressStars(theme) {
                "center",
                "middle",
                theme,
-               textStyle.glow
+               false
           );
           miniGameCtx.restore();
 
@@ -1688,6 +1689,9 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
      const detailTextWidth = miniGameWidth - detailTextX - screenLayout.sidePadding;
      const sectionHeadings = new Set(["TIPS", "EFFECTS", "HELPS", "HURTS"]);
      const shouldCenterContent = Boolean(options.centerContent);
+     const getDetailLineColor = (line) => line.includes("{iconWin}")
+          ? getCssColor("--color-white", "#fff")
+          : detailStyle.color || colors.fontColor;
 
      miniGameCtx.fillStyle = detailStyle.color || colors.fontColor;
      miniGameCtx.textAlign = "left";
@@ -1753,6 +1757,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
      function drawCenteredDetailLine(line, firstSegment, bodyText) {
           const hasLeadingIcon = firstSegment?.type === "icon";
           const textFont = getTextFont(theme, "buttonsOptions", 400);
+          const lineColor = getDetailLineColor(line);
           let icon = null;
           let iconFont = textFont;
           let iconWidth = 0;
@@ -1778,9 +1783,10 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
                     iconX,
                     iconY,
                     getRichTextIconSize(icon, fontSize),
-                    detailStyle.color || colors.fontColor
+                    lineColor
                )) {
                     miniGameCtx.font = iconFont;
+                    miniGameCtx.fillStyle = lineColor;
                     miniGameCtx.fillText(
                          icon.particle,
                          iconX,
@@ -1792,6 +1798,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
           }
 
           miniGameCtx.font = textFont;
+          miniGameCtx.fillStyle = lineColor;
           miniGameCtx.fillText(bodyText || line, currentX, textY);
           miniGameCtx.font = textFont;
 
@@ -1824,6 +1831,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
                     .join("")
                     .trimStart()
                : line;
+          const lineColor = getDetailLineColor(line);
 
           if (shouldCenterContent) {
                textY += drawCenteredDetailLine(line, firstSegment, bodyText) * lineHeight;
@@ -1844,14 +1852,14 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
                          richIconX,
                          richIconY,
                          iconSize,
-                         detailStyle.color || colors.fontColor
+                         lineColor
                     )) {
                          drawGlowingCanvasText(
                               miniGameCtx,
                               icon.particle,
                               richIconX,
                               richIconY,
-                              detailStyle.color || colors.fontColor,
+                              lineColor,
                               getTextFont(theme, "buttonsOptions", 400, "body", iconSize),
                               "left",
                               "top",
@@ -1862,6 +1870,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
                }
           }
 
+          miniGameCtx.fillStyle = lineColor;
           textY += (
                drawWrappedText(
                     miniGameCtx,
@@ -2063,7 +2072,7 @@ function drawSharedActionScreen(
      const titleStackGap = titleStyle.stackGap;
      const titleMenuGap = canvasSpacing.menuPadding;
      const resolvedInstructionLines = Array.isArray(instructionLines) ? instructionLines.filter(Boolean) : [];
-     const titleContentGap = resolvedInstructionLines.length ? canvasSpacing.uiRowGap : titleMenuGap;
+     const titleContentGap = canvasSpacing.uiRowGap;
      const instructionGap = resolvedInstructionLines.length ? canvasSpacing.uiRowGap : 0;
      const instructionLineHeight = buttonStyle.fontSize * 1.5;
      const instructionBlockHeight = resolvedInstructionLines.length * instructionLineHeight;
@@ -2432,7 +2441,7 @@ function drawRoundIntroOverlay(theme) {
                "center",
                "middle",
                theme,
-               false
+               true
           );
      });
 
@@ -2577,8 +2586,7 @@ function drawGameplayPopup(theme) {
           return;
      }
 
-     const marqueeStyle = getTextStyle(theme, "marquee");
-     const fontSize = marqueeStyle.fontSize || theme.sizes.uiFontLg;
+     const fontSize = theme.sizes.uiFontMd || getTextStyle(theme, "buttonsOptions").fontSize;
      const isLevelPopup = gameplayPopupText === "Lvl Up!";
      const y = Math.min(
           miniGameHeight - fontSize,

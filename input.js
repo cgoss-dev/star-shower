@@ -88,6 +88,8 @@ import {
      showScreenWelcome,
      isScreenWelcomeActive,
      isOverlayScreenActive,
+     isRoundIntroActive,
+     dismissRoundIntro,
      startNewGameRound,
      decreaseHurtLevel,
      increaseHurtLevel,
@@ -1115,6 +1117,15 @@ function handleKeyDown(event) {
           return;
      }
 
+     if (isRoundIntroActive()) {
+          if (isEnterKey(event) || isSpaceKey(event)) {
+               event.preventDefault();
+               dismissRoundIntro();
+          }
+
+          return;
+     }
+
      if (isJoystickMovementMode()) {
           clearPointerMove();
      }
@@ -1182,6 +1193,11 @@ function handlePointerDown(event) {
      }
 
      if (handleMenuPointerDown(event, x, y)) {
+          return;
+     }
+
+     if (isRoundIntroActive()) {
+          dismissRoundIntro();
           return;
      }
 
