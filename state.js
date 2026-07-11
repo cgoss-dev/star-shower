@@ -12,7 +12,7 @@ import {
      maxPlayerHealth,
      maxDifficultyOptionIndex,
      defaultDifficultyOptionIndex
-} from "./options.js?v=20260711-21";
+} from "./options.js?v=20260711-24";
 
 export const miniGameCanvas = document.getElementById("miniGameCanvas");
 
@@ -190,11 +190,16 @@ export const gameMenuScroll = {
      max: 0,
      pointerId: null,
      lastY: 0,
+     dragStartY: 0,
+     dragStartOffset: 0,
      velocity: 0,
      friction: 0.9,
      settleForce: 0.22,
      minVelocity: 0.08,
      maxVelocity: 42,
+     pageSize: 0,
+     pageTurnDistance: 28,
+     pageTurnVelocity: 3,
      overscrollLimit: 36,
      overscrollResistance: 0.35
 };
@@ -542,16 +547,44 @@ function clampGameMenuVelocity(value) {
      return Math.max(-gameMenuScroll.maxVelocity, Math.min(gameMenuScroll.maxVelocity, value));
 }
 
+function isPagedGameMenuScroll() {
+     return gameMenuScroll.pageSize > 0;
+}
+
+function getGameMenuScrollPage() {
+     if (!isPagedGameMenuScroll()) {
+          return 0;
+     }
+
+     return Math.round(gameMenuScroll.offset / gameMenuScroll.pageSize);
+}
+
+function setGameMenuScrollPage(page) {
+     if (!isPagedGameMenuScroll()) {
+          return;
+     }
+
+     const maxPage = Math.round(gameMenuScroll.max / gameMenuScroll.pageSize);
+     const nextPage = Math.max(0, Math.min(maxPage, page));
+
+     gameMenuScroll.offset = nextPage * gameMenuScroll.pageSize;
+     gameMenuScroll.velocity = 0;
+}
+
 export function resetGameMenuScroll() {
      gameMenuScroll.offset = 0;
      gameMenuScroll.max = 0;
      gameMenuScroll.pointerId = null;
      gameMenuScroll.lastY = 0;
+     gameMenuScroll.dragStartY = 0;
+     gameMenuScroll.dragStartOffset = 0;
      gameMenuScroll.velocity = 0;
+     gameMenuScroll.pageSize = 0;
 }
 
-export function setGameMenuScrollMax(value) {
+export function setGameMenuScrollMax(value, pageSize = 0) {
      gameMenuScroll.max = Math.max(0, value);
+     gameMenuScroll.pageSize = Math.max(0, pageSize);
 
      if (gameMenuScroll.pointerId === null && Math.abs(gameMenuScroll.velocity) < gameMenuScroll.minVelocity) {
           gameMenuScroll.offset = clampGameMenuScrollOffset(gameMenuScroll.offset);
@@ -559,6 +592,16 @@ export function setGameMenuScrollMax(value) {
 }
 
 export function addGameMenuScrollOffset(delta) {
+     if (isPagedGameMenuScroll()) {
+          const direction = Math.sign(delta);
+
+          if (direction !== 0) {
+               setGameMenuScrollPage(getGameMenuScrollPage() + direction);
+          }
+
+          return;
+     }
+
      gameMenuScroll.offset = clampGameMenuScrollOffset(gameMenuScroll.offset + delta);
      gameMenuScroll.velocity = 0;
 }
@@ -566,6 +609,8 @@ export function addGameMenuScrollOffset(delta) {
 export function beginGameMenuScrollDrag(pointerId, y) {
      gameMenuScroll.pointerId = pointerId;
      gameMenuScroll.lastY = y;
+     gameMenuScroll.dragStartY = y;
+     gameMenuScroll.dragStartOffset = gameMenuScroll.offset;
      gameMenuScroll.velocity = 0;
 }
 
@@ -574,6 +619,11 @@ export function updateGameMenuScrollDrag(y) {
 
      gameMenuScroll.lastY = y;
      gameMenuScroll.velocity = clampGameMenuVelocity(delta);
+
+     if (isPagedGameMenuScroll()) {
+          return;
+     }
+
      gameMenuScroll.offset = clampGameMenuDragOffset(gameMenuScroll.offset + delta);
 }
 
@@ -582,13 +632,43 @@ export function endGameMenuScrollDrag(pointerId = gameMenuScroll.pointerId) {
           return false;
      }
 
+     const releaseY = gameMenuScroll.lastY;
+
      gameMenuScroll.pointerId = null;
+
+     if (isPagedGameMenuScroll()) {
+          const dragDelta = gameMenuScroll.dragStartY - releaseY;
+          const startPage = Math.round(gameMenuScroll.dragStartOffset / gameMenuScroll.pageSize);
+          const direction = Math.sign(
+               Math.abs(dragDelta) >= gameMenuScroll.pageTurnDistance
+                    ? dragDelta
+                    : gameMenuScroll.velocity
+          );
+
+          if (
+               Math.abs(dragDelta) >= gameMenuScroll.pageTurnDistance ||
+               Math.abs(gameMenuScroll.velocity) >= gameMenuScroll.pageTurnVelocity
+          ) {
+               setGameMenuScrollPage(startPage + direction);
+          } else {
+               setGameMenuScrollPage(startPage);
+          }
+
+          gameMenuScroll.dragStartY = 0;
+          gameMenuScroll.dragStartOffset = 0;
+     }
+
      gameMenuScroll.lastY = 0;
      return true;
 }
 
 export function updateGameMenuScrollVelocity() {
      if (gameMenuScroll.pointerId !== null) {
+          return;
+     }
+
+     if (isPagedGameMenuScroll()) {
+          gameMenuScroll.velocity = 0;
           return;
      }
 

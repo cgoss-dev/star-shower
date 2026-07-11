@@ -63,7 +63,7 @@ import {
      setGameMenuScrollMax,
      isPointInsideRect,
      resetActionButtonBounds
-} from "../state.js?v=20260711-21";
+} from "../state.js?v=20260711-24";
 
 import {
      maxDifficultyOptionIndex,
@@ -83,11 +83,11 @@ import {
      fogClearRadiusBase,
      fogClearRadiusMinScale,
      fogClearRadiusMaxScale
-} from "../options.js?v=20260711-21";
+} from "../options.js?v=20260711-24";
 
 import {
      spawnDensityBaselineArea
-} from "../entities/constants.js?v=20260711-21";
+} from "../entities/constants.js?v=20260711-24";
 
 import {
      drawStars,
@@ -109,7 +109,7 @@ import {
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
      syncPlayerSize
-} from "../entities/index.js?v=20260711-21";
+} from "../entities/index.js?v=20260711-24";
 
 import {
      getCanvasTheme,
@@ -133,13 +133,13 @@ import {
      isRoundIntroActive,
      getRoundIntroAlpha,
      getRoundIntroLines
-} from "../game.js?v=20260711-21";
+} from "../game.js?v=20260711-24";
 
 import {
      stepperLeftIcon,
      stepperRightIcon,
      richTextIconAssetImages
-} from "./assets.js?v=20260711-21";
+} from "./assets.js?v=20260711-24";
 
 const siteTheme = window.SiteTheme;
 const levelProgressPulseFrames = 18;
@@ -854,7 +854,6 @@ export function drawMenuScreenTitle(title, theme, centerX, y) {
      }
 
      const titleStyle = getTextStyle(theme, "title");
-     const titleFontSize = titleStyle.fontSize;
      const letterSpacing = titleStyle.letterSpacing;
 
      miniGameCtx.save();
@@ -862,16 +861,7 @@ export function drawMenuScreenTitle(title, theme, centerX, y) {
      miniGameCtx.textBaseline = "top";
      miniGameCtx.font = getTextFont(theme, "title", 400);
 
-     const letterWidths = [];
-
-     for (let i = 0; i < title.length; i += 1) {
-          letterWidths.push(miniGameCtx.measureText(title[i]).width);
-     }
-
-     const totalWidth =
-          letterWidths.reduce((sum, width) => sum + width, 0) +
-          (letterSpacing * Math.max(0, title.length - 1));
-
+     const totalWidth = measureMenuScreenTitleWidth(title, theme);
      let titleX = centerX - (totalWidth / 2);
 
      for (let i = 0; i < title.length; i += 1) {
@@ -889,10 +879,36 @@ export function drawMenuScreenTitle(title, theme, centerX, y) {
                titleStyle.glow
           );
 
-          titleX += letterWidths[i] + letterSpacing;
+          titleX += miniGameCtx.measureText(letter).width + letterSpacing;
      }
 
      miniGameCtx.restore();
+}
+
+function measureMenuScreenTitleWidth(title, theme) {
+     if (!miniGameCtx) {
+          return 0;
+     }
+
+     const titleStyle = getTextStyle(theme, "title");
+     const letterSpacing = titleStyle.letterSpacing;
+
+     miniGameCtx.save();
+     miniGameCtx.font = getTextFont(theme, "title", 400);
+
+     const letterWidths = [];
+
+     for (let i = 0; i < title.length; i += 1) {
+          letterWidths.push(miniGameCtx.measureText(title[i]).width);
+     }
+
+     const totalWidth =
+          letterWidths.reduce((sum, width) => sum + width, 0) +
+          (letterSpacing * Math.max(0, title.length - 1));
+
+     miniGameCtx.restore();
+
+     return totalWidth;
 }
 
 function getShortDifficultyOptionLabel(levelIndex) {
@@ -1683,26 +1699,28 @@ function drawTipsMenuScreen(theme) {
           return;
      }
 
-     const lines = [
-          "TIPS",
-          "",
-          ...getHowToPlayLines(),
-          "",
-          "HELP",
-          "",
-          ...getHelpLines(),
-          "",
-          "HURT",
-          "",
-          ...getHurtLines()
+     const sections = [
+          {
+               title: "TIPS",
+               lines: getHowToPlayLines()
+          },
+          {
+               title: "HELP",
+               lines: getHelpLines()
+          },
+          {
+               title: "HURT",
+               lines: getHurtLines()
+          }
      ];
 
-     drawScrollableInfoScreen(theme, lines);
+     drawPagedInfoScreen(theme, sections);
 }
 
-function drawScrollableInfoScreen(theme, lines) {
+function drawPagedInfoScreen(theme, sections) {
      const { colors } = theme;
      const layout = getMenuScreenLayout(theme);
+     const cardWidth = getPagedInfoCardWidth(theme, sections);
 
      miniGameCtx.save();
      miniGameCtx.fillStyle = colors.menuScreenFill;
@@ -1711,28 +1729,96 @@ function drawScrollableInfoScreen(theme, lines) {
      const viewportTop = layout.titleY;
      const viewportBottom = layout.contentBottomY;
      const viewportHeight = Math.max(0, viewportBottom - viewportTop);
+     const pageSize = Math.max(1, viewportHeight);
+     const maxPageIndex = Math.max(0, sections.length - 1);
+     const activePageIndex = Math.max(
+          0,
+          Math.min(maxPageIndex, Math.round(gameMenuScroll.offset / pageSize))
+     );
+     const activeSection = sections[activePageIndex] || sections[0];
+     const lines = activeSection
+          ? [activeSection.title, "", ...activeSection.lines]
+          : [];
 
      miniGameCtx.save();
      miniGameCtx.beginPath();
      miniGameCtx.rect(0, viewportTop, miniGameWidth, viewportHeight);
      miniGameCtx.clip();
 
-     const contentStartY = viewportTop - gameMenuScroll.offset;
-     const contentEndY = drawMenuDetailLines(theme, lines, contentStartY, {
+     drawMenuDetailLines(theme, lines, viewportTop, {
           centerContent: true,
-          sectionCards: true
+          sectionCards: true,
+          sectionCardWidth: cardWidth,
+          sectionCardFill: true
      });
-     const contentHeight = contentEndY - contentStartY;
 
      miniGameCtx.restore();
 
-     const scrollMax = Math.max(0, contentHeight - viewportHeight);
-
-     setGameMenuScrollMax(scrollMax);
+     setGameMenuScrollMax(maxPageIndex * pageSize, pageSize);
 
      drawMenuBackButton(gameMenuUi.backButton, theme, tipsSelectionIndex === 0);
 
      miniGameCtx.restore();
+}
+
+function getPagedInfoCardWidth(theme, sections) {
+     if (!miniGameCtx) {
+          return 0;
+     }
+
+     const detailStyle = getTextStyle(theme, "buttonsOptions");
+     const titleStyle = getTextStyle(theme, "title");
+     const canvasSpacing = getTextStyle(theme, "canvasSpacing");
+     const fontSize = detailStyle.fontSize;
+     const sectionCardPadding = canvasSpacing.uiPadding;
+     const iconGap = fontSize * 0.45;
+     const maxCardWidth = Math.max(fontSize, miniGameWidth - (canvasSpacing.menuPadding * 2));
+     let maxContentWidth = 0;
+
+     miniGameCtx.save();
+
+     sections.forEach((section) => {
+          maxContentWidth = Math.max(maxContentWidth, measureMenuScreenTitleWidth(section.title, theme));
+
+          section.lines.forEach((line) => {
+               if (!line.trim()) {
+                    return;
+               }
+
+               const richSegments = parseRichTextSegments(line);
+               const firstSegment = richSegments[0];
+               const hasLeadingIcon = firstSegment?.type === "icon";
+               const bodyText = hasLeadingIcon
+                    ? richSegments
+                         .slice(1)
+                         .map((segment) => segment.value)
+                         .join("")
+                         .trimStart()
+                    : line;
+               let rowWidth = 0;
+
+               if (hasLeadingIcon) {
+                    const icon = getRichTextIcon(theme, firstSegment.value);
+
+                    if (icon) {
+                         const iconFont = getTextFont(theme, "buttonsOptions", 400, "body", getRichTextIconSize(icon, fontSize));
+
+                         rowWidth += getRichTextIconWidth(miniGameCtx, icon, fontSize, iconFont) + iconGap;
+                    }
+               }
+
+               miniGameCtx.font = getTextFont(theme, "buttonsOptions", 400);
+               rowWidth += miniGameCtx.measureText(bodyText || line).width;
+               maxContentWidth = Math.max(maxContentWidth, rowWidth);
+          });
+     });
+
+     miniGameCtx.restore();
+
+     return Math.min(
+          maxCardWidth,
+          Math.max(titleStyle.fontSize, maxContentWidth + (sectionCardPadding * 2))
+     );
 }
 
 function drawMenuDetailLines(theme, lines, startY, options = {}) {
@@ -1754,11 +1840,17 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
      const shouldCenterContent = Boolean(options.centerContent);
      const shouldDrawSectionCards = Boolean(options.sectionCards);
      const sectionCardPadding = canvasSpacing.uiPadding;
+     const sectionCardBottomPadding = Math.max(0, sectionCardPadding - (lineHeight - fontSize));
      const sectionCardGap = lineHeight;
-     const sectionCardX = screenLayout.sidePadding;
-     const sectionCardWidth = miniGameWidth - (screenLayout.sidePadding * 2);
+     const requestedSectionCardWidth = options.sectionCardWidth || (miniGameWidth - (screenLayout.sidePadding * 2));
+     const sectionCardWidth = Math.min(
+          miniGameWidth - (screenLayout.sidePadding * 2),
+          Math.max(fontSize, requestedSectionCardWidth)
+     );
+     const sectionCardX = (miniGameWidth - sectionCardWidth) / 2;
      const sectionCardBorderWidth = theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1;
      const sectionCardBorderColor = detailStyle.color || colors.controlText;
+     const shouldFillSectionCard = Boolean(options.sectionCardFill);
      let currentSectionTopY = null;
      const getDetailLineColor = (line) => line.includes("{icon")
           ? getCssColor("--color-white", "#fff")
@@ -1779,7 +1871,12 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
           let iconFont = textFont;
           let iconWidth = 0;
           const iconGap = hasLeadingIcon ? fontSize * 0.45 : 0;
-          const availableWidth = Math.max(fontSize, miniGameWidth - (screenLayout.sidePadding * 2));
+          const availableWidth = Math.max(
+               fontSize,
+               shouldDrawSectionCards
+                    ? sectionCardWidth - (sectionCardPadding * 2)
+                    : miniGameWidth - (screenLayout.sidePadding * 2)
+          );
 
           if (hasLeadingIcon) {
                icon = getRichTextIcon(theme, firstSegment.value);
@@ -1798,7 +1895,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
                iconWidth +
                (icon ? iconGap : 0) +
                Math.min(measuredBodyWidth, bodyMaxWidth);
-          let currentX = Math.max(screenLayout.sidePadding, (miniGameWidth - rowWidth) / 2);
+          let currentX = Math.max(sectionCardX + sectionCardPadding, (miniGameWidth - rowWidth) / 2);
 
           if (icon) {
                const iconX = currentX + (icon.xOffset || 0);
@@ -1844,10 +1941,21 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
                return;
           }
 
-          const sectionBottomY = textY + sectionCardPadding;
+          const sectionBottomY = textY + sectionCardBottomPadding;
           const sectionHeight = Math.max(0, sectionBottomY - currentSectionTopY);
 
           if (sectionHeight > 0) {
+               if (shouldFillSectionCard) {
+                    fillRoundedControlRect(
+                         sectionCardX,
+                         currentSectionTopY,
+                         sectionCardWidth,
+                         sectionHeight,
+                         getControlCornerRadius(theme, sectionCardWidth, sectionHeight),
+                         keyboardFocusFill
+                    );
+               }
+
                strokeRoundedControlRect(
                     sectionCardX,
                     currentSectionTopY,

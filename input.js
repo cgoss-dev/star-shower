@@ -67,14 +67,14 @@ import {
      updateGameMenuScrollDrag,
      endGameMenuScrollDrag,
      showMenuKeyboardFocus
-} from "./state.js?v=20260711-21";
+} from "./state.js?v=20260711-24";
 
 import {
      isJoystickEnabled,
      movementOptionIndexes,
      maxDifficultyOptionIndex,
      getMaxMovementOptionIndex
-} from "./options.js?v=20260711-21";
+} from "./options.js?v=20260711-24";
 
 import {
      dismissScreenWelcomeToStart,
@@ -92,11 +92,11 @@ import {
      increaseHurtLevel,
      decreaseMovementLevel,
      increaseMovementLevel
-} from "./game.js?v=20260711-21";
+} from "./game.js?v=20260711-24";
 
 import {
      syncUiBounds
-} from "./draw/index.js?v=20260711-21";
+} from "./draw/index.js?v=20260711-24";
 
 const portfolioHomeUrl = "https://cgoss-dev.github.io/cgoss-dev/";
 

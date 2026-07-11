@@ -47,7 +47,7 @@ import {
 
      resetUiActionBounds,
      resetGameState
-} from "./state.js?v=20260711-21";
+} from "./state.js?v=20260711-24";
 
 import {
      difficultyOptionLabels,
@@ -59,7 +59,7 @@ import {
      isJoystickEnabled,
      loadAndApplySavedOptions,
      saveCurrentOptions
-} from "./options.js?v=20260711-21";
+} from "./options.js?v=20260711-24";
 
 import {
      bindKeyboardInput,
@@ -67,7 +67,7 @@ import {
      bindResizeHandler,
      updateTouchControlBounds,
      resetTouchControls
-} from "./input.js?v=20260711-21";
+} from "./input.js?v=20260711-24";
 
 import {
      resetPlayerPosition,
@@ -85,14 +85,14 @@ import {
      collectHelphurtPickups,
      updatePlayerTrail,
      resetHelphurtIntroState
-} from "./entities/index.js?v=20260711-21";
+} from "./entities/index.js?v=20260711-24";
 
 import {
      syncUiBounds,
      updatePauseButtonState,
      updateScreenTitleColorState,
      drawGame
-} from "./draw/index.js?v=20260711-21";
+} from "./draw/index.js?v=20260711-24";
 
 // ====================================================================================================
 // NOTE: CONFIG / THEME
