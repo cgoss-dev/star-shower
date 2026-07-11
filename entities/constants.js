@@ -1,10 +1,11 @@
 import {
      gameplayStartingHealth
-} from "../options.js?v=20260711-45";
+} from "../options.js?v=20260711-47";
 
 export const playerBaseHealth = gameplayStartingHealth;
 export const playerBaseSpeed = 3;
 export const playerSpeedPerHeart = 1;
+export const playerMinimumSpeed = 1;
 export const playerSpeedMinScale = 1;
 export const playerSpeedMaxScale = 2;
 export const playerBaseSize = 64;

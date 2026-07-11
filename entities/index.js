@@ -58,7 +58,7 @@ import {
      randomItem,
      randomNumber,
      isCollidingWithStar
-} from "../state.js?v=20260711-45";
+} from "../state.js?v=20260711-47";
 
 import {
      maxPlayerHealth,
@@ -72,7 +72,7 @@ import {
      statusFlashSeconds,
      touchArriveDistance,
      movementOptionIndexes
-} from "../options.js?v=20260711-45";
+} from "../options.js?v=20260711-47";
 
 import {
      areStrikesUnlockedForCurrentLevel,
@@ -85,12 +85,13 @@ import {
      starShowerRainbowPalette,
      getCssColor,
      showGameplayPopup
-} from "../game.js?v=20260711-45";
+} from "../game.js?v=20260711-47";
 
 import {
      playerBaseHealth,
      playerBaseSpeed,
      playerSpeedPerHeart,
+     playerMinimumSpeed,
      playerSpeedMinScale,
      playerSpeedMaxScale,
      playerBaseSize,
@@ -129,12 +130,13 @@ import {
      strikeParticles,
      strikeAssetSrc,
      burstChars
-} from "./constants.js?v=20260711-45";
+} from "./constants.js?v=20260711-47";
 
 export {
      playerBaseHealth,
      playerBaseSpeed,
      playerSpeedPerHeart,
+     playerMinimumSpeed,
      playerSpeedMinScale,
      playerSpeedMaxScale,
      playerBaseSize,
@@ -558,8 +560,9 @@ export function updatePlayerSpeedFromHealth() {
      const diff = playerHealth - playerBaseHealth;
      const healthAdjustedSpeed = playerBaseSpeed + (diff * playerSpeedPerHeart);
      const screenScale = getScreenAreaScale(playerSpeedMinScale, playerSpeedMaxScale);
+     const minimumSpeed = playerMinimumSpeed * screenScale;
 
-     player.speed = Math.max(0, healthAdjustedSpeed * screenScale);
+     player.speed = Math.max(minimumSpeed, healthAdjustedSpeed * screenScale);
 }
 
 export function syncPlayerHealthState() {

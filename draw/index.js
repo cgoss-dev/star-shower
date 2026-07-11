@@ -63,7 +63,7 @@ import {
      setGameMenuScrollMax,
      isPointInsideRect,
      resetActionButtonBounds
-} from "../state.js?v=20260711-45";
+} from "../state.js?v=20260711-47";
 
 import {
      maxDifficultyOptionIndex,
@@ -83,11 +83,11 @@ import {
      fogClearRadiusBase,
      fogClearRadiusMinScale,
      fogClearRadiusMaxScale
-} from "../options.js?v=20260711-45";
+} from "../options.js?v=20260711-47";
 
 import {
      spawnDensityBaselineArea
-} from "../entities/constants.js?v=20260711-45";
+} from "../entities/constants.js?v=20260711-47";
 
 import {
      drawStars,
@@ -109,7 +109,7 @@ import {
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
      syncPlayerSize
-} from "../entities/index.js?v=20260711-45";
+} from "../entities/index.js?v=20260711-47";
 
 import {
      getCanvasTheme,
@@ -135,13 +135,13 @@ import {
      getRoundIntroFirstAlpha,
      getRoundIntroSecondAlpha,
      getRoundIntroLines
-} from "../game.js?v=20260711-45";
+} from "../game.js?v=20260711-47";
 
 import {
      stepperLeftIcon,
      stepperRightIcon,
      richTextIconAssetImages
-} from "./assets.js?v=20260711-45";
+} from "./assets.js?v=20260711-47";
 
 const siteTheme = window.SiteTheme;
 const levelProgressPulseFrames = 18;
@@ -1837,7 +1837,7 @@ function getPagedInfoCardHeight(theme, lines) {
      const fontSize = detailStyle.fontSize;
      const lineHeight = canvasSpacing.bodyLineHeight;
      const sectionCardYPadding = lineHeight;
-     const sectionCardBottomPadding = Math.max(0, sectionCardYPadding - (lineHeight - fontSize));
+     const sectionCardBottomPadding = lineHeight;
      const sectionHeadings = new Set(["TIPS", "HELP", "HURT"]);
      let cardHeight = 0;
      let hasSection = false;
@@ -1850,7 +1850,7 @@ function getPagedInfoCardHeight(theme, lines) {
 
           if (sectionHeadings.has(line)) {
                hasSection = true;
-               cardHeight += sectionCardYPadding + titleStyle.fontSize + (lineHeight * 0.5);
+               cardHeight += sectionCardYPadding + titleStyle.fontSize + lineHeight;
                return;
           }
 
@@ -1880,7 +1880,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
      const shouldDrawSectionCards = Boolean(options.sectionCards);
      const sectionCardXPadding = canvasSpacing.uiPadding;
      const sectionCardYPadding = lineHeight;
-     const sectionCardBottomPadding = Math.max(0, sectionCardYPadding - (lineHeight - fontSize));
+     const sectionCardBottomPadding = lineHeight;
      const sectionCardGap = lineHeight;
      const requestedSectionCardWidth = options.sectionCardWidth || (miniGameWidth - (screenLayout.sidePadding * 2));
      const sectionCardWidth = Math.min(
@@ -2018,7 +2018,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
                }
 
                drawMenuScreenTitle(line, theme, screenLayout.titleCenterX, textY);
-               textY += sectionHeadingHeight + (lineHeight * 0.5);
+               textY += sectionHeadingHeight + lineHeight;
                return;
           }
 
