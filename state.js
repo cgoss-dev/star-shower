@@ -12,7 +12,7 @@ import {
      maxPlayerHealth,
      maxDifficultyOptionIndex,
      defaultDifficultyOptionIndex
-} from "./options.js?v=20260711-18";
+} from "./options.js?v=20260711-21";
 
 export const miniGameCanvas = document.getElementById("miniGameCanvas");
 
@@ -190,6 +190,11 @@ export const gameMenuScroll = {
      max: 0,
      pointerId: null,
      lastY: 0,
+     velocity: 0,
+     friction: 0.9,
+     settleForce: 0.22,
+     minVelocity: 0.08,
+     maxVelocity: 42,
      overscrollLimit: 36,
      overscrollResistance: 0.35
 };
@@ -533,34 +538,42 @@ function clampGameMenuDragOffset(value) {
      return value;
 }
 
+function clampGameMenuVelocity(value) {
+     return Math.max(-gameMenuScroll.maxVelocity, Math.min(gameMenuScroll.maxVelocity, value));
+}
+
 export function resetGameMenuScroll() {
      gameMenuScroll.offset = 0;
      gameMenuScroll.max = 0;
      gameMenuScroll.pointerId = null;
      gameMenuScroll.lastY = 0;
+     gameMenuScroll.velocity = 0;
 }
 
 export function setGameMenuScrollMax(value) {
      gameMenuScroll.max = Math.max(0, value);
 
-     if (gameMenuScroll.pointerId === null) {
+     if (gameMenuScroll.pointerId === null && Math.abs(gameMenuScroll.velocity) < gameMenuScroll.minVelocity) {
           gameMenuScroll.offset = clampGameMenuScrollOffset(gameMenuScroll.offset);
      }
 }
 
 export function addGameMenuScrollOffset(delta) {
      gameMenuScroll.offset = clampGameMenuScrollOffset(gameMenuScroll.offset + delta);
+     gameMenuScroll.velocity = 0;
 }
 
 export function beginGameMenuScrollDrag(pointerId, y) {
      gameMenuScroll.pointerId = pointerId;
      gameMenuScroll.lastY = y;
+     gameMenuScroll.velocity = 0;
 }
 
 export function updateGameMenuScrollDrag(y) {
      const delta = gameMenuScroll.lastY - y;
 
      gameMenuScroll.lastY = y;
+     gameMenuScroll.velocity = clampGameMenuVelocity(delta);
      gameMenuScroll.offset = clampGameMenuDragOffset(gameMenuScroll.offset + delta);
 }
 
@@ -571,8 +584,40 @@ export function endGameMenuScrollDrag(pointerId = gameMenuScroll.pointerId) {
 
      gameMenuScroll.pointerId = null;
      gameMenuScroll.lastY = 0;
-     gameMenuScroll.offset = clampGameMenuScrollOffset(gameMenuScroll.offset);
      return true;
+}
+
+export function updateGameMenuScrollVelocity() {
+     if (gameMenuScroll.pointerId !== null) {
+          return;
+     }
+
+     if (gameMenuScroll.max <= 0) {
+          gameMenuScroll.offset = 0;
+          gameMenuScroll.velocity = 0;
+          return;
+     }
+
+     let nextVelocity = gameMenuScroll.velocity;
+
+     if (gameMenuScroll.offset < 0) {
+          nextVelocity += (0 - gameMenuScroll.offset) * gameMenuScroll.settleForce;
+     } else if (gameMenuScroll.offset > gameMenuScroll.max) {
+          nextVelocity += (gameMenuScroll.max - gameMenuScroll.offset) * gameMenuScroll.settleForce;
+     }
+
+     if (Math.abs(nextVelocity) < gameMenuScroll.minVelocity) {
+          gameMenuScroll.velocity = 0;
+
+          if (gameMenuScroll.offset < 0 || gameMenuScroll.offset > gameMenuScroll.max) {
+               gameMenuScroll.offset = clampGameMenuScrollOffset(gameMenuScroll.offset);
+          }
+
+          return;
+     }
+
+     gameMenuScroll.offset = clampGameMenuDragOffset(gameMenuScroll.offset + nextVelocity);
+     gameMenuScroll.velocity = clampGameMenuVelocity(nextVelocity * gameMenuScroll.friction);
 }
 
 export function showMenuKeyboardFocus(duration = menuKeyboardFocus.duration) {

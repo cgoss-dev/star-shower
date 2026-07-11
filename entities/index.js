@@ -57,7 +57,7 @@ import {
      randomItem,
      randomNumber,
      isCollidingWithStar
-} from "../state.js?v=20260711-18";
+} from "../state.js?v=20260711-21";
 
 import {
      maxPlayerHealth,
@@ -71,7 +71,7 @@ import {
      statusFlashSeconds,
      touchArriveDistance,
      movementOptionIndexes
-} from "../options.js?v=20260711-18";
+} from "../options.js?v=20260711-21";
 
 import {
      areStrikesUnlockedForCurrentLevel,
@@ -80,10 +80,11 @@ import {
      getUnlockedHurtNamesForCurrentLevel,
      starShowerHelphurtIcons,
      starShowerGuideIcons,
+     starShowerHealthParticles,
      starShowerRainbowPalette,
      getCssColor,
      showGameplayPopup
-} from "../game.js?v=20260711-18";
+} from "../game.js?v=20260711-21";
 
 import {
      playerBaseHealth,
@@ -127,7 +128,7 @@ import {
      strikeParticles,
      strikeAssetSrc,
      burstChars
-} from "./constants.js?v=20260711-18";
+} from "./constants.js?v=20260711-21";
 
 export {
      playerBaseHealth,
@@ -186,7 +187,6 @@ export const playerFaces = {
 };
 
 const pickupAssetImages = {};
-const fallingHealthParticles = ["❤️", "🧡", "💛", "💚", "💙", "💜"];
 let lastSpawnedHelphurtName = "";
 
 function getHelpTypes() {
@@ -1100,7 +1100,7 @@ export function collectStrikes() {
 function createHelphurtPickup(type, category) {
      const x = Math.random() * (miniGameWidth - 20) + 10;
      const particle = type.name === "health"
-          ? randomItem(fallingHealthParticles)
+          ? randomItem(starShowerHealthParticles)
           : type.particle;
 
      helphurtPickups.push({

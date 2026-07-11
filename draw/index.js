@@ -63,7 +63,7 @@ import {
      setGameMenuScrollMax,
      isPointInsideRect,
      resetActionButtonBounds
-} from "../state.js?v=20260711-18";
+} from "../state.js?v=20260711-21";
 
 import {
      maxDifficultyOptionIndex,
@@ -83,11 +83,11 @@ import {
      fogClearRadiusBase,
      fogClearRadiusMinScale,
      fogClearRadiusMaxScale
-} from "../options.js?v=20260711-18";
+} from "../options.js?v=20260711-21";
 
 import {
      spawnDensityBaselineArea
-} from "../entities/constants.js?v=20260711-18";
+} from "../entities/constants.js?v=20260711-21";
 
 import {
      drawStars,
@@ -109,7 +109,7 @@ import {
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
      syncPlayerSize
-} from "../entities/index.js?v=20260711-18";
+} from "../entities/index.js?v=20260711-21";
 
 import {
      getCanvasTheme,
@@ -133,13 +133,13 @@ import {
      isRoundIntroActive,
      getRoundIntroAlpha,
      getRoundIntroLines
-} from "../game.js?v=20260711-18";
+} from "../game.js?v=20260711-21";
 
 import {
      stepperLeftIcon,
      stepperRightIcon,
      richTextIconAssetImages
-} from "./assets.js?v=20260711-18";
+} from "./assets.js?v=20260711-21";
 
 const siteTheme = window.SiteTheme;
 const levelProgressPulseFrames = 18;
@@ -663,7 +663,19 @@ function getTextColor(theme, styleName, letterIndex = 0) {
 }
 
 function getRichTextIcon(theme, tokenName) {
-     return theme.text?.guideIcons?.[tokenName] || null;
+     const icon = theme.text?.guideIcons?.[tokenName] || null;
+
+     if (!icon?.particles?.length) {
+          return icon;
+     }
+
+     const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+     const particleIndex = Math.floor(now / 500) % icon.particles.length;
+
+     return {
+          ...icon,
+          particle: icon.particles[particleIndex]
+     };
 }
 
 function getRichTextIconAsset(src) {
@@ -1706,7 +1718,10 @@ function drawScrollableInfoScreen(theme, lines) {
      miniGameCtx.clip();
 
      const contentStartY = viewportTop - gameMenuScroll.offset;
-     const contentEndY = drawMenuDetailLines(theme, lines, contentStartY, { centerContent: true });
+     const contentEndY = drawMenuDetailLines(theme, lines, contentStartY, {
+          centerContent: true,
+          sectionCards: true
+     });
      const contentHeight = contentEndY - contentStartY;
 
      miniGameCtx.restore();
@@ -1737,6 +1752,14 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
      const detailTextWidth = miniGameWidth - detailTextX - screenLayout.sidePadding;
      const sectionHeadings = new Set(["TIPS", "HELP", "HURT"]);
      const shouldCenterContent = Boolean(options.centerContent);
+     const shouldDrawSectionCards = Boolean(options.sectionCards);
+     const sectionCardPadding = canvasSpacing.uiPadding;
+     const sectionCardGap = lineHeight;
+     const sectionCardX = screenLayout.sidePadding;
+     const sectionCardWidth = miniGameWidth - (screenLayout.sidePadding * 2);
+     const sectionCardBorderWidth = theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1;
+     const sectionCardBorderColor = detailStyle.color || colors.controlText;
+     let currentSectionTopY = null;
      const getDetailLineColor = (line) => line.includes("{icon")
           ? getCssColor("--color-white", "#fff")
           : detailStyle.color || colors.fontColor;
@@ -1816,6 +1839,30 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
           return wrappedLineCount;
      }
 
+     function closeCurrentSectionCard() {
+          if (!shouldDrawSectionCards || currentSectionTopY === null) {
+               return;
+          }
+
+          const sectionBottomY = textY + sectionCardPadding;
+          const sectionHeight = Math.max(0, sectionBottomY - currentSectionTopY);
+
+          if (sectionHeight > 0) {
+               strokeRoundedControlRect(
+                    sectionCardX,
+                    currentSectionTopY,
+                    sectionCardWidth,
+                    sectionHeight,
+                    getControlCornerRadius(theme, sectionCardWidth, sectionHeight),
+                    sectionCardBorderWidth,
+                    sectionCardBorderColor
+               );
+          }
+
+          textY = sectionBottomY;
+          currentSectionTopY = null;
+     }
+
      lines.forEach((line) => {
           if (!line.trim()) {
                textY += lineHeight;
@@ -1823,8 +1870,15 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
           }
 
           if (sectionHeadings.has(line)) {
+               closeCurrentSectionCard();
+
                if (textY > startY) {
-                    textY += lineHeight;
+                    textY += shouldDrawSectionCards ? sectionCardGap : lineHeight;
+               }
+
+               if (shouldDrawSectionCards) {
+                    currentSectionTopY = textY;
+                    textY += sectionCardPadding;
                }
 
                drawMenuScreenTitle(line, theme, screenLayout.titleCenterX, textY);
@@ -1893,6 +1947,8 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
                ) * lineHeight
           );
      });
+
+     closeCurrentSectionCard();
 
      return textY;
 }

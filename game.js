@@ -43,10 +43,11 @@ import {
      setMiniGameSize,
      setWelcomeSelectionIndex,
      updateMenuKeyboardFocusTimer,
+     updateGameMenuScrollVelocity,
 
      resetUiActionBounds,
      resetGameState
-} from "./state.js?v=20260711-18";
+} from "./state.js?v=20260711-21";
 
 import {
      difficultyOptionLabels,
@@ -58,7 +59,7 @@ import {
      isJoystickEnabled,
      loadAndApplySavedOptions,
      saveCurrentOptions
-} from "./options.js?v=20260711-18";
+} from "./options.js?v=20260711-21";
 
 import {
      bindKeyboardInput,
@@ -66,7 +67,7 @@ import {
      bindResizeHandler,
      updateTouchControlBounds,
      resetTouchControls
-} from "./input.js?v=20260711-18";
+} from "./input.js?v=20260711-21";
 
 import {
      resetPlayerPosition,
@@ -84,14 +85,14 @@ import {
      collectHelphurtPickups,
      updatePlayerTrail,
      resetHelphurtIntroState
-} from "./entities/index.js?v=20260711-18";
+} from "./entities/index.js?v=20260711-21";
 
 import {
      syncUiBounds,
      updatePauseButtonState,
      updateScreenTitleColorState,
      drawGame
-} from "./draw/index.js?v=20260711-18";
+} from "./draw/index.js?v=20260711-21";
 
 // ====================================================================================================
 // NOTE: CONFIG / THEME
@@ -118,6 +119,8 @@ export const starShowerRainbowPalette = [
 
 
 
+export const starShowerHealthParticles = ["❤️", "🧡", "💛", "💚", "💙", "💜"];
+
 export const starShowerHelphurtIcons = {
 
      // NOTE: HELPS
@@ -127,6 +130,7 @@ export const starShowerHelphurtIcons = {
           name: "health",
           label: "HEALTH",
           particle: "❤️",
+          particles: starShowerHealthParticles,
           assetSrc: "",
           ability: "increaseHealth",
           lastsUntilUsed: true,
@@ -664,14 +668,14 @@ export function getHowToPlayLines() {
 
 export function getHelpLines() {
      return [
-          "{iconHealth} Health",
-          "Increase health.",
-          "",
           "{iconMagnet} Magnet",
           "Triple range.",
           "",
           "{iconDouble} Double",
-          "Double points."
+          "Double points.",
+          "",
+          "{iconHealth} Health",
+          "Increase health."
      ];
 }
 
@@ -1231,6 +1235,7 @@ export function updateGame() {
      updateGameOverlayTimer();
      updateGameplayPopupTimer();
      updateMenuKeyboardFocusTimer();
+     updateGameMenuScrollVelocity();
 
      if (screenLayerActive) {
           updateScreenTitleColorState();
