@@ -11,7 +11,7 @@ The player collects stars to gain points and speed. Strikes cost one life. Helps
 Goal:
 
 - Reach level 10 to win.
-- The win score is `200`.
+- The win score is `150`.
 - Health starts at `💚 5/5`.
 - Each strike costs `1` life.
 
@@ -28,14 +28,14 @@ Levels are score-based:
 ```text
 Level 1: 0
 Level 2: 5
-Level 3: 25
-Level 4: 50
-Level 5: 75
-Level 6: 100
-Level 7: 125
-Level 8: 150
-Level 9: 175
-Level 10: 200
+Level 3: 20
+Level 4: 35
+Level 5: 50
+Level 6: 70
+Level 7: 90
+Level 8: 110
+Level 9: 130
+Level 10: 150
 ```
 
 Help/hurt unlock schedule:

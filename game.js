@@ -531,20 +531,20 @@ export function getCssPixelSize(variableName, fallback = 10) {
 
 export const startOverlayDuration = 120;
 export const overlayFadeFrames = 30;
-export const gameplayPopupDurationFrames = 90;
+export const gameplayPopupDurationFrames = 180;
 export const maxLevelProgressUnits = 10;
 export const progressUnitsPerCircle = 2;
 const levelScoreMins = [
      0,
      5,
-     25,
+     20,
+     35,
      50,
-     75,
-     100,
-     125,
-     150,
-     175,
-     200
+     70,
+     90,
+     110,
+     130,
+     150
 ];
 export const winScore = levelScoreMins.at(-1) ?? 0;
 
@@ -1343,7 +1343,7 @@ export function getGameplayPopupAlpha() {
 
      const elapsed = gameplayPopupDuration - gameplayPopupTimer;
      const fadeIn = Math.min(1, elapsed / 10);
-     const fadeOut = Math.min(1, gameplayPopupTimer / 30);
+     const fadeOut = Math.min(1, gameplayPopupTimer / 45);
 
      return Math.max(0, Math.min(1, Math.min(fadeIn, fadeOut)));
 }

@@ -137,6 +137,10 @@ import {
 } from "./assets.js";
 
 const siteTheme = window.SiteTheme;
+const levelProgressPulseFrames = 18;
+
+let lastLevelProgressFilledStars = null;
+let levelProgressPulseTimer = 0;
 
 // Re-export moved player/entity helpers so existing imports from this file keep working.
 export {
@@ -1129,8 +1133,11 @@ function getScoreBadgeText() {
      return `⭐ ${String(starScore).padStart(3, "0")}`;
 }
 
-function getLevelProgressStars() {
-     const filledStars = Math.round(getCurrentLevelProgressRatio() * maxLevelProgressUnits);
+function getLevelProgressFilledStars() {
+     return Math.round(getCurrentLevelProgressRatio() * maxLevelProgressUnits);
+}
+
+function getLevelProgressStars(filledStars = getLevelProgressFilledStars()) {
 
      return Array.from({ length: maxLevelProgressUnits }, (_item, index) => (
           index < filledStars ? "★" : "☆"
@@ -1215,12 +1222,35 @@ function drawLevelProgressStars(theme) {
      const padding = spacing.uiPadding || 8;
      const progressStyle = getTextStyle(theme, "hudProgress");
      const maxWidth = Math.max(80, miniGameWidth - (padding * 2));
+     const filledStars = getLevelProgressFilledStars();
+     const progressText = getLevelProgressStars(filledStars);
      const y = Math.max(
           padding,
           miniGameHeight - padding - progressStyle.fontSize
      );
 
-     drawHudText(theme, getLevelProgressStars(), miniGameWidth / 2, y, "center", "hudProgress", maxWidth);
+     if (lastLevelProgressFilledStars === null) {
+          lastLevelProgressFilledStars = filledStars;
+     } else if (filledStars > lastLevelProgressFilledStars) {
+          levelProgressPulseTimer = levelProgressPulseFrames;
+          lastLevelProgressFilledStars = filledStars;
+     } else if (filledStars < lastLevelProgressFilledStars) {
+          lastLevelProgressFilledStars = filledStars;
+     }
+
+     const pulseRatio = levelProgressPulseTimer / levelProgressPulseFrames;
+     const scale = 1 + (0.1 * pulseRatio);
+     const centerY = y + (progressStyle.fontSize / 2);
+
+     if (levelProgressPulseTimer > 0) {
+          levelProgressPulseTimer -= 1;
+     }
+
+     miniGameCtx.save();
+     miniGameCtx.translate(miniGameWidth / 2, centerY);
+     miniGameCtx.scale(scale, scale);
+     drawHudText(theme, progressText, 0, -(progressStyle.fontSize / 2), "center", "hudProgress", maxWidth / scale);
+     miniGameCtx.restore();
 }
 
 // ==================================================
