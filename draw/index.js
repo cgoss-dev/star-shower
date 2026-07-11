@@ -112,7 +112,6 @@ import {
      maxLevelProgressUnits,
      getCurrentScreenActionTexts,
      getCurrentPausedActionTexts,
-     getWelcomeInstructionLines,
      getHowToPlayLines,
      getHelpLines,
      getHurtLines,
@@ -124,7 +123,10 @@ import {
      getGameWelcomeAlpha,
      getGameOverlayAlpha,
      getGameplayPopupAlpha,
-     getDifficultyOptionLabel
+     getDifficultyOptionLabel,
+     isRoundIntroActive,
+     getRoundIntroAlpha,
+     getRoundIntroLines
 } from "../game.js";
 
 import {
@@ -949,7 +951,15 @@ function drawUnifiedTextButton(button, label, theme, isFocused = false, fontWeig
           fillRoundedControlRect(button.x, button.y, button.width, button.height, cornerRadius, keyboardFocusFill);
      }
 
-     strokeRoundedControlRect(button.x, button.y, button.width, button.height, cornerRadius, borderWidth, getCssColor("--color-white", "#ffffff"));
+     strokeRoundedControlRect(
+          button.x,
+          button.y,
+          button.width,
+          button.height,
+          cornerRadius,
+          borderWidth,
+          buttonStyle.color || colors.controlText
+     );
 
      miniGameCtx.restore();
 
@@ -987,7 +997,7 @@ export function drawMenuButton(button, label, theme, isFocused = false) {
 }
 
 export function drawMenuBackButton(button, theme, isFocused = false) {
-     drawUnifiedTextButton(button, "PREVIOUS", theme, isFocused, 700, getTextStyle(theme, "buttonsOptions").fontSize);
+     drawUnifiedTextButton(button, "PREVIOUS", theme, isFocused, 400, getTextStyle(theme, "buttonsOptions").fontSize);
 }
 
 export function drawOptionStepper(
@@ -1043,7 +1053,15 @@ export function drawOptionStepper(
           fillRoundedControlRect(row.x, row.y, row.width, row.height, cornerRadius, keyboardFocusFill);
      }
 
-     strokeRoundedControlRect(row.x, row.y, row.width, row.height, cornerRadius, borderWidth, getCssColor("--color-white", "#ffffff"));
+     strokeRoundedControlRect(
+          row.x,
+          row.y,
+          row.width,
+          row.height,
+          cornerRadius,
+          borderWidth,
+          optionsStyle.color || colors.controlText
+     );
 
      miniGameCtx.restore();
 
@@ -2288,7 +2306,7 @@ function drawGameWelcomeOverlay(theme) {
           },
           alpha,
           !isWelcomeScreen,
-          isWelcomeScreen ? getWelcomeInstructionLines() : []
+          []
      );
 }
 
@@ -2316,6 +2334,40 @@ function drawPausedOverlay(theme) {
           1,
           true
      );
+}
+
+function drawRoundIntroOverlay(theme) {
+     if (!miniGameCtx || !isRoundIntroActive()) {
+          return;
+     }
+
+     const { screens } = theme;
+     const introLines = getRoundIntroLines();
+     const alpha = getRoundIntroAlpha();
+     const fontSize = getWelcomeMarqueeFontSize(theme, introLines, screens.paused);
+     const lineGap = fontSize * 0.45;
+     const totalHeight =
+          (introLines.length * fontSize) +
+          (Math.max(0, introLines.length - 1) * lineGap);
+     const startY = (miniGameHeight / 2) - (totalHeight / 2) + (fontSize / 2);
+
+     miniGameCtx.save();
+     miniGameCtx.globalAlpha = alpha;
+     miniGameCtx.fillStyle = screens.paused.overlayFill;
+     miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
+     miniGameCtx.restore();
+
+     introLines.forEach((line, index) => {
+          drawCenteredMarqueeText(
+               theme,
+               line,
+               miniGameWidth / 2,
+               startY + (index * (fontSize + lineGap)),
+               fontSize,
+               alpha,
+               true
+          );
+     });
 }
 
 function drawGameStatusOverlay(theme) {
@@ -2513,6 +2565,8 @@ export function drawGame() {
           }
      } else if (gamePaused && !gameOver && !gameWon) {
           drawPausedOverlay(theme);
+     } else if (isRoundIntroActive()) {
+          drawRoundIntroOverlay(theme);
      } else if (isOverlayScreenActive()) {
           drawGameWelcomeOverlay(theme);
      } else {

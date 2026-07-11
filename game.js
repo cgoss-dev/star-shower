@@ -527,6 +527,14 @@ export function getCssPixelSize(variableName, fallback = 10) {
 export const startOverlayDuration = 120;
 export const overlayFadeFrames = 30;
 export const gameplayPopupDurationFrames = 180;
+const roundIntroMessageFrames = 120;
+const roundIntroPauseFrames = 120;
+const roundIntroFadeFrames = 120;
+const roundIntroTotalFrames =
+     roundIntroMessageFrames +
+     roundIntroPauseFrames +
+     roundIntroMessageFrames +
+     roundIntroFadeFrames;
 export const maxLevelProgressUnits = 10;
 export const progressUnitsPerCircle = 2;
 const levelScoreMins = [
@@ -617,17 +625,31 @@ const levelRules = Array.from({ length: maxLevelProgressUnits }, (_, index) => {
 const welcomeTitleLines = ["STAR", "SHOWER"];
 const screenActionTexts = ["NEW GAME", "TIPS", "EFFECTS", "OPTIONS", "DEVELOPER"];
 const pausedActionTexts = ["RESUME", "NEW GAME", "TIPS", "EFFECTS", "OPTIONS", "DEVELOPER"];
-const welcomeInstructionLines = [
+const roundIntroInstructionLines = [
      "Collect stars, avoid strikes.",
      "Effects can help or hurt."
 ];
 
-export function getWelcomeTitleLines() {
-     return welcomeTitleLines;
+function getRoundIntroInstructionSplitLines(index) {
+     const instruction = roundIntroInstructionLines[index] || "";
+
+     if (instruction.includes(", ")) {
+          return instruction.split(", ").map((line, lineIndex) =>
+               lineIndex === 0 ? `${line},` : line
+          );
+     }
+
+     const words = instruction.split(" ");
+     const splitIndex = Math.ceil(words.length / 2);
+
+     return [
+          words.slice(0, splitIndex).join(" "),
+          words.slice(splitIndex).join(" ")
+     ].filter(Boolean);
 }
 
-export function getWelcomeInstructionLines() {
-     return welcomeInstructionLines;
+export function getWelcomeTitleLines() {
+     return welcomeTitleLines;
 }
 
 export function getWinGoalText() {
@@ -800,6 +822,7 @@ let screenLayerActive = true;
 let screenLayerTimer = -1;
 let screenLayerDuration = -1;
 let gameScreenMode = "screenWelcome";
+let roundIntroTimer = 0;
 
 // ==================================================
 // SCREEN MODE HELPERS
@@ -823,6 +846,38 @@ export function isOverlayScreenActive() {
 
 export function getGameScreenMode() {
      return gameScreenMode;
+}
+
+export function isRoundIntroActive() {
+     return roundIntroTimer > 0;
+}
+
+export function getRoundIntroAlpha() {
+     if (!isRoundIntroActive()) {
+          return 0;
+     }
+
+     if (roundIntroTimer <= roundIntroFadeFrames) {
+          return Math.max(0, Math.min(1, roundIntroTimer / roundIntroFadeFrames));
+     }
+
+     return 1;
+}
+
+export function getRoundIntroLines() {
+     const elapsedFrames = roundIntroTotalFrames - roundIntroTimer;
+     const firstMessageEnd = roundIntroMessageFrames;
+     const pauseEnd = firstMessageEnd + roundIntroPauseFrames;
+
+     if (elapsedFrames < firstMessageEnd) {
+          return getRoundIntroInstructionSplitLines(0);
+     }
+
+     if (elapsedFrames < pauseEnd) {
+          return [];
+     }
+
+     return getRoundIntroInstructionSplitLines(1);
 }
 
 export function getCurrentScreenTitleLines() {
@@ -949,6 +1004,7 @@ export function showScreenWelcome() {
      gameScreenMode = "screenWelcome";
      screenLayerTimer = -1;
      screenLayerDuration = -1;
+     clearRoundIntro();
 }
 
 export function showScreenTryAgain() {
@@ -956,6 +1012,7 @@ export function showScreenTryAgain() {
      gameScreenMode = "screenTryAgain";
      screenLayerTimer = -1;
      screenLayerDuration = -1;
+     clearRoundIntro();
 }
 
 export function showScreenYouWin() {
@@ -963,6 +1020,7 @@ export function showScreenYouWin() {
      gameScreenMode = "screenYouWin";
      screenLayerTimer = -1;
      screenLayerDuration = -1;
+     clearRoundIntro();
 }
 
 export function getGameWelcomeAlpha() {
@@ -1031,6 +1089,7 @@ export function startNewGameRound() {
      setGameMenuView("");
      setGameOver(false);
      setGameWon(false);
+     roundIntroTimer = roundIntroTotalFrames;
 }
 
 // ====================================================================================================
@@ -1122,6 +1181,16 @@ export function clearGameOverlay() {
      setGameOverlaySubtext("");
      setGameOverlayTimer(0);
      setGameOverlayDuration(0);
+}
+
+function clearRoundIntro() {
+     roundIntroTimer = 0;
+}
+
+function updateRoundIntroTimer() {
+     if (roundIntroTimer > 0) {
+          roundIntroTimer -= 1;
+     }
 }
 
 export function showTimedGameOverlay(text, sub = "", duration = startOverlayDuration) {
@@ -1233,6 +1302,11 @@ export function updateGame() {
           return;
      }
 
+     if (isRoundIntroActive()) {
+          updateRoundIntroTimer();
+          return;
+     }
+
      const levelBeforeCollections = getCurrentLevelNumber();
 
      updateHelphurtState();
@@ -1303,6 +1377,7 @@ export function startStarShower() {
      screenLayerTimer = -1;
      screenLayerDuration = -1;
      gameScreenMode = "screenWelcome";
+     clearRoundIntro();
 
      bindKeyboardInput();
      bindPointerInput();

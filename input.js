@@ -367,6 +367,7 @@ function setJoystickFromPoint(x, y, pointerId) {
 
 function closeMenuAndRefresh() {
      dismissMenuBackToPreviousScreen();
+     showMenuKeyboardFocus();
      syncUiBounds();
 }
 
@@ -400,20 +401,20 @@ function handleWelcomeOrResultPointerDown(x, y) {
      }
 
      if (isScreenWelcomeActive() && isPointInsideBox(x, y, screenActionUi.tipsButton)) {
-          setWelcomeSelectionIndex(1);
           dismissScreenWelcomeToTipsMenu();
+          setWelcomeSelectionIndex(1);
           return true;
      }
 
      if (isScreenWelcomeActive() && isPointInsideBox(x, y, screenActionUi.effectsButton)) {
-          setWelcomeSelectionIndex(2);
           dismissScreenWelcomeToEffectsMenu();
+          setWelcomeSelectionIndex(2);
           return true;
      }
 
      if (isScreenWelcomeActive() && isPointInsideBox(x, y, screenActionUi.menuButton)) {
-          setWelcomeSelectionIndex(3);
           dismissScreenWelcomeToOptionsMenu();
+          setWelcomeSelectionIndex(3);
           return true;
      }
 
@@ -477,7 +478,6 @@ function handleTipsMenuPointerDown(x, y) {
      }
 
      if (isPointInsideBox(x, y, gameMenuUi.backButton)) {
-          setTipsSelectionIndex(0);
           closeMenuAndRefresh();
           return true;
      }
@@ -491,7 +491,6 @@ function handleOptionsPointerDown(x, y) {
      }
 
      if (isPointInsideBox(x, y, gameMenuUi.backButton)) {
-          setOptionsSelectionRow(getOptionsBackRowIndex());
           closeMenuAndRefresh();
           return true;
      }
@@ -774,14 +773,17 @@ function activateWelcomeSelection() {
 
      if (selection === 1 && isScreenWelcomeActive()) {
           dismissScreenWelcomeToTipsMenu();
+          setWelcomeSelectionIndex(1);
      }
 
      if (selection === 2 && isScreenWelcomeActive()) {
           dismissScreenWelcomeToEffectsMenu();
+          setWelcomeSelectionIndex(2);
      }
 
      if (selection === 3 && isScreenWelcomeActive()) {
           dismissScreenWelcomeToOptionsMenu();
+          setWelcomeSelectionIndex(3);
      }
 
      if (selection === 4 && isScreenWelcomeActive()) {

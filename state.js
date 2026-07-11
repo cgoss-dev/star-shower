@@ -565,11 +565,7 @@ export function updateMenuKeyboardFocusTimer() {
 }
 
 export function getMenuKeyboardFocusAlpha() {
-     if (menuKeyboardFocus.duration <= 0) {
-          return 0;
-     }
-
-     return Math.max(0, Math.min(1, menuKeyboardFocus.timer / menuKeyboardFocus.duration));
+     return menuKeyboardFocus.timer > 0 ? 1 : 0;
 }
 
 export function setHurtEnabled(value) {
