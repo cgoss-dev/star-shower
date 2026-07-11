@@ -12,7 +12,7 @@ import {
      maxPlayerHealth,
      maxDifficultyOptionIndex,
      defaultDifficultyOptionIndex
-} from "./options.js?v=20260711-47";
+} from "./options.js?v=20260711-50";
 
 export const miniGameCanvas = document.getElementById("miniGameCanvas");
 
@@ -494,6 +494,7 @@ export function setGameMenuOpen(value) {
 export function setGameMenuView(value) {
      if (gameMenuView !== value) {
           gameMenuView = value;
+          tipsSelectionIndex = value === "tips" ? -1 : tipsSelectionIndex;
           resetGameMenuScroll();
           return;
      }

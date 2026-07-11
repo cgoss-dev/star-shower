@@ -63,7 +63,7 @@ import {
      setGameMenuScrollMax,
      isPointInsideRect,
      resetActionButtonBounds
-} from "../state.js?v=20260711-47";
+} from "../state.js?v=20260711-50";
 
 import {
      maxDifficultyOptionIndex,
@@ -83,11 +83,11 @@ import {
      fogClearRadiusBase,
      fogClearRadiusMinScale,
      fogClearRadiusMaxScale
-} from "../options.js?v=20260711-47";
+} from "../options.js?v=20260711-50";
 
 import {
      spawnDensityBaselineArea
-} from "../entities/constants.js?v=20260711-47";
+} from "../entities/constants.js?v=20260711-50";
 
 import {
      drawStars,
@@ -109,7 +109,7 @@ import {
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
      syncPlayerSize
-} from "../entities/index.js?v=20260711-47";
+} from "../entities/index.js?v=20260711-50";
 
 import {
      getCanvasTheme,
@@ -135,13 +135,13 @@ import {
      getRoundIntroFirstAlpha,
      getRoundIntroSecondAlpha,
      getRoundIntroLines
-} from "../game.js?v=20260711-47";
+} from "../game.js?v=20260711-50";
 
 import {
      stepperLeftIcon,
      stepperRightIcon,
      richTextIconAssetImages
-} from "./assets.js?v=20260711-47";
+} from "./assets.js?v=20260711-50";
 
 const siteTheme = window.SiteTheme;
 const levelProgressPulseFrames = 18;
@@ -1733,10 +1733,13 @@ function drawPagedInfoScreen(theme, sections) {
      const carouselGap = getTextStyle(theme, "canvasSpacing").bodyLineHeight;
      const pageSize = Math.max(1, viewportHeight + carouselGap);
      const maxPageIndex = Math.max(0, sections.length - 1);
-     const activePageIndex = Math.max(
+     const focusedPageIndex = Math.max(
           0,
-          Math.min(maxPageIndex, Math.round(gameMenuScroll.offset / pageSize))
+          Math.min(maxPageIndex, Math.round(gameMenuScroll.targetOffset / pageSize))
      );
+     const shouldFocusBackButton =
+          tipsSelectionIndex === 0 &&
+          (focusedPageIndex === 0 || focusedPageIndex === maxPageIndex);
      const cardX = (miniGameWidth - cardWidth) / 2;
 
      miniGameCtx.save();
@@ -1765,7 +1768,7 @@ function drawPagedInfoScreen(theme, sections) {
 
      setGameMenuScrollMax(maxPageIndex * pageSize, pageSize);
 
-     drawMenuBackButton(gameMenuUi.backButton, theme, tipsSelectionIndex === 0);
+     drawMenuBackButton(gameMenuUi.backButton, theme, shouldFocusBackButton);
 
      miniGameCtx.restore();
 }

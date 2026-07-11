@@ -58,7 +58,7 @@ import {
      randomItem,
      randomNumber,
      isCollidingWithStar
-} from "../state.js?v=20260711-47";
+} from "../state.js?v=20260711-50";
 
 import {
      maxPlayerHealth,
@@ -72,7 +72,7 @@ import {
      statusFlashSeconds,
      touchArriveDistance,
      movementOptionIndexes
-} from "../options.js?v=20260711-47";
+} from "../options.js?v=20260711-50";
 
 import {
      areStrikesUnlockedForCurrentLevel,
@@ -85,7 +85,7 @@ import {
      starShowerRainbowPalette,
      getCssColor,
      showGameplayPopup
-} from "../game.js?v=20260711-47";
+} from "../game.js?v=20260711-50";
 
 import {
      playerBaseHealth,
@@ -130,7 +130,7 @@ import {
      strikeParticles,
      strikeAssetSrc,
      burstChars
-} from "./constants.js?v=20260711-47";
+} from "./constants.js?v=20260711-50";
 
 export {
      playerBaseHealth,
@@ -344,6 +344,7 @@ const particleColorEngine = {
 
 let pastelParticleColorIndex = 0;
 let healthParticleIndex = 0;
+const healthParticleCycleMs = 500;
 
 function ensureParticleColorEngine() {
      if (!particleColorEngine.engine) {
@@ -382,10 +383,29 @@ function getNextPastelColorIndex() {
      return colorIndex;
 }
 
-function getNextHealthParticle() {
-     const particle = starShowerHealthParticles[healthParticleIndex % starShowerHealthParticles.length] || "❤️";
+function getNextHealthParticleOffset() {
+     const offset = healthParticleIndex % Math.max(1, starShowerHealthParticles.length);
      healthParticleIndex += 1;
-     return particle;
+     return offset;
+}
+
+function getCyclingHealthParticle(offset = 0) {
+     if (!starShowerHealthParticles.length) {
+          return "❤️";
+     }
+
+     const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+     const particleIndex = (Math.floor(now / healthParticleCycleMs) + offset) % starShowerHealthParticles.length;
+
+     return starShowerHealthParticles[particleIndex] || "❤️";
+}
+
+function getPickupParticle(pickup) {
+     if (pickup.type?.name === "health") {
+          return getCyclingHealthParticle(pickup.healthParticleOffset || 0);
+     }
+
+     return pickup.particle;
 }
 
 function getPastelParticleColor(colorIndex = 0) {
@@ -1137,8 +1157,9 @@ export function collectStrikes() {
 
 function createHelphurtPickup(type, category) {
      const x = Math.random() * (miniGameWidth - 20) + 10;
+     const healthParticleOffset = type.name === "health" ? getNextHealthParticleOffset() : 0;
      const particle = type.name === "health"
-          ? getNextHealthParticle()
+          ? getCyclingHealthParticle(healthParticleOffset)
           : type.particle;
 
      helphurtPickups.push({
@@ -1148,6 +1169,7 @@ function createHelphurtPickup(type, category) {
           speed: getFallingObjectSpeed(),
           size: randomNumber(getGameParticleSizeMin(), getGameParticleSizeMax()),
           particle,
+          healthParticleOffset,
           type,
           category,
           colorRole: category === "help" ? "help" : "hurt",
@@ -1291,7 +1313,7 @@ function collectHelpPickup(pickup, index) {
      helphurtPickups.splice(index, 1);
 
      applyHelpPickup(pickup.type);
-     showGameplayPopup(`${pickup.type?.particle || "⭐"} ${pickup.type?.label || "HELP"}`);
+     showGameplayPopup(`${getPickupParticle(pickup) || "⭐"} ${pickup.type?.label || "HELP"}`);
      applyTemporaryPlayerFace(playerFaces.star, 45);
      triggerPlayerFacePop(1.2);
 }
@@ -1503,6 +1525,7 @@ export function drawHelphurtPickups() {
      for (let i = helphurtPickups.length - 1; i >= 0; i -= 1) {
           const pickup = helphurtPickups[i];
           const fillColor = getParticleFillColor(pickup);
+          const particle = getPickupParticle(pickup);
 
           const pickupFontSize = Math.max(20, pickup.size);
           const assetImage = getPickupAssetImage(pickup.type?.assetSrc);
@@ -1519,11 +1542,11 @@ export function drawHelphurtPickups() {
           miniGameCtx.shadowBlur = glowBlur;
 
           miniGameCtx.globalAlpha = pickup.category === "help" ? 1 : 0.95;
-          miniGameCtx.fillText(pickup.particle, pickup.x, pickup.y);
+          miniGameCtx.fillText(particle, pickup.x, pickup.y);
 
           miniGameCtx.shadowBlur = 0;
           miniGameCtx.globalAlpha = 1;
-          miniGameCtx.fillText(pickup.particle, pickup.x, pickup.y);
+          miniGameCtx.fillText(particle, pickup.x, pickup.y);
 
           miniGameCtx.restore();
      }

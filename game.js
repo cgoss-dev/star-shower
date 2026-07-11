@@ -47,7 +47,7 @@ import {
 
      resetUiActionBounds,
      resetGameState
-} from "./state.js?v=20260711-47";
+} from "./state.js?v=20260711-50";
 
 import {
      difficultyOptionLabels,
@@ -59,7 +59,7 @@ import {
      isJoystickEnabled,
      loadAndApplySavedOptions,
      saveCurrentOptions
-} from "./options.js?v=20260711-47";
+} from "./options.js?v=20260711-50";
 
 import {
      bindKeyboardInput,
@@ -67,7 +67,7 @@ import {
      bindResizeHandler,
      updateTouchControlBounds,
      resetTouchControls
-} from "./input.js?v=20260711-47";
+} from "./input.js?v=20260711-50";
 
 import {
      resetPlayerPosition,
@@ -85,14 +85,14 @@ import {
      collectHelphurtPickups,
      updatePlayerTrail,
      resetHelphurtIntroState
-} from "./entities/index.js?v=20260711-47";
+} from "./entities/index.js?v=20260711-50";
 
 import {
      syncUiBounds,
      updatePauseButtonState,
      updateScreenTitleColorState,
      drawGame
-} from "./draw/index.js?v=20260711-47";
+} from "./draw/index.js?v=20260711-50";
 
 // ====================================================================================================
 // NOTE: CONFIG / THEME
@@ -696,7 +696,7 @@ export function getHurtLines() {
 
 export function getDifficultyOptionLines() {
      return [
-          "OFF: Only stars and strikes.",
+          "OFF: No effects.",
           "MED: 1x Effects.",
           "MAX: 3x Effects."
      ];

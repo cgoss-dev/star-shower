@@ -69,14 +69,14 @@ import {
      updateGameMenuScrollDrag,
      endGameMenuScrollDrag,
      showMenuKeyboardFocus
-} from "./state.js?v=20260711-47";
+} from "./state.js?v=20260711-50";
 
 import {
      isJoystickEnabled,
      movementOptionIndexes,
      maxDifficultyOptionIndex,
      getMaxMovementOptionIndex
-} from "./options.js?v=20260711-47";
+} from "./options.js?v=20260711-50";
 
 import {
      dismissScreenWelcomeToStart,
@@ -94,11 +94,11 @@ import {
      increaseHurtLevel,
      decreaseMovementLevel,
      increaseMovementLevel
-} from "./game.js?v=20260711-47";
+} from "./game.js?v=20260711-50";
 
 import {
      syncUiBounds
-} from "./draw/index.js?v=20260711-47";
+} from "./draw/index.js?v=20260711-50";
 
 const portfolioHomeUrl = "https://cgoss-dev.github.io/cgoss-dev/";
 
@@ -808,7 +808,25 @@ function activatePausedSelection() {
 }
 
 function activateTipsSelection() {
-     closeMenuAndRefresh();
+     if (tipsSelectionIndex === 0) {
+          closeMenuAndRefresh();
+     }
+}
+
+function getTipsMenuPage() {
+     if (gameMenuScroll.pageSize <= 0) {
+          return 0;
+     }
+
+     return Math.round(gameMenuScroll.targetOffset / gameMenuScroll.pageSize);
+}
+
+function getTipsMenuMaxPage() {
+     if (gameMenuScroll.pageSize <= 0) {
+          return 0;
+     }
+
+     return Math.round(gameMenuScroll.max / gameMenuScroll.pageSize);
 }
 
 function activateOptionsSelection() {
@@ -949,20 +967,28 @@ function handleTipsNavigation(event) {
      if (isPreviousMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
-          if (isUpKey(event)) {
+
+          if (getTipsMenuPage() <= 0) {
+               setTipsSelectionIndex(0);
+          } else {
                addGameMenuScrollOffset(-36);
+               setTipsSelectionIndex(-1);
           }
-          setTipsSelectionIndex(0);
+
           return true;
      }
 
      if (isNextMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
-          if (isDownKey(event)) {
+
+          if (getTipsMenuPage() >= getTipsMenuMaxPage()) {
+               setTipsSelectionIndex(0);
+          } else {
                addGameMenuScrollOffset(36);
+               setTipsSelectionIndex(-1);
           }
-          setTipsSelectionIndex(0);
+
           return true;
      }
 
