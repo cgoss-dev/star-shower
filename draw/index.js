@@ -63,7 +63,7 @@ import {
      setGameMenuScrollMax,
      isPointInsideRect,
      resetActionButtonBounds
-} from "../state.js?v=20260711-41";
+} from "../state.js?v=20260711-45";
 
 import {
      maxDifficultyOptionIndex,
@@ -83,11 +83,11 @@ import {
      fogClearRadiusBase,
      fogClearRadiusMinScale,
      fogClearRadiusMaxScale
-} from "../options.js?v=20260711-41";
+} from "../options.js?v=20260711-45";
 
 import {
      spawnDensityBaselineArea
-} from "../entities/constants.js?v=20260711-41";
+} from "../entities/constants.js?v=20260711-45";
 
 import {
      drawStars,
@@ -109,7 +109,7 @@ import {
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
      syncPlayerSize
-} from "../entities/index.js?v=20260711-41";
+} from "../entities/index.js?v=20260711-45";
 
 import {
      getCanvasTheme,
@@ -132,15 +132,16 @@ import {
      getDifficultyOptionLabel,
      isRoundIntroActive,
      getRoundIntroAlpha,
+     getRoundIntroFirstAlpha,
      getRoundIntroSecondAlpha,
      getRoundIntroLines
-} from "../game.js?v=20260711-41";
+} from "../game.js?v=20260711-45";
 
 import {
      stepperLeftIcon,
      stepperRightIcon,
      richTextIconAssetImages
-} from "./assets.js?v=20260711-41";
+} from "./assets.js?v=20260711-45";
 
 const siteTheme = window.SiteTheme;
 const levelProgressPulseFrames = 18;
@@ -1083,6 +1084,7 @@ export function drawOptionStepper(
      const centerY = row.y + (row.height / 2);
      const titleY = row.y + (row.height * 0.25);
      const valueY = row.y + (row.height * 0.75);
+     const arrowCenterY = titleY;
      const canDecrease = levelIndex > 0;
      const canIncrease = levelIndex < maxLevelIndex;
      const optionTextColor = optionsStyle.color || colors.controlText;
@@ -1101,11 +1103,8 @@ export function drawOptionStepper(
           isButtonHovered(increaseButton) ||
           (isRowFocused && focusedSide === 1 && focusAlpha > 0)
      );
-     const isActive = isDecreaseActive || isIncreaseActive || (isRowFocused && focusAlpha > 0);
      const activeColor = getCssColor("--color-white", "#fff");
-     const arrowColor = isActive ? activeColor : (optionsStyle.color || colors.controlText);
-     const valueTextColor = isActive ? activeColor : optionTextColor;
-     const resolvedLabelTextColor = isActive ? activeColor : labelTextColor;
+     const arrowColor = optionsStyle.color || colors.controlText;
 
      function drawStepperArrow(button, icon, isEnabled, isButtonActive = false) {
           if (!isEnabled) {
@@ -1113,10 +1112,10 @@ export function drawOptionStepper(
           }
 
           const iconX = button.x + ((button.width - arrowIconSize) / 2);
-          const iconY = centerY - (arrowIconSize / 2);
+          const iconY = arrowCenterY - (arrowIconSize / 2);
           const circleSize = Math.min(button.width, button.height, arrowIconSize * 1.45);
           const circleX = button.x + ((button.width - circleSize) / 2);
-          const circleY = centerY - (circleSize / 2);
+          const circleY = arrowCenterY - (circleSize / 2);
           const circleRadius = circleSize / 2;
 
           miniGameCtx.save();
@@ -1148,12 +1147,12 @@ export function drawOptionStepper(
           label,
           row.x + (row.width / 2),
           titleY,
-          resolvedLabelTextColor,
+          labelTextColor,
           getTextFont(theme, "buttonsOptions", 400),
           "center",
           "middle",
           theme,
-          isRowFocused && optionsStyle.glow
+          false
      );
 
      drawGlowingCanvasText(
@@ -1161,12 +1160,12 @@ export function drawOptionStepper(
           value,
           row.x + (row.width / 2),
           valueY,
-          valueTextColor,
+          optionTextColor,
           getTextFont(theme, "buttonsOptions", 400),
           "center",
           "middle",
           theme,
-          isRowFocused && optionsStyle.glow
+          false
      );
 
      drawStepperArrow(increaseButton, stepperRightIcon, canIncrease, isIncreaseActive);
@@ -2681,6 +2680,7 @@ function drawRoundIntroOverlay(theme) {
      const { screens } = theme;
      const introLines = getRoundIntroLines();
      const textAlpha = getRoundIntroAlpha();
+     const firstTextAlpha = getRoundIntroFirstAlpha();
      const secondTextAlpha = getRoundIntroSecondAlpha();
      const buttonStyle = getTextStyle(theme, "buttonsOptions");
      const fontSize = buttonStyle.fontSize;
@@ -2702,7 +2702,7 @@ function drawRoundIntroOverlay(theme) {
           }
 
           miniGameCtx.save();
-          miniGameCtx.globalAlpha = textAlpha * (index >= 3 ? secondTextAlpha : 1);
+          miniGameCtx.globalAlpha = textAlpha * (index >= 3 ? secondTextAlpha : firstTextAlpha);
 
           drawGlowingCanvasText(
                miniGameCtx,

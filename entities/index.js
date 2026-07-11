@@ -54,10 +54,11 @@ import {
      decrementHelphurtTimers,
      setActiveStatusUi,
      clearActiveStatusUi,
+     clearTouchMoveTarget,
      randomItem,
      randomNumber,
      isCollidingWithStar
-} from "../state.js?v=20260711-41";
+} from "../state.js?v=20260711-45";
 
 import {
      maxPlayerHealth,
@@ -71,7 +72,7 @@ import {
      statusFlashSeconds,
      touchArriveDistance,
      movementOptionIndexes
-} from "../options.js?v=20260711-41";
+} from "../options.js?v=20260711-45";
 
 import {
      areStrikesUnlockedForCurrentLevel,
@@ -84,7 +85,7 @@ import {
      starShowerRainbowPalette,
      getCssColor,
      showGameplayPopup
-} from "../game.js?v=20260711-41";
+} from "../game.js?v=20260711-45";
 
 import {
      playerBaseHealth,
@@ -128,7 +129,7 @@ import {
      strikeParticles,
      strikeAssetSrc,
      burstChars
-} from "./constants.js?v=20260711-41";
+} from "./constants.js?v=20260711-45";
 
 export {
      playerBaseHealth,
@@ -463,6 +464,27 @@ function getPlayerMovementMultiplier() {
      return 1;
 }
 
+function hasKeyboardMovementInput() {
+     return Boolean(
+          keys.a ||
+          keys.A ||
+          keys.ArrowLeft ||
+          keys.arrowleft ||
+          keys.d ||
+          keys.D ||
+          keys.ArrowRight ||
+          keys.arrowright ||
+          keys.w ||
+          keys.W ||
+          keys.ArrowUp ||
+          keys.arrowup ||
+          keys.s ||
+          keys.S ||
+          keys.ArrowDown ||
+          keys.arrowdown
+     );
+}
+
 function createPlayerTrail(fromX, fromY, toX, toY) {
      const dx = toX - fromX;
      const dy = toY - fromY;
@@ -615,12 +637,17 @@ function movePlayerTowardPointerTarget() {
           return false;
      }
 
+     if (hasKeyboardMovementInput()) {
+          return false;
+     }
+
      const dx = target.x - player.x;
      const dy = target.y - player.y;
      const distance = Math.hypot(dx, dy);
 
      if (distance <= touchArriveDistance) {
-          return true;
+          clearTouchMoveTarget(target.pointerId);
+          return false;
      }
 
      const reverseMultiplier = isHelphurtActive("daze") ? -1 : 1;
