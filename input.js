@@ -24,6 +24,8 @@
 
 import {
      miniGameCanvas,
+     miniGameWidth,
+     miniGameHeight,
      keys,
      gameStarted,
      gamePaused,
@@ -67,14 +69,14 @@ import {
      updateGameMenuScrollDrag,
      endGameMenuScrollDrag,
      showMenuKeyboardFocus
-} from "./state.js?v=20260711-24";
+} from "./state.js?v=20260711-29";
 
 import {
      isJoystickEnabled,
      movementOptionIndexes,
      maxDifficultyOptionIndex,
      getMaxMovementOptionIndex
-} from "./options.js?v=20260711-24";
+} from "./options.js?v=20260711-29";
 
 import {
      dismissScreenWelcomeToStart,
@@ -92,11 +94,11 @@ import {
      increaseHurtLevel,
      decreaseMovementLevel,
      increaseMovementLevel
-} from "./game.js?v=20260711-24";
+} from "./game.js?v=20260711-29";
 
 import {
      syncUiBounds
-} from "./draw/index.js?v=20260711-24";
+} from "./draw/index.js?v=20260711-29";
 
 const portfolioHomeUrl = "https://cgoss-dev.github.io/cgoss-dev/";
 
@@ -193,9 +195,13 @@ function getCanvasPoint(event) {
 
      const rect = miniGameCanvas.getBoundingClientRect();
 
+     if (!rect.width || !rect.height) {
+          return { x: 0, y: 0 };
+     }
+
      return {
-          x: event.clientX - rect.left,
-          y: event.clientY - rect.top
+          x: ((event.clientX - rect.left) / rect.width) * miniGameWidth,
+          y: ((event.clientY - rect.top) / rect.height) * miniGameHeight
      };
 }
 

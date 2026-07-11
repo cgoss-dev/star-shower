@@ -12,7 +12,7 @@ import {
      maxPlayerHealth,
      maxDifficultyOptionIndex,
      defaultDifficultyOptionIndex
-} from "./options.js?v=20260711-24";
+} from "./options.js?v=20260711-29";
 
 export const miniGameCanvas = document.getElementById("miniGameCanvas");
 
@@ -621,6 +621,9 @@ export function updateGameMenuScrollDrag(y) {
      gameMenuScroll.velocity = clampGameMenuVelocity(delta);
 
      if (isPagedGameMenuScroll()) {
+          const dragDelta = gameMenuScroll.dragStartY - y;
+
+          gameMenuScroll.offset = clampGameMenuDragOffset(gameMenuScroll.dragStartOffset + dragDelta);
           return;
      }
 

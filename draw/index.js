@@ -63,7 +63,7 @@ import {
      setGameMenuScrollMax,
      isPointInsideRect,
      resetActionButtonBounds
-} from "../state.js?v=20260711-24";
+} from "../state.js?v=20260711-29";
 
 import {
      maxDifficultyOptionIndex,
@@ -83,11 +83,11 @@ import {
      fogClearRadiusBase,
      fogClearRadiusMinScale,
      fogClearRadiusMaxScale
-} from "../options.js?v=20260711-24";
+} from "../options.js?v=20260711-29";
 
 import {
      spawnDensityBaselineArea
-} from "../entities/constants.js?v=20260711-24";
+} from "../entities/constants.js?v=20260711-29";
 
 import {
      drawStars,
@@ -109,7 +109,7 @@ import {
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
      syncPlayerSize
-} from "../entities/index.js?v=20260711-24";
+} from "../entities/index.js?v=20260711-29";
 
 import {
      getCanvasTheme,
@@ -133,13 +133,13 @@ import {
      isRoundIntroActive,
      getRoundIntroAlpha,
      getRoundIntroLines
-} from "../game.js?v=20260711-24";
+} from "../game.js?v=20260711-29";
 
 import {
      stepperLeftIcon,
      stepperRightIcon,
      richTextIconAssetImages
-} from "./assets.js?v=20260711-24";
+} from "./assets.js?v=20260711-29";
 
 const siteTheme = window.SiteTheme;
 const levelProgressPulseFrames = 18;
@@ -1735,21 +1735,38 @@ function drawPagedInfoScreen(theme, sections) {
           0,
           Math.min(maxPageIndex, Math.round(gameMenuScroll.offset / pageSize))
      );
-     const activeSection = sections[activePageIndex] || sections[0];
-     const lines = activeSection
-          ? [activeSection.title, "", ...activeSection.lines]
-          : [];
+     const cardX = (miniGameWidth - cardWidth) / 2;
 
      miniGameCtx.save();
      miniGameCtx.beginPath();
      miniGameCtx.rect(0, viewportTop, miniGameWidth, viewportHeight);
      miniGameCtx.clip();
 
-     drawMenuDetailLines(theme, lines, viewportTop, {
-          centerContent: true,
-          sectionCards: true,
-          sectionCardWidth: cardWidth,
-          sectionCardFill: true
+     sections.forEach((section, index) => {
+          const lines = [section.title, "", ...section.lines];
+          const pageY = viewportTop + (index * pageSize) - gameMenuScroll.offset;
+          const cardHeight = getPagedInfoCardHeight(theme, lines);
+
+          if (pageY > viewportBottom || pageY + cardHeight < viewportTop) {
+               return;
+          }
+
+          if (index === activePageIndex && cardHeight > 0) {
+               fillRoundedControlRect(
+                    cardX,
+                    pageY,
+                    cardWidth,
+                    cardHeight,
+                    getControlCornerRadius(theme, cardWidth, cardHeight),
+                    keyboardFocusFill
+               );
+          }
+
+          drawMenuDetailLines(theme, lines, pageY, {
+               centerContent: true,
+               sectionCards: true,
+               sectionCardWidth: cardWidth
+          });
      });
 
      miniGameCtx.restore();
@@ -1770,7 +1787,7 @@ function getPagedInfoCardWidth(theme, sections) {
      const titleStyle = getTextStyle(theme, "title");
      const canvasSpacing = getTextStyle(theme, "canvasSpacing");
      const fontSize = detailStyle.fontSize;
-     const sectionCardPadding = canvasSpacing.uiPadding;
+     const sectionCardXPadding = canvasSpacing.uiPadding;
      const iconGap = fontSize * 0.45;
      const maxCardWidth = Math.max(fontSize, miniGameWidth - (canvasSpacing.menuPadding * 2));
      let maxContentWidth = 0;
@@ -1817,8 +1834,38 @@ function getPagedInfoCardWidth(theme, sections) {
 
      return Math.min(
           maxCardWidth,
-          Math.max(titleStyle.fontSize, maxContentWidth + (sectionCardPadding * 2))
+          Math.max(titleStyle.fontSize, maxContentWidth + (sectionCardXPadding * 2))
      );
+}
+
+function getPagedInfoCardHeight(theme, lines) {
+     const detailStyle = getTextStyle(theme, "buttonsOptions");
+     const titleStyle = getTextStyle(theme, "title");
+     const canvasSpacing = getTextStyle(theme, "canvasSpacing");
+     const fontSize = detailStyle.fontSize;
+     const lineHeight = canvasSpacing.bodyLineHeight;
+     const sectionCardYPadding = lineHeight;
+     const sectionCardBottomPadding = Math.max(0, sectionCardYPadding - (lineHeight - fontSize));
+     const sectionHeadings = new Set(["TIPS", "HELP", "HURT"]);
+     let cardHeight = 0;
+     let hasSection = false;
+
+     lines.forEach((line) => {
+          if (!line.trim()) {
+               cardHeight += lineHeight;
+               return;
+          }
+
+          if (sectionHeadings.has(line)) {
+               hasSection = true;
+               cardHeight += sectionCardYPadding + titleStyle.fontSize + (lineHeight * 0.5);
+               return;
+          }
+
+          cardHeight += lineHeight;
+     });
+
+     return hasSection ? cardHeight + sectionCardBottomPadding : 0;
 }
 
 function drawMenuDetailLines(theme, lines, startY, options = {}) {
@@ -1839,8 +1886,9 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
      const sectionHeadings = new Set(["TIPS", "HELP", "HURT"]);
      const shouldCenterContent = Boolean(options.centerContent);
      const shouldDrawSectionCards = Boolean(options.sectionCards);
-     const sectionCardPadding = canvasSpacing.uiPadding;
-     const sectionCardBottomPadding = Math.max(0, sectionCardPadding - (lineHeight - fontSize));
+     const sectionCardXPadding = canvasSpacing.uiPadding;
+     const sectionCardYPadding = lineHeight;
+     const sectionCardBottomPadding = Math.max(0, sectionCardYPadding - (lineHeight - fontSize));
      const sectionCardGap = lineHeight;
      const requestedSectionCardWidth = options.sectionCardWidth || (miniGameWidth - (screenLayout.sidePadding * 2));
      const sectionCardWidth = Math.min(
@@ -1850,7 +1898,6 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
      const sectionCardX = (miniGameWidth - sectionCardWidth) / 2;
      const sectionCardBorderWidth = theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1;
      const sectionCardBorderColor = detailStyle.color || colors.controlText;
-     const shouldFillSectionCard = Boolean(options.sectionCardFill);
      let currentSectionTopY = null;
      const getDetailLineColor = (line) => line.includes("{icon")
           ? getCssColor("--color-white", "#fff")
@@ -1874,7 +1921,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
           const availableWidth = Math.max(
                fontSize,
                shouldDrawSectionCards
-                    ? sectionCardWidth - (sectionCardPadding * 2)
+                    ? sectionCardWidth - (sectionCardXPadding * 2)
                     : miniGameWidth - (screenLayout.sidePadding * 2)
           );
 
@@ -1895,7 +1942,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
                iconWidth +
                (icon ? iconGap : 0) +
                Math.min(measuredBodyWidth, bodyMaxWidth);
-          let currentX = Math.max(sectionCardX + sectionCardPadding, (miniGameWidth - rowWidth) / 2);
+          let currentX = Math.max(sectionCardX + sectionCardXPadding, (miniGameWidth - rowWidth) / 2);
 
           if (icon) {
                const iconX = currentX + (icon.xOffset || 0);
@@ -1945,17 +1992,6 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
           const sectionHeight = Math.max(0, sectionBottomY - currentSectionTopY);
 
           if (sectionHeight > 0) {
-               if (shouldFillSectionCard) {
-                    fillRoundedControlRect(
-                         sectionCardX,
-                         currentSectionTopY,
-                         sectionCardWidth,
-                         sectionHeight,
-                         getControlCornerRadius(theme, sectionCardWidth, sectionHeight),
-                         keyboardFocusFill
-                    );
-               }
-
                strokeRoundedControlRect(
                     sectionCardX,
                     currentSectionTopY,
@@ -1986,7 +2022,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
 
                if (shouldDrawSectionCards) {
                     currentSectionTopY = textY;
-                    textY += sectionCardPadding;
+                    textY += sectionCardYPadding;
                }
 
                drawMenuScreenTitle(line, theme, screenLayout.titleCenterX, textY);

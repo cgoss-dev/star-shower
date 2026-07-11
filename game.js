@@ -47,7 +47,7 @@ import {
 
      resetUiActionBounds,
      resetGameState
-} from "./state.js?v=20260711-24";
+} from "./state.js?v=20260711-29";
 
 import {
      difficultyOptionLabels,
@@ -59,7 +59,7 @@ import {
      isJoystickEnabled,
      loadAndApplySavedOptions,
      saveCurrentOptions
-} from "./options.js?v=20260711-24";
+} from "./options.js?v=20260711-29";
 
 import {
      bindKeyboardInput,
@@ -67,7 +67,7 @@ import {
      bindResizeHandler,
      updateTouchControlBounds,
      resetTouchControls
-} from "./input.js?v=20260711-24";
+} from "./input.js?v=20260711-29";
 
 import {
      resetPlayerPosition,
@@ -85,14 +85,14 @@ import {
      collectHelphurtPickups,
      updatePlayerTrail,
      resetHelphurtIntroState
-} from "./entities/index.js?v=20260711-24";
+} from "./entities/index.js?v=20260711-29";
 
 import {
      syncUiBounds,
      updatePauseButtonState,
      updateScreenTitleColorState,
      drawGame
-} from "./draw/index.js?v=20260711-24";
+} from "./draw/index.js?v=20260711-29";
 
 // ====================================================================================================
 // NOTE: CONFIG / THEME
@@ -537,10 +537,10 @@ export function getCssPixelSize(variableName, fallback = 10) {
 export const startOverlayDuration = 120;
 export const overlayFadeFrames = 30;
 export const gameplayPopupDurationFrames = 180;
-const roundIntroMessageFrames = 120;
-const roundIntroPauseFrames = 120;
-const roundIntroSecondHoldFrames = 120;
-const roundIntroFadeFrames = 120;
+const roundIntroMessageFrames = 60;
+const roundIntroPauseFrames = 60;
+const roundIntroSecondHoldFrames = 60;
+const roundIntroFadeFrames = 60;
 const roundIntroTotalFrames =
      roundIntroMessageFrames +
      roundIntroPauseFrames +
