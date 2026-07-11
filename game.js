@@ -529,10 +529,12 @@ export const overlayFadeFrames = 30;
 export const gameplayPopupDurationFrames = 180;
 const roundIntroMessageFrames = 120;
 const roundIntroPauseFrames = 120;
+const roundIntroSecondHoldFrames = 120;
 const roundIntroFadeFrames = 120;
 const roundIntroTotalFrames =
      roundIntroMessageFrames +
      roundIntroPauseFrames +
+     roundIntroSecondHoldFrames +
      roundIntroFadeFrames;
 export const maxLevelProgressUnits = 10;
 export const progressUnitsPerCircle = 2;
@@ -552,49 +554,25 @@ export const winScore = levelScoreMins.at(-1) ?? 0;
 
 const levelChallengeProgression = [
      {
-          introText: "HEALTH",
-          introDescription: "Increases health.",
+          introText: "HEALTH / FREEZE",
+          introDescription: "Health helps. Freeze hurts.",
           introIcon: "iconHealth",
           strikesUnlocked: true,
           helpNames: ["health"],
-          hurtNames: []
-     },
-     {
-          introText: "FREEZE",
-          introDescription: "Freezes player.",
-          introIcon: "iconFreeze",
-          strikesUnlocked: true,
-          helpNames: ["health"],
           hurtNames: ["freeze"]
      },
      {
-          introText: "MAGNET",
-          introDescription: "Triples pickup range.",
+          introText: "MAGNET / DAZE",
+          introDescription: "Magnet helps. Daze hurts.",
           introIcon: "iconMagnet",
           strikesUnlocked: true,
           helpNames: ["health", "magnet"],
-          hurtNames: ["freeze"]
-     },
-     {
-          introText: "DAZE",
-          introDescription: "Reverses controls.",
-          introIcon: "iconDaze",
-          strikesUnlocked: true,
-          helpNames: ["health", "magnet"],
           hurtNames: ["freeze", "daze"]
      },
      {
-          introText: "DOUBLE",
-          introDescription: "Stars count twice.",
+          introText: "DOUBLE / FOG",
+          introDescription: "Double helps. Fog hurts.",
           introIcon: "iconDouble",
-          strikesUnlocked: true,
-          helpNames: ["health", "magnet", "double"],
-          hurtNames: ["freeze", "daze"]
-     },
-     {
-          introText: "FOG",
-          introDescription: "Limits vision.",
-          introIcon: "iconFog",
           strikesUnlocked: true,
           helpNames: ["health", "magnet", "double"],
           hurtNames: ["freeze", "daze", "fog"]
@@ -685,8 +663,8 @@ export function getHelpLines() {
 
 export function getHurtLines() {
      return [
-          "{iconFreeze} Freeze: freezes player.",
           "{iconDaze} Daze: reverses movement.",
+          "{iconFreeze} Freeze: freezes player.",
           "{iconFog} Fog: limits visible area."
      ];
 }

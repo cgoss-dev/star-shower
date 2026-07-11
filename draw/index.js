@@ -79,8 +79,15 @@ import {
      getMenuScreenLayout,
      getMenuLayoutMetrics,
      parseRichTextSegments,
-     playerGlowBlurFallback
+     playerGlowBlurFallback,
+     fogClearRadiusBase,
+     fogClearRadiusMinScale,
+     fogClearRadiusMaxScale
 } from "../options.js";
+
+import {
+     spawnDensityBaselineArea
+} from "../entities/constants.js";
 
 import {
      drawStars,
@@ -905,6 +912,17 @@ function getCanvasGlowColor(color) {
           : color;
 }
 
+function getCanvasAreaScale(minScale, maxScale) {
+     if (miniGameWidth <= 0 || miniGameHeight <= 0) {
+          return minScale;
+     }
+
+     const areaRatio = (miniGameWidth * miniGameHeight) / spawnDensityBaselineArea;
+     const areaScale = Math.sqrt(areaRatio);
+
+     return Math.max(minScale, Math.min(maxScale, areaScale));
+}
+
 function getControlCornerRadius(theme, width, height) {
      return Math.min(theme.sizes.controlRadius || 0, width / 2, height / 2);
 }
@@ -1485,7 +1503,8 @@ export function drawFogOverlay() {
           return;
      }
 
-     const clearRadius = Math.max(44, Math.min(82, miniGameWidth * 0.16));
+     const fogScale = getCanvasAreaScale(fogClearRadiusMinScale, fogClearRadiusMaxScale);
+     const clearRadius = fogClearRadiusBase * fogScale;
      const fadeRadius = clearRadius * 1.5;
 
      miniGameCtx.save();
@@ -2344,12 +2363,14 @@ function drawRoundIntroOverlay(theme) {
      const { screens } = theme;
      const introLines = getRoundIntroLines();
      const alpha = getRoundIntroAlpha();
-     const fontSize = getWelcomeMarqueeFontSize(theme, introLines, screens.paused);
-     const lineGap = fontSize * 0.45;
-     const totalHeight =
-          (introLines.length * fontSize) +
-          (Math.max(0, introLines.length - 1) * lineGap);
-     const startY = (miniGameHeight / 2) - (totalHeight / 2) + (fontSize / 2);
+     const buttonStyle = getTextStyle(theme, "buttonsOptions");
+     const fontSize = buttonStyle.fontSize;
+     const lineHeight = fontSize * 1.5;
+     const introSlots = 5;
+     const totalHeight = introSlots * lineHeight;
+     const startY = (miniGameHeight / 2) - (totalHeight / 2) + (lineHeight / 2);
+     const introFont = getTextFont(theme, "buttonsOptions", 400, null, fontSize);
+     const introColor = getCssColor("--color-white", "#fff");
 
      miniGameCtx.save();
      miniGameCtx.globalAlpha = alpha;
@@ -2357,18 +2378,29 @@ function drawRoundIntroOverlay(theme) {
      miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
      miniGameCtx.restore();
 
+     miniGameCtx.save();
+     miniGameCtx.globalAlpha = alpha;
+
      introLines.forEach((line, index) => {
-          drawCenteredMarqueeText(
-               theme,
+          if (!line) {
+               return;
+          }
+
+          drawGlowingCanvasText(
+               miniGameCtx,
                line,
                miniGameWidth / 2,
-               startY + (index * (fontSize + lineGap)),
-               fontSize,
-               alpha,
-               false,
+               startY + (index * lineHeight),
+               introColor,
+               introFont,
+               "center",
+               "middle",
+               theme,
                false
           );
      });
+
+     miniGameCtx.restore();
 }
 
 function drawGameStatusOverlay(theme) {
@@ -2529,7 +2561,7 @@ export function drawGame() {
      // 1. Paint the background and apply the selected color mode.
      // 2. If welcome is active, draw only that screen and exit.
      // 3. Draw gameplay entities from back to front.
-     // 4. Draw menus/overlays, then keep gameplay HUD on top when no menu is open.
+     // 4. Draw HUD with gameplay, then menus/overlays above it.
      const theme = getCanvasTheme();
 
      ensureCanvasHoverTracking();
@@ -2554,6 +2586,11 @@ export function drawGame() {
           drawFogOverlay();
 
           drawGameplayPopup(theme);
+
+          if (!gameMenuOpen) {
+               drawHudBadges(theme);
+               drawLevelProgressStars(theme);
+          }
      }
 
      if (gameMenuOpen) {
@@ -2574,13 +2611,8 @@ export function drawGame() {
           drawGameStatusOverlay(theme);
      }
 
-     if (gameStarted && !gameMenuOpen) {
-          drawHudBadges(theme);
-          drawLevelProgressStars(theme);
-
-          if (!gamePaused && !gameOver && !gameWon) {
-               drawJoystick(theme);
-          }
+     if (gameStarted && !gameMenuOpen && !gamePaused && !gameOver && !gameWon && !isRoundIntroActive()) {
+          drawJoystick(theme);
      }
 
      resetCanvasColorModeFilter();
