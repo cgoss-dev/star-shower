@@ -10,8 +10,6 @@
 import {
      gameplayStartingHealth,
      maxPlayerHealth,
-     maxOptionLevelIndex,
-     defaultOptionLevelIndex,
      maxDifficultyOptionIndex,
      defaultDifficultyOptionIndex
 } from "./options.js";
@@ -75,8 +73,6 @@ export let playerHealth = gameplayStartingHealth;
 // Current selected levels live here because they are mutable runtime state.
 // ====================================================================================================
 
-export let musicLevel = defaultOptionLevelIndex;
-export let soundEffectsLevel = defaultOptionLevelIndex;
 export let hurtLevel = defaultDifficultyOptionIndex;
 export let movementLevel = 0;
 export let colorLevel = 0;
@@ -116,9 +112,6 @@ export let gamePaused = true;
 export let gameMenuOpen = false;
 export let gameMenuView = "";
 
-// Compatibility booleans for systems that still expect simple flags.
-export let musicEnabled = true;
-export let soundEffectsEnabled = true;
 export let hurtEnabled = true;
 
 export let gameOver = false;
@@ -147,21 +140,12 @@ export const gameMenuUi = {
      panel: { x: 0, y: 0, width: 0, height: 0 },
 
      optionsDifficultyButton: { x: 0, y: 0, width: 0, height: 0 },
-     optionsAudioButton: { x: 0, y: 0, width: 0, height: 0 },
      optionsMovementButton: { x: 0, y: 0, width: 0, height: 0 },
      optionsColorButton: { x: 0, y: 0, width: 0, height: 0 },
 
      hurtRow: { x: 0, y: 0, width: 0, height: 0 },
      hurtDecreaseButton: { x: 0, y: 0, width: 0, height: 0 },
      hurtIncreaseButton: { x: 0, y: 0, width: 0, height: 0 },
-
-     musicRow: { x: 0, y: 0, width: 0, height: 0 },
-     musicDecreaseButton: { x: 0, y: 0, width: 0, height: 0 },
-     musicIncreaseButton: { x: 0, y: 0, width: 0, height: 0 },
-
-     soundEffectsRow: { x: 0, y: 0, width: 0, height: 0 },
-     soundEffectsDecreaseButton: { x: 0, y: 0, width: 0, height: 0 },
-     soundEffectsIncreaseButton: { x: 0, y: 0, width: 0, height: 0 },
 
      movementRow: { x: 0, y: 0, width: 0, height: 0 },
      movementDecreaseButton: { x: 0, y: 0, width: 0, height: 0 },
@@ -453,20 +437,8 @@ export function resetHelphurtState() {
 // OPTIONS HELPERS
 // ==================================================
 
-function clampRuntimeOptionLevelIndex(value) {
-     return Math.max(0, Math.min(maxOptionLevelIndex, value));
-}
-
 function clampRuntimeDifficultyOptionIndex(value) {
      return Math.max(0, Math.min(maxDifficultyOptionIndex, value));
-}
-
-function syncMusicEnabledFromLevel() {
-     musicEnabled = musicLevel > 0;
-}
-
-function syncSoundEffectsEnabledFromLevel() {
-     soundEffectsEnabled = soundEffectsLevel > 0;
 }
 
 function syncHurtEnabledFromLevel() {
@@ -474,14 +446,10 @@ function syncHurtEnabledFromLevel() {
 }
 
 export function syncOptionFlagsFromLevels() {
-     syncMusicEnabledFromLevel();
-     syncSoundEffectsEnabledFromLevel();
      syncHurtEnabledFromLevel();
 }
 
 export function resetOptionsToDefaults() {
-     musicLevel = defaultOptionLevelIndex;
-     soundEffectsLevel = defaultOptionLevelIndex;
      hurtLevel = defaultDifficultyOptionIndex;
      movementLevel = 0;
      colorLevel = 0;
@@ -604,33 +572,12 @@ export function getMenuKeyboardFocusAlpha() {
      return Math.max(0, Math.min(1, menuKeyboardFocus.timer / menuKeyboardFocus.duration));
 }
 
-// Boolean setters. Keep legacy simple on/off controls in sync with option levels.
-export function setMusicEnabled(value) {
-     musicEnabled = value;
-     musicLevel = value ? maxOptionLevelIndex : 0;
-}
-
-export function setSoundEffectsEnabled(value) {
-     soundEffectsEnabled = value;
-     soundEffectsLevel = value ? maxOptionLevelIndex : 0;
-}
-
 export function setHurtEnabled(value) {
      hurtEnabled = value;
      hurtLevel = value ? maxDifficultyOptionIndex : 0;
 }
 
 // Level setters for Options UI.
-export function setMusicLevel(value) {
-     musicLevel = clampRuntimeOptionLevelIndex(value);
-     syncMusicEnabledFromLevel();
-}
-
-export function setSoundEffectsLevel(value) {
-     soundEffectsLevel = clampRuntimeOptionLevelIndex(value);
-     syncSoundEffectsEnabledFromLevel();
-}
-
 export function setHurtLevel(value) {
      hurtLevel = clampRuntimeDifficultyOptionIndex(value);
      syncHurtEnabledFromLevel();

@@ -1,6 +1,6 @@
 // NOTE: game
 // Consolidated runtime core for Star Shower.
-// Includes game orchestration, progression rules, canvas config, and audio.
+// Includes game orchestration, progression rules, and canvas config.
 
 import {
      miniGameCanvas,
@@ -17,8 +17,6 @@ import {
      gameplayPopupText,
      gameplayPopupTimer,
      gameplayPopupDuration,
-     musicLevel,
-     soundEffectsLevel,
      hurtLevel,
      movementLevel,
      colorLevel,
@@ -39,8 +37,6 @@ import {
      setGameplayPopupText,
      setGameplayPopupTimer,
      setGameplayPopupDuration,
-     setMusicLevel,
-     setSoundEffectsLevel,
      setHurtLevel,
      setMovementLevel,
      setColorLevel,
@@ -52,9 +48,6 @@ import {
 } from "./state.js";
 
 import {
-     optionLevelLabels,
-     optionLevelValues,
-     maxOptionLevelIndex,
      difficultyOptionLabels,
      maxDifficultyOptionIndex,
      movementOptionLabels,
@@ -705,16 +698,6 @@ export function getDifficultyOptionLines() {
      ];
 }
 
-export function getAudioOptionLines() {
-     return [
-          "OFF",
-          "MIN: 25%",
-          "LOW: 50%",
-          "MED: 75%",
-          "MAX: 100%"
-     ];
-}
-
 export function getMovementOptionLines() {
      const lines = [
           "Touch/Click + WASD/Arrows: pointer and keyboard movement.",
@@ -805,125 +788,6 @@ export function getLevelIntroIcon(levelNumber) {
      const levelData = levelRules.find((rule) => rule.levelNumber === levelNumber);
 
      return levelData?.introIcon || "";
-}
-
-// ====================================================================================================
-// NOTE: AUDIO
-// ====================================================================================================
-
-export const starShowerAudioFiles = {
-     music: "./audio/music-loop.mp3",
-
-     soundEffects: {
-          star: "./audio/star.wav",
-          strike: "./audio/strike.wav",
-          help: "./audio/help-effect.wav",
-          hurt: "./audio/hurt-effect.wav",
-          win: "./audio/win.wav",
-          lose: "./audio/lose.wav",
-          pause: "./audio/pause.wav",
-          resume: "./audio/resume.wav"
-     }
-};
-
-let musicAudio = null;
-const soundEffectAudio = {};
-
-function canUseAudio() {
-     return typeof Audio !== "undefined";
-}
-
-function getOptionVolume(levelIndex) {
-     return optionLevelValues[levelIndex] ?? optionLevelValues[0] ?? 0;
-}
-
-function getMusicVolume() {
-     return getOptionVolume(musicLevel);
-}
-
-function getSoundEffectsVolume() {
-     return getOptionVolume(soundEffectsLevel);
-}
-
-function getMusicAudio() {
-     if (!canUseAudio()) {
-          return null;
-     }
-
-     if (!musicAudio) {
-          musicAudio = new Audio(starShowerAudioFiles.music);
-          musicAudio.loop = true;
-          musicAudio.preload = "auto";
-     }
-
-     return musicAudio;
-}
-
-function getSoundEffectAudio(name) {
-     if (!canUseAudio()) {
-          return null;
-     }
-
-     const src = starShowerAudioFiles.soundEffects[name];
-
-     if (!src) {
-          return null;
-     }
-
-     if (!soundEffectAudio[name]) {
-          soundEffectAudio[name] = new Audio(src);
-          soundEffectAudio[name].preload = "auto";
-     }
-
-     return soundEffectAudio[name];
-}
-
-export function syncBackgroundMusic(shouldPlay) {
-     const audio = getMusicAudio();
-
-     if (!audio) {
-          return;
-     }
-
-     const volume = getMusicVolume();
-     audio.volume = volume;
-
-     if (!shouldPlay || volume <= 0) {
-          audio.pause();
-          return;
-     }
-
-     if (!audio.paused) {
-          return;
-     }
-
-     audio.play().catch(() => {});
-}
-
-export function pauseBackgroundMusic() {
-     const audio = getMusicAudio();
-
-     if (audio) {
-          audio.pause();
-     }
-}
-
-export function playSoundEffect(name) {
-     const volume = getSoundEffectsVolume();
-
-     if (volume <= 0) {
-          return;
-     }
-
-     const audio = getSoundEffectAudio(name);
-
-     if (!audio) {
-          return;
-     }
-
-     const sound = audio.cloneNode();
-     sound.volume = volume;
-     sound.play().catch(() => {});
 }
 
 // ==================================================
@@ -1140,7 +1004,7 @@ export function startNewGameRound() {
      // Round reset pseudocode:
      // 1. Clear every gameplay system back to its starting state.
      // 2. Resize canvas/UI before placing the player, so coordinates are current.
-     // 3. Switch from menus/overlays into live play and start music if allowed.
+     // 3. Switch from menus/overlays into live play.
      resetGameState();
      resetTouchControls();
      resetEntityColorCycle();
@@ -1157,31 +1021,18 @@ export function startNewGameRound() {
      setGameMenuView("");
      setGameOver(false);
      setGameWon(false);
-     syncBackgroundMusic(true);
 }
 
 // ====================================================================================================
 // NOTE: OPTIONS
 // ====================================================================================================
 
-export function getOptionLevelLabel(levelIndex) {
-     return optionLevelLabels[levelIndex] || optionLevelLabels[0];
-}
-
 export function getDifficultyOptionLabel(levelIndex) {
      return difficultyOptionLabels[levelIndex] || difficultyOptionLabels[0];
 }
 
-export function getOptionLevelValue(levelIndex) {
-     return optionLevelValues[levelIndex] ?? optionLevelValues[0];
-}
-
-function getPreviousOptionLevelIndex(levelIndex) {
+function getPreviousDifficultyOptionIndex(levelIndex) {
      return Math.max(0, levelIndex - 1);
-}
-
-function getNextOptionLevelIndex(levelIndex) {
-     return Math.min(maxOptionLevelIndex, levelIndex + 1);
 }
 
 function getNextDifficultyOptionIndex(levelIndex) {
@@ -1208,14 +1059,6 @@ export function getHurtToggleLabel() {
      return getDifficultyOptionLabel(hurtLevel);
 }
 
-export function getMusicToggleLabel() {
-     return getOptionLevelLabel(musicLevel);
-}
-
-export function getSoundEffectsToggleLabel() {
-     return getOptionLevelLabel(soundEffectsLevel);
-}
-
 export function getMovementToggleLabel() {
      return movementOptionLabels[movementLevel] || movementOptionLabels[0];
 }
@@ -1224,28 +1067,8 @@ export function getColorToggleLabel() {
      return colorOptionLabels[colorLevel] || colorOptionLabels[0];
 }
 
-export function decreaseMusicLevel() {
-     setMusicLevel(getPreviousOptionLevelIndex(musicLevel));
-     saveCurrentOptions();
-}
-
-export function increaseMusicLevel() {
-     setMusicLevel(getNextOptionLevelIndex(musicLevel));
-     saveCurrentOptions();
-}
-
-export function decreaseSoundEffectsLevel() {
-     setSoundEffectsLevel(getPreviousOptionLevelIndex(soundEffectsLevel));
-     saveCurrentOptions();
-}
-
-export function increaseSoundEffectsLevel() {
-     setSoundEffectsLevel(getNextOptionLevelIndex(soundEffectsLevel));
-     saveCurrentOptions();
-}
-
 export function decreaseHurtLevel() {
-     const nextLevel = getPreviousOptionLevelIndex(hurtLevel);
+     const nextLevel = getPreviousDifficultyOptionIndex(hurtLevel);
      setHurtLevel(nextLevel);
 
      if (nextLevel === 0) {
@@ -1373,7 +1196,7 @@ export function getGameplayPopupAlpha() {
 
 export function updateGame() {
      // Frame update pseudocode:
-     // 1. Always tick UI-only timers and sync audio, even when gameplay is paused.
+     // 1. Always tick UI-only timers, even when gameplay is paused.
      // 2. Exit early for welcome/menu/paused/result states.
      // 3. During live play, update effects, movement, spawning, collisions, and progress.
      // 4. Finish by checking lose/win conditions and switching to the matching result screen.
@@ -1385,15 +1208,6 @@ export function updateGame() {
      if (screenLayerActive) {
           updateScreenTitleColorState();
      }
-
-     syncBackgroundMusic(
-          gameStarted &&
-          !gamePaused &&
-          !gameMenuOpen &&
-          !gameOver &&
-          !gameWon &&
-          !isScreenWelcomeActive()
-     );
 
      if (isScreenWelcomeActive()) {
           return;
@@ -1437,7 +1251,6 @@ export function updateGame() {
           setGameMenuView("");
           resetTouchControls();
           clearGameOverlay();
-          playSoundEffect("lose");
           showScreenTryAgain();
           return;
      }
@@ -1450,7 +1263,6 @@ export function updateGame() {
           setGameMenuView("");
           resetTouchControls();
           clearGameOverlay();
-          playSoundEffect("win");
           showScreenYouWin();
      }
 }

@@ -78,7 +78,7 @@ Responsive tuning:
 - `theme.css`: global theme variables, Annotation Mono font fallback, colors, glow, and page-level layout.
 - `star-shower.css`: game canvas sizing, border, responsive fullscreen behavior, and Star Shower-specific layout.
 - `site.js`: page helpers and falling background particles outside the game canvas.
-- `game.js`: game orchestration, progression rules, canvas theme config, popup state, audio, startup, and win/lose flow.
+- `game.js`: game orchestration, progression rules, canvas theme config, popup state, startup, and win/lose flow.
 - `state.js`: shared mutable runtime state and state setters.
 - `options.js`: saved options, difficulty values, movement options, health/magnet tunables, and shared layout helpers.
 - `input.js`: keyboard, pointer, touch, joystick, menu, and pause input.
@@ -111,7 +111,7 @@ Useful pseudocode template:
 // Feature pseudocode:
 // 1. Validate whether this state should run.
 // 2. Update the smallest state needed for this frame/action.
-// 3. Trigger side effects like sounds, popups, or saved options.
+// 3. Trigger side effects like popups or saved options.
 // 4. Refresh dependent UI bounds/status so input and drawing stay in sync.
 ```
 
@@ -120,4 +120,3 @@ Recommended next cleanup areas:
 - Split HUD drawing out of `draw/index.js`.
 - Split help/hurt logic out of `entities/index.js`.
 - Remove compatibility exports once imports are fully direct.
-- Future audio placeholders fail quietly so the game stays playable while assets are in progress. At the moment, `audio/music-loop.mp3` may 404 during local preview until a music file is added.

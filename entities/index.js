@@ -82,7 +82,6 @@ import {
      starShowerGuideIcons,
      starShowerRainbowPalette,
      getCssColor,
-     playSoundEffect,
      showGameplayPopup
 } from "../game.js";
 
@@ -1064,7 +1063,6 @@ export function collectStars() {
           addStarScore(1);
           applyTemporaryPlayerFace(playerFaces.star, 60);
           triggerPlayerFacePop(1.25);
-          playSoundEffect("star");
      }
 }
 
@@ -1083,7 +1081,6 @@ export function collectStrikes() {
           syncPlayerHealthState();
           applyTemporaryPlayerFace(playerFaces.hurt, 30);
           triggerPlayerFacePop(1.25);
-          playSoundEffect("strike");
      }
 }
 
@@ -1249,7 +1246,6 @@ function collectHelpPickup(pickup, index) {
      showGameplayPopup(`${pickup.type?.particle || "⭐"} ${pickup.type?.label || "HELP"}`);
      applyTemporaryPlayerFace(playerFaces.star, 45);
      triggerPlayerFacePop(1.2);
-     playSoundEffect("help");
 }
 
 function collectHurtPickup(pickup, index) {
@@ -1260,7 +1256,6 @@ function collectHurtPickup(pickup, index) {
      showGameplayPopup(`${pickup.type?.particle || "😵"} ${pickup.type?.label || "HURT"}`);
      applyTemporaryPlayerFace(playerFaces.hurt, 30);
      triggerPlayerFacePop(1.25);
-     playSoundEffect("hurt");
 }
 
 export function collectHelphurtPickups() {

@@ -3,7 +3,7 @@
 //
 // Owned here:
 // - saved options / localStorage keys
-// - option metadata for Music / Sound FX / Difficulty
+// - option metadata for Difficulty / Movement / Color
 // - shared tunables that are configuration, not runtime state
 // - reusable measurement / layout helpers shared by canvas UI
 // - helpers for loading/saving persistent settings
@@ -24,13 +24,9 @@ import {
      miniGameCtx,
      miniGameWidth,
      miniGameHeight,
-     musicLevel,
-     soundEffectsLevel,
      hurtLevel,
      movementLevel,
      colorLevel,
-     setMusicLevel,
-     setSoundEffectsLevel,
      setHurtLevel,
      setMovementLevel,
      setColorLevel
@@ -52,10 +48,6 @@ export const configStorageKeys = {
 // OPTION DEFINITIONS
 // ==================================================
 
-export const optionLevelLabels = ["Off", "Min", "Low", "Med", "Max"];
-export const optionLevelValues = [0, 0.25, 0.5, 0.75, 1];
-export const maxOptionLevelIndex = optionLevelLabels.length - 1;
-export const defaultOptionLevelIndex = 2;
 export const difficultyOptionLabels = ["Off", "Med", "Max"];
 export const maxDifficultyOptionIndex = difficultyOptionLabels.length - 1;
 export const defaultDifficultyOptionIndex = 1;
@@ -86,18 +78,6 @@ export const optionDefinitions = {
           id: "hurt",
           label: "Difficulty",
           defaultLevel: defaultDifficultyOptionIndex
-     },
-
-     music: {
-          id: "music",
-          label: "Music",
-          defaultLevel: defaultOptionLevelIndex
-     },
-
-     soundEffects: {
-          id: "soundEffects",
-          label: "Sound FX",
-          defaultLevel: defaultOptionLevelIndex
      },
 
      movement: {
@@ -140,16 +120,6 @@ export const statusFlashSeconds = 1.25;
 // SMALL HELPERS
 // ==================================================
 
-export function clampOptionLevelIndex(value) {
-     const numericValue = Number(value);
-
-     if (!Number.isFinite(numericValue)) {
-          return defaultOptionLevelIndex;
-     }
-
-     return Math.max(0, Math.min(maxOptionLevelIndex, Math.round(numericValue)));
-}
-
 export function clampDifficultyOptionIndex(value) {
      const numericValue = Number(value);
 
@@ -180,10 +150,6 @@ export function clampColorOptionIndex(value) {
      return Math.max(0, Math.min(maxColorOptionIndex, Math.round(numericValue)));
 }
 
-export function getOptionLevelLabel(levelIndex) {
-     return optionLevelLabels[clampOptionLevelIndex(levelIndex)] || optionLevelLabels[0];
-}
-
 export function getDifficultyOptionLabel(levelIndex) {
      return difficultyOptionLabels[clampDifficultyOptionIndex(levelIndex)] || difficultyOptionLabels[0];
 }
@@ -196,10 +162,6 @@ export function getColorOptionLabel(levelIndex) {
      return colorOptionLabels[clampColorOptionIndex(levelIndex)] || colorOptionLabels[0];
 }
 
-export function getOptionLevelValue(levelIndex) {
-     return optionLevelValues[clampOptionLevelIndex(levelIndex)] ?? optionLevelValues[0];
-}
-
 export function getOptionDefinition(optionName) {
      return optionDefinitions[optionName] || null;
 }
@@ -210,8 +172,6 @@ export function getAllOptionDefinitions() {
 
 export function getDefaultOptionSnapshot() {
      return {
-          music: optionDefinitions.music.defaultLevel,
-          soundEffects: optionDefinitions.soundEffects.defaultLevel,
           hurt: optionDefinitions.hurt.defaultLevel,
           movement: optionDefinitions.movement.defaultLevel,
           color: optionDefinitions.color.defaultLevel
@@ -220,8 +180,6 @@ export function getDefaultOptionSnapshot() {
 
 export function getCurrentOptionSnapshot() {
      return {
-          music: musicLevel,
-          soundEffects: soundEffectsLevel,
           hurt: hurtLevel,
           movement: movementLevel,
           color: colorLevel
@@ -404,8 +362,6 @@ export function normalizeOptionSnapshot(snapshot = {}) {
      const defaults = getDefaultOptionSnapshot();
 
      return {
-          music: clampOptionLevelIndex(snapshot.music ?? defaults.music),
-          soundEffects: clampOptionLevelIndex(snapshot.soundEffects ?? defaults.soundEffects),
           hurt: clampDifficultyOptionIndex(snapshot.hurt ?? defaults.hurt),
           movement: clampMovementOptionIndex(snapshot.movement ?? defaults.movement),
           color: clampColorOptionIndex(snapshot.color ?? defaults.color)
@@ -467,8 +423,6 @@ export function clearSavedOptionSnapshot() {
 export function applyOptionSnapshot(snapshot = loadSavedOptionSnapshot()) {
      const normalizedSnapshot = normalizeOptionSnapshot(snapshot);
 
-     setMusicLevel(normalizedSnapshot.music);
-     setSoundEffectsLevel(normalizedSnapshot.soundEffects);
      setHurtLevel(normalizedSnapshot.hurt);
      setMovementLevel(normalizedSnapshot.movement);
      setColorLevel(normalizedSnapshot.color);
@@ -493,16 +447,6 @@ export function saveCurrentOptions() {
 
 export function loadAndApplySavedOptions() {
      return applyOptionSnapshot(loadSavedOptionSnapshot());
-}
-
-export function setAndPersistMusicLevel(levelIndex) {
-     setMusicLevel(clampOptionLevelIndex(levelIndex));
-     saveCurrentOptions();
-}
-
-export function setAndPersistSoundEffectsLevel(levelIndex) {
-     setSoundEffectsLevel(clampOptionLevelIndex(levelIndex));
-     saveCurrentOptions();
 }
 
 export function setAndPersistHurtLevel(levelIndex) {

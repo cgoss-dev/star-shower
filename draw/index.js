@@ -39,8 +39,6 @@ import {
      gameOverlaySubtext,
      gameplayPopupText,
      gameMenuUi,
-     musicLevel,
-     soundEffectsLevel,
      hurtLevel,
      movementLevel,
      colorLevel,
@@ -68,13 +66,11 @@ import {
 } from "../state.js";
 
 import {
-     maxOptionLevelIndex,
      maxDifficultyOptionIndex,
      getMaxMovementOptionIndex,
      maxPlayerHealth,
      movementOptionIndexes,
      isJoystickEnabled,
-     getOptionLevelLabel,
      getMovementOptionLabel,
      getUnifiedButtonFont,
      getUnifiedButtonWidth,
@@ -121,7 +117,6 @@ import {
      getHelpLines,
      getHurtLines,
      getDifficultyOptionLines,
-     getAudioOptionLines,
      getMovementOptionLines,
      isScreenWelcomeActive,
      isOverlayScreenActive,
@@ -377,7 +372,6 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
           }
 
           setButtonBounds(gameMenuUi.optionsDifficultyButton, 0, 0, 0, 0);
-          setButtonBounds(gameMenuUi.optionsAudioButton, 0, 0, 0, 0);
           setButtonBounds(gameMenuUi.optionsMovementButton, 0, 0, 0, 0);
           setButtonBounds(gameMenuUi.optionsColorButton, 0, 0, 0, 0);
           setButtonBounds(gameMenuUi.colorRow, 0, 0, 0, 0);
@@ -404,7 +398,6 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
 
      if (
           gameMenuView !== "options_difficulty" &&
-          gameMenuView !== "options_audio" &&
           gameMenuView !== "options_movement"
      ) {
           return;
@@ -437,33 +430,6 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
 
           return;
      }
-
-     const audioRows = [
-          {
-               row: gameMenuUi.musicRow,
-               decreaseButton: gameMenuUi.musicDecreaseButton,
-               increaseButton: gameMenuUi.musicIncreaseButton
-          },
-          {
-               row: gameMenuUi.soundEffectsRow,
-               decreaseButton: gameMenuUi.soundEffectsDecreaseButton,
-               increaseButton: gameMenuUi.soundEffectsIncreaseButton
-          }
-     ];
-
-     audioRows.forEach((item, index) => {
-          const y = layout.contentTopY + (index * (layout.buttonHeight + layout.rowGap));
-
-          setOptionRowBounds(
-               item.row,
-               item.decreaseButton,
-               item.increaseButton,
-               layout.buttonX,
-               y,
-               layout.buttonWidth,
-               layout.buttonHeight
-          );
-     });
 }
 
 function updatePauseButtonBounds(theme = getCanvasTheme()) {
@@ -900,10 +866,6 @@ export function drawMenuScreenTitle(title, theme, centerX, y) {
      miniGameCtx.restore();
 }
 
-function getShortOptionLevelLabel(levelIndex) {
-     return getOptionLevelLabel(levelIndex).toUpperCase();
-}
-
 function getShortDifficultyOptionLabel(levelIndex) {
      return getDifficultyOptionLabel(levelIndex).toUpperCase();
 }
@@ -1037,7 +999,7 @@ export function drawOptionStepper(
      theme,
      isRowFocused = false,
      focusedSide = -1,
-     maxLevelIndex = maxOptionLevelIndex
+     maxLevelIndex = maxDifficultyOptionIndex
 ) {
      if (!miniGameCtx || !row || !decreaseButton || !increaseButton) {
           return;
@@ -1592,7 +1554,6 @@ function drawEffectsMenuScreen(theme) {
      }
 
      const lines = [
-          "EFFECTS",
           "HELPS",
           ...getHelpLines(),
           "",
@@ -1629,24 +1590,6 @@ function drawScrollableInfoScreen(theme, lines) {
      const scrollMax = Math.max(0, contentHeight - viewportHeight);
 
      setGameMenuScrollMax(scrollMax);
-
-     if (scrollMax > 0 && viewportHeight > 0) {
-          const scrollbarWidth = theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1;
-          const scrollbarX = miniGameWidth - layout.sidePadding + (scrollbarWidth / 2);
-          const thumbHeight = Math.max(viewportHeight * (viewportHeight / contentHeight), viewportHeight * 0.2);
-          const thumbTravel = viewportHeight - thumbHeight;
-          const thumbY = viewportTop + (thumbTravel * (gameMenuScroll.offset / scrollMax));
-
-          miniGameCtx.save();
-          miniGameCtx.globalAlpha = 0.7;
-          miniGameCtx.strokeStyle = colors.fontColor;
-          miniGameCtx.lineWidth = scrollbarWidth;
-          miniGameCtx.beginPath();
-          miniGameCtx.moveTo(scrollbarX, thumbY);
-          miniGameCtx.lineTo(scrollbarX, thumbY + thumbHeight);
-          miniGameCtx.stroke();
-          miniGameCtx.restore();
-     }
 
      drawMenuBackButton(gameMenuUi.backButton, theme, tipsSelectionIndex === 0);
 
@@ -1964,51 +1907,6 @@ function drawDifficultyOptionsScreen(theme) {
 
      drawMenuDetailLines(theme, optionLines, getOptionDescriptionY(layout, 1));
      drawMenuBackButton(gameMenuUi.backButton, theme, focused.row === 1);
-     miniGameCtx.restore();
-}
-
-function drawAudioOptionsScreen(theme) {
-     if (!miniGameCtx) {
-          return;
-     }
-
-     const { colors } = theme;
-     const layout = getMenuScreenLayout(theme);
-     const focused = optionsSelection;
-     const optionLines = getAudioOptionLines();
-
-     miniGameCtx.save();
-     miniGameCtx.fillStyle = colors.menuScreenFill;
-     miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
-
-     drawMenuScreenTitle("AUDIO", theme, layout.titleCenterX, layout.titleY);
-
-     drawOptionStepper(
-          gameMenuUi.musicRow,
-          gameMenuUi.musicDecreaseButton,
-          gameMenuUi.musicIncreaseButton,
-          "Music",
-          getShortOptionLevelLabel(musicLevel),
-          musicLevel,
-          theme,
-          focused.row === 0,
-          focused.row === 0 ? focused.col : -1
-     );
-
-     drawOptionStepper(
-          gameMenuUi.soundEffectsRow,
-          gameMenuUi.soundEffectsDecreaseButton,
-          gameMenuUi.soundEffectsIncreaseButton,
-          "Sound FX",
-          getShortOptionLevelLabel(soundEffectsLevel),
-          soundEffectsLevel,
-          theme,
-          focused.row === 1,
-          focused.row === 1 ? focused.col : -1
-     );
-
-     drawMenuDetailLines(theme, optionLines, getOptionDescriptionY(layout, 2));
-     drawMenuBackButton(gameMenuUi.backButton, theme, focused.row === 2);
      miniGameCtx.restore();
 }
 

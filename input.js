@@ -91,10 +91,6 @@ import {
      startNewGameRound,
      decreaseHurtLevel,
      increaseHurtLevel,
-     decreaseMusicLevel,
-     increaseMusicLevel,
-     decreaseSoundEffectsLevel,
-     increaseSoundEffectsLevel,
      decreaseMovementLevel,
      increaseMovementLevel
 } from "./game.js";
@@ -232,12 +228,12 @@ function isOptionsDetailView() {
      return false;
 }
 
-function isTipsListView() {
-     return gameMenuView === "tips";
+function isInfoMenuView() {
+     return gameMenuView === "tips" || gameMenuView === "effects";
 }
 
 function isScrollableMenuView() {
-     return gameMenuOpen && isTipsListView();
+     return gameMenuOpen && isInfoMenuView();
 }
 
 function getOptionsBackRowIndex() {
@@ -369,14 +365,6 @@ function activateOptionAdjustment(optionName, direction) {
           direction < 0 ? decreaseHurtLevel() : increaseHurtLevel();
      }
 
-     if (optionName === "music") {
-          direction < 0 ? decreaseMusicLevel() : increaseMusicLevel();
-     }
-
-     if (optionName === "soundEffects") {
-          direction < 0 ? decreaseSoundEffectsLevel() : increaseSoundEffectsLevel();
-     }
-
      if (optionName === "movement") {
           direction < 0 ? decreaseMovementLevel() : increaseMovementLevel();
      }
@@ -474,7 +462,7 @@ function handlePausedOverlayPointerDown(x, y) {
 }
 
 function handleTipsMenuPointerDown(x, y) {
-     if (!isTipsListView()) {
+     if (!isInfoMenuView()) {
           return false;
      }
 
@@ -546,7 +534,6 @@ function handleOptionsDetailPointerDown(x, y) {
 
      if (
           gameMenuView !== "options_difficulty" &&
-          gameMenuView !== "options_audio" &&
           gameMenuView !== "options_movement"
      ) {
           return true;
@@ -589,38 +576,6 @@ function handleOptionsDetailPointerDown(x, y) {
                return true;
           }
 
-          return true;
-     }
-
-     if (isPointInsideBox(x, y, gameMenuUi.musicDecreaseButton)) {
-          setOptionsSelectionRow(0);
-          setOptionsSelectionCol(0);
-          decreaseMusicLevel();
-          syncUiBounds();
-          return true;
-     }
-
-     if (isPointInsideBox(x, y, gameMenuUi.musicIncreaseButton)) {
-          setOptionsSelectionRow(0);
-          setOptionsSelectionCol(1);
-          increaseMusicLevel();
-          syncUiBounds();
-          return true;
-     }
-
-     if (isPointInsideBox(x, y, gameMenuUi.soundEffectsDecreaseButton)) {
-          setOptionsSelectionRow(1);
-          setOptionsSelectionCol(0);
-          decreaseSoundEffectsLevel();
-          syncUiBounds();
-          return true;
-     }
-
-     if (isPointInsideBox(x, y, gameMenuUi.soundEffectsIncreaseButton)) {
-          setOptionsSelectionRow(1);
-          setOptionsSelectionCol(1);
-          increaseSoundEffectsLevel();
-          syncUiBounds();
           return true;
      }
 
@@ -882,18 +837,6 @@ function activateOptionsDetailSelection() {
           return;
      }
 
-     if (gameMenuView === "options_audio") {
-          if (optionsSelection.row === 2) {
-               setGameMenuView("options");
-               syncUiBounds();
-               return;
-          }
-
-          const optionName = optionsSelection.row === 0 ? "music" : "soundEffects";
-          const direction = optionsSelection.col === 0 ? -1 : 1;
-          activateOptionAdjustment(optionName, direction);
-     }
-
      if (gameMenuView === "options_movement") {
           if (optionsSelection.row === 1) {
                setGameMenuView("options");
@@ -991,7 +934,7 @@ function handleTipsNavigation(event) {
           return true;
      }
 
-     if (!isTipsListView()) {
+     if (!isInfoMenuView()) {
           return false;
      }
 
@@ -1088,7 +1031,7 @@ function handleOptionsDetailNavigation(event) {
           return true;
      }
 
-     const maxRow = gameMenuView === "options_audio" ? 2 : 1;
+     const maxRow = 1;
 
      if (isUpKey(event)) {
           event.preventDefault();
