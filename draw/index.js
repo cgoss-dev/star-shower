@@ -1137,7 +1137,7 @@ function getLevelProgressCircles(filledUnits = getLevelProgressFilledUnits()) {
 
      return Array.from({ length: maxLevelProgressUnits }, (_item, index) => (
           index < filledUnits ? "●" : "○"
-     )).join("");
+     )).join("") + "🏆";
 }
 
 function getStatusTextLines() {
@@ -1193,8 +1193,7 @@ function drawHudPauseButton(theme) {
      const { colors } = theme;
      const button = touchControls.pauseButton;
      const textStyle = getTextStyle(theme, "scoreReady");
-     const buttonStyle = getTextStyle(theme, "pauseButton");
-     const padding = getTextStyle(theme, "canvasSpacing").uiPadding || 8;
+     const padding = Math.max(2, textStyle.fontSize * 0.15);
      const labelMaxWidth = Math.max(1, button.width - (padding * 2));
      const centerX = button.x + (button.width / 2);
      const centerY = button.y + (button.height / 2);
@@ -1227,7 +1226,7 @@ function drawHudPauseButton(theme) {
                          ...theme.text,
                          scoreReady: {
                               ...textStyle,
-                              fontSize: buttonStyle.fontSize || textStyle.fontSize
+                              fontSize: textStyle.fontSize
                          }
                     }
                },
@@ -1687,10 +1686,9 @@ function drawEffectsMenuScreen(theme) {
      }
 
      const lines = [
-          "HEALTH",
+          "HELP",
           ...getHelpLines(),
-          "",
-          "HURTS",
+          "HURT",
           ...getHurtLines()
      ];
 
@@ -1744,9 +1742,9 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
      const iconX = screenLayout.sidePadding + (iconGutterWidth * 0.25);
      const detailTextX = screenLayout.sidePadding + iconGutterWidth;
      const detailTextWidth = miniGameWidth - detailTextX - screenLayout.sidePadding;
-     const sectionHeadings = new Set(["TIPS", "EFFECTS", "HELPS", "HEALTH", "HURTS"]);
+     const sectionHeadings = new Set(["TIPS", "EFFECTS", "HELP", "HURT"]);
      const shouldCenterContent = Boolean(options.centerContent);
-     const getDetailLineColor = (line) => line.includes("{iconWin}")
+     const getDetailLineColor = (line) => line.includes("{icon")
           ? getCssColor("--color-white", "#fff")
           : detailStyle.color || colors.fontColor;
 

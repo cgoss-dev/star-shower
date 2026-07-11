@@ -336,8 +336,8 @@ export function getCanvasTheme() {
 
           pauseButton: {
                font: "body",
-               fontSize: uiFontSm * 2,
-               buttonSize: Math.max(44, uiFontSm * 3.6),
+               fontSize: uiFontSm,
+               buttonSize: uiFontSm * 1.5,
                iconScale: 0.62,
                letterSpacing: 0,
                color: bodyColor,
@@ -643,12 +643,8 @@ export function getCurrentPausedActionTexts() {
 
 export function getHowToPlayLines() {
      return [
-          "",
-          getWinGoalText(),
-          "",
           "{iconStar} Stars",
           "Gain speed & points.",
-          "",
           "{iconStrike} Strikes",
           "Deal damage."
      ];
@@ -656,13 +652,10 @@ export function getHowToPlayLines() {
 
 export function getHelpLines() {
      return [
-          "",
           "{iconHealth} Health",
           "Increase health.",
-          "",
           "{iconMagnet} Magnet",
           "Triple range.",
-          "",
           "{iconDouble} Double",
           "Double points."
      ];
@@ -670,13 +663,10 @@ export function getHelpLines() {
 
 export function getHurtLines() {
      return [
-          "",
           "{iconDaze} Daze",
           "Reverse movement.",
-          "",
           "{iconFreeze} Freeze",
           "Freeze player.",
-          "",
           "{iconFog} Fog",
           "Shrink visibility."
      ];
