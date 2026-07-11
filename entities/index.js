@@ -57,7 +57,7 @@ import {
      randomItem,
      randomNumber,
      isCollidingWithStar
-} from "../state.js?v=20260711-37";
+} from "../state.js?v=20260711-41";
 
 import {
      maxPlayerHealth,
@@ -71,7 +71,7 @@ import {
      statusFlashSeconds,
      touchArriveDistance,
      movementOptionIndexes
-} from "../options.js?v=20260711-37";
+} from "../options.js?v=20260711-41";
 
 import {
      areStrikesUnlockedForCurrentLevel,
@@ -84,7 +84,7 @@ import {
      starShowerRainbowPalette,
      getCssColor,
      showGameplayPopup
-} from "../game.js?v=20260711-37";
+} from "../game.js?v=20260711-41";
 
 import {
      playerBaseHealth,
@@ -128,7 +128,7 @@ import {
      strikeParticles,
      strikeAssetSrc,
      burstChars
-} from "./constants.js?v=20260711-37";
+} from "./constants.js?v=20260711-41";
 
 export {
      playerBaseHealth,
@@ -340,6 +340,7 @@ const particleColorEngine = {
 };
 
 let pastelParticleColorIndex = 0;
+let healthParticleIndex = 0;
 
 function ensureParticleColorEngine() {
      if (!particleColorEngine.engine) {
@@ -376,6 +377,12 @@ function getNextPastelColorIndex() {
      const colorIndex = pastelParticleColorIndex % 12;
      pastelParticleColorIndex += 1;
      return colorIndex;
+}
+
+function getNextHealthParticle() {
+     const particle = starShowerHealthParticles[healthParticleIndex % starShowerHealthParticles.length] || "❤️";
+     healthParticleIndex += 1;
+     return particle;
 }
 
 function getPastelParticleColor(colorIndex = 0) {
@@ -440,6 +447,7 @@ export function resetEntityColorCycle() {
      }
 
      pastelParticleColorIndex = 0;
+     healthParticleIndex = 0;
      particleColorEngine.engine = null;
 }
 
@@ -1100,7 +1108,7 @@ export function collectStrikes() {
 function createHelphurtPickup(type, category) {
      const x = Math.random() * (miniGameWidth - 20) + 10;
      const particle = type.name === "health"
-          ? randomItem(starShowerHealthParticles)
+          ? getNextHealthParticle()
           : type.particle;
 
      helphurtPickups.push({

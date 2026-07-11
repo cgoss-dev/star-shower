@@ -63,7 +63,7 @@ import {
      setGameMenuScrollMax,
      isPointInsideRect,
      resetActionButtonBounds
-} from "../state.js?v=20260711-37";
+} from "../state.js?v=20260711-41";
 
 import {
      maxDifficultyOptionIndex,
@@ -83,11 +83,11 @@ import {
      fogClearRadiusBase,
      fogClearRadiusMinScale,
      fogClearRadiusMaxScale
-} from "../options.js?v=20260711-37";
+} from "../options.js?v=20260711-41";
 
 import {
      spawnDensityBaselineArea
-} from "../entities/constants.js?v=20260711-37";
+} from "../entities/constants.js?v=20260711-41";
 
 import {
      drawStars,
@@ -109,7 +109,7 @@ import {
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
      syncPlayerSize
-} from "../entities/index.js?v=20260711-37";
+} from "../entities/index.js?v=20260711-41";
 
 import {
      getCanvasTheme,
@@ -132,14 +132,15 @@ import {
      getDifficultyOptionLabel,
      isRoundIntroActive,
      getRoundIntroAlpha,
+     getRoundIntroSecondAlpha,
      getRoundIntroLines
-} from "../game.js?v=20260711-37";
+} from "../game.js?v=20260711-41";
 
 import {
      stepperLeftIcon,
      stepperRightIcon,
      richTextIconAssetImages
-} from "./assets.js?v=20260711-37";
+} from "./assets.js?v=20260711-41";
 
 const siteTheme = window.SiteTheme;
 const levelProgressPulseFrames = 18;
@@ -357,8 +358,8 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
 
      if (gameMenuView === "options") {
           const sliderRowHeight = layout.buttonHeight * 2;
-          const optionsBodyGap = getTextStyle(theme, "canvasSpacing").bodyLineHeight;
           const showMovementOption = isJoystickEnabled();
+          const optionCardMetrics = getOptionsCardMetrics(theme, showMovementOption);
           const optionRows = [
                {
                     row: gameMenuUi.hurtRow,
@@ -391,12 +392,9 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
                     item.row,
                     item.decreaseButton,
                     item.increaseButton,
-                    layout.buttonX,
-                    layout.contentTopY +
-                         optionsBodyGap +
-                         (index * (sliderRowHeight + layout.rowGap)) +
-                         (index > 0 ? optionsBodyGap : 0),
-                    layout.buttonWidth,
+                    optionCardMetrics.contentX,
+                    optionCardMetrics.firstRowY + (index * (sliderRowHeight + optionCardMetrics.rowGap)),
+                    optionCardMetrics.contentWidth,
                     sliderRowHeight
                );
           });
@@ -1748,7 +1746,7 @@ function drawPagedInfoScreen(theme, sections) {
      miniGameCtx.clip();
 
      sections.forEach((section, index) => {
-          const lines = [section.title, "", ...section.lines];
+          const lines = [section.title, ...section.lines];
           const cardHeight = getPagedInfoCardHeight(theme, lines);
           const centeredCardY = viewportTop + Math.max(0, (viewportHeight - cardHeight) / 2);
           const pageY = centeredCardY + (index * pageSize) - gameMenuScroll.offset;
@@ -2116,6 +2114,69 @@ function getOptionDescriptionY(layout, rowCount = 1) {
      return layout.contentTopY + rowStackHeight + layout.titleGap;
 }
 
+function getOptionsCardMetrics(theme, showMovementOption = isJoystickEnabled()) {
+     const layout = getMenuScreenLayout(theme);
+     const titleStyle = getTextStyle(theme, "title");
+     const optionStyle = getTextStyle(theme, "buttonsOptions");
+     const canvasSpacing = getTextStyle(theme, "canvasSpacing");
+     const lineHeight = canvasSpacing.bodyLineHeight;
+     const cardXPadding = canvasSpacing.uiPadding;
+     const cardYPadding = lineHeight;
+     const cardBottomPadding = Math.max(0, cardYPadding - (lineHeight - optionStyle.fontSize));
+     const rowHeight = layout.buttonHeight * 2;
+     const rowGap = showMovementOption ? lineHeight : 0;
+     const sectionHeadingGap = lineHeight * 0.5;
+     const maxCardWidth = Math.max(optionStyle.fontSize, miniGameWidth - (layout.sidePadding * 2));
+     const arrowSpace = Math.min(96, Math.max(70, maxCardWidth * 0.18 * 2));
+     const arrowGap = optionStyle.fontSize * 1.5;
+     const labels = [
+          "DIFFICULTY",
+          getDifficultyOptionDescription(hurtLevel),
+          ...(showMovementOption ? ["MOVEMENT", getShortMovementOptionLabel(movementLevel)] : [])
+     ];
+     let maxTextWidth = 0;
+
+     miniGameCtx.save();
+     miniGameCtx.font = getTextFont(theme, "buttonsOptions", 400);
+     labels.forEach((label) => {
+          maxTextWidth = Math.max(maxTextWidth, miniGameCtx.measureText(label).width);
+     });
+     miniGameCtx.restore();
+
+     const rowContentWidth = Math.min(
+          maxCardWidth - (cardXPadding * 2),
+          Math.max(optionStyle.fontSize, maxTextWidth + arrowSpace + arrowGap)
+     );
+     const cardWidth = Math.min(
+          maxCardWidth,
+          Math.max(measureMenuScreenTitleWidth("OPTIONS", theme), rowContentWidth) + (cardXPadding * 2)
+     );
+     const cardHeight =
+          cardYPadding +
+          titleStyle.fontSize +
+          sectionHeadingGap +
+          rowHeight +
+          (showMovementOption ? rowGap + rowHeight : 0) +
+          cardBottomPadding;
+     const viewportTop = layout.titleY;
+     const viewportBottom = layout.contentBottomY;
+     const viewportHeight = Math.max(0, viewportBottom - viewportTop);
+     const cardX = (miniGameWidth - cardWidth) / 2;
+     const cardY = viewportTop + Math.max(0, (viewportHeight - cardHeight) / 2);
+
+     return {
+          cardX,
+          cardY,
+          cardWidth,
+          cardHeight,
+          contentX: cardX + cardXPadding,
+          contentWidth: cardWidth - (cardXPadding * 2),
+          titleY: cardY + cardYPadding,
+          firstRowY: cardY + cardYPadding + titleStyle.fontSize + sectionHeadingGap,
+          rowGap
+     };
+}
+
 function drawOptionsScreen(theme) {
      if (!miniGameCtx) {
           return;
@@ -2126,39 +2187,24 @@ function drawOptionsScreen(theme) {
      const focused = optionsSelection;
      const showMovementOption = isJoystickEnabled();
      const backRowIndex = showMovementOption ? 2 : 1;
+     const optionCardMetrics = getOptionsCardMetrics(theme, showMovementOption);
+     const optionStyle = getTextStyle(theme, "buttonsOptions");
 
      miniGameCtx.save();
      miniGameCtx.fillStyle = colors.menuScreenFill;
      miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
 
-     const optionsTitleY = Math.max(
-          layout.titleY,
-          (gameMenuUi.hurtRow.y - layout.titleFontSize) / 2
-     );
-     const canvasSpacing = getTextStyle(theme, "canvasSpacing");
-     const optionCardXPadding = canvasSpacing.uiPadding;
-     const optionCardYPadding = canvasSpacing.bodyLineHeight;
-     const lastOptionRow = showMovementOption ? gameMenuUi.movementRow : gameMenuUi.hurtRow;
-     const optionCardWidth = Math.min(
-          miniGameWidth - (layout.sidePadding * 2),
-          layout.buttonWidth + (optionCardXPadding * 2)
-     );
-     const optionCardX = (miniGameWidth - optionCardWidth) / 2;
-     const optionCardY = Math.max(layout.titleY, optionsTitleY - optionCardYPadding);
-     const optionCardBottomY = lastOptionRow.y + lastOptionRow.height + optionCardYPadding;
-     const optionCardHeight = Math.max(0, optionCardBottomY - optionCardY);
-
      strokeRoundedControlRect(
-          optionCardX,
-          optionCardY,
-          optionCardWidth,
-          optionCardHeight,
-          getControlCornerRadius(theme, optionCardWidth, optionCardHeight),
+          optionCardMetrics.cardX,
+          optionCardMetrics.cardY,
+          optionCardMetrics.cardWidth,
+          optionCardMetrics.cardHeight,
+          getControlCornerRadius(theme, optionCardMetrics.cardWidth, optionCardMetrics.cardHeight),
           theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1,
-          getTextStyle(theme, "buttonsOptions").color || colors.controlText
+          optionStyle.color || colors.controlText
      );
 
-     drawMenuScreenTitle("OPTIONS", theme, layout.titleCenterX, optionsTitleY);
+     drawMenuScreenTitle("OPTIONS", theme, layout.titleCenterX, optionCardMetrics.titleY);
 
      drawOptionStepper(
           gameMenuUi.hurtRow,
@@ -2635,6 +2681,7 @@ function drawRoundIntroOverlay(theme) {
      const { screens } = theme;
      const introLines = getRoundIntroLines();
      const textAlpha = getRoundIntroAlpha();
+     const secondTextAlpha = getRoundIntroSecondAlpha();
      const buttonStyle = getTextStyle(theme, "buttonsOptions");
      const fontSize = buttonStyle.fontSize;
      const lineHeight = fontSize * 1.5;
@@ -2649,13 +2696,13 @@ function drawRoundIntroOverlay(theme) {
      miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
      miniGameCtx.restore();
 
-     miniGameCtx.save();
-     miniGameCtx.globalAlpha = textAlpha;
-
      introLines.forEach((line, index) => {
           if (!line) {
                return;
           }
+
+          miniGameCtx.save();
+          miniGameCtx.globalAlpha = textAlpha * (index >= 3 ? secondTextAlpha : 1);
 
           drawGlowingCanvasText(
                miniGameCtx,
@@ -2669,9 +2716,9 @@ function drawRoundIntroOverlay(theme) {
                theme,
                true
           );
-     });
 
-     miniGameCtx.restore();
+          miniGameCtx.restore();
+     });
 }
 
 function drawGameStatusOverlay(theme) {
@@ -2820,7 +2867,7 @@ function drawGameplayPopup(theme) {
      const isLevelPopup = gameplayPopupText === "Lvl Up!";
      const y = Math.max(fontSize, progressCenterY - (fontSize * 1.35));
 
-     drawCenteredMarqueeText(theme, gameplayPopupText, miniGameWidth / 2, y, fontSize, popupAlpha, isLevelPopup);
+     drawCenteredMarqueeText(theme, gameplayPopupText, miniGameWidth / 2, y, fontSize, popupAlpha, isLevelPopup, false);
 }
 
 // ==================================================
@@ -2859,8 +2906,6 @@ export function drawGame() {
 
           drawFogOverlay();
 
-          drawGameplayPopup(theme);
-
           if (!gameMenuOpen && !isRoundIntroActive()) {
                drawHudBadges(theme);
                drawLevelProgressStars(theme);
@@ -2881,6 +2926,10 @@ export function drawGame() {
           drawGameWelcomeOverlay(theme);
      } else {
           drawGameStatusOverlay(theme);
+     }
+
+     if (gameStarted && !gameMenuOpen && !isRoundIntroActive()) {
+          drawGameplayPopup(theme);
      }
 
      if (gameStarted && !gameMenuOpen && !gamePaused && !gameOver && !gameWon && !isRoundIntroActive()) {

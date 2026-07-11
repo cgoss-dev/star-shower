@@ -47,7 +47,7 @@ import {
 
      resetUiActionBounds,
      resetGameState
-} from "./state.js?v=20260711-37";
+} from "./state.js?v=20260711-41";
 
 import {
      difficultyOptionLabels,
@@ -59,7 +59,7 @@ import {
      isJoystickEnabled,
      loadAndApplySavedOptions,
      saveCurrentOptions
-} from "./options.js?v=20260711-37";
+} from "./options.js?v=20260711-41";
 
 import {
      bindKeyboardInput,
@@ -67,7 +67,7 @@ import {
      bindResizeHandler,
      updateTouchControlBounds,
      resetTouchControls
-} from "./input.js?v=20260711-37";
+} from "./input.js?v=20260711-41";
 
 import {
      resetPlayerPosition,
@@ -85,14 +85,14 @@ import {
      collectHelphurtPickups,
      updatePlayerTrail,
      resetHelphurtIntroState
-} from "./entities/index.js?v=20260711-37";
+} from "./entities/index.js?v=20260711-41";
 
 import {
      syncUiBounds,
      updatePauseButtonState,
      updateScreenTitleColorState,
      drawGame
-} from "./draw/index.js?v=20260711-37";
+} from "./draw/index.js?v=20260711-41";
 
 // ====================================================================================================
 // NOTE: CONFIG / THEME
@@ -539,11 +539,13 @@ export const overlayFadeFrames = 30;
 export const gameplayPopupDurationFrames = 180;
 const roundIntroMessageFrames = 60;
 const roundIntroPauseFrames = 60;
+const roundIntroSecondFadeFrames = 120;
 const roundIntroSecondHoldFrames = 60;
 const roundIntroFadeFrames = 120;
 const roundIntroTotalFrames =
      roundIntroMessageFrames +
      roundIntroPauseFrames +
+     roundIntroSecondFadeFrames +
      roundIntroSecondHoldFrames +
      roundIntroFadeFrames;
 export const maxLevelProgressUnits = 10;
@@ -857,6 +859,17 @@ export function getRoundIntroLines() {
           "",
           ...roundIntroSecondLines
      ];
+}
+
+export function getRoundIntroSecondAlpha() {
+     const elapsedFrames = roundIntroTotalFrames - roundIntroTimer;
+     const secondMessageStart = roundIntroMessageFrames + roundIntroPauseFrames;
+
+     if (elapsedFrames < secondMessageStart) {
+          return 0;
+     }
+
+     return Math.max(0, Math.min(1, (elapsedFrames - secondMessageStart) / roundIntroSecondFadeFrames));
 }
 
 export function getCurrentScreenTitleLines() {
@@ -1243,7 +1256,9 @@ export function updateGame() {
      // 4. Finish by checking lose/win conditions and switching to the matching result screen.
      updatePauseButtonState();
      updateGameOverlayTimer();
-     updateGameplayPopupTimer();
+     if (!gamePaused) {
+          updateGameplayPopupTimer();
+     }
      updateMenuKeyboardFocusTimer();
      updateGameMenuScrollVelocity();
 
