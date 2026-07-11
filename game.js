@@ -596,8 +596,8 @@ const levelRules = Array.from({ length: maxLevelProgressUnits }, (_, index) => {
 // ====================================================================================================
 
 const welcomeTitleLines = ["STAR", "SHOWER"];
-const screenActionTexts = ["NEW GAME", "TIPS", "EFFECTS", "OPTIONS", "DEVELOPER"];
-const pausedActionTexts = ["RESUME", "NEW GAME", "TIPS", "EFFECTS", "OPTIONS", "DEVELOPER"];
+const screenActionTexts = ["NEW GAME", "TIPS", "OPTIONS", "DEVELOPER"];
+const pausedActionTexts = ["RESUME", "NEW GAME", "TIPS", "OPTIONS", "DEVELOPER"];
 const roundIntroFirstLines = ["Collect Stars,", "Avoid Strikes"];
 const roundIntroSecondLines = ["Effects Can", "Help or Hurt"];
 
@@ -881,29 +881,6 @@ export function dismissScreenWelcomeToTipsMenu() {
      clearGameOverlay();
 }
 
-export function dismissScreenWelcomeToEffectsMenu() {
-     screenLayerActive = false;
-     gameScreenMode = "screenWelcome";
-     screenLayerTimer = 0;
-     screenLayerDuration = 0;
-
-     resetGameState();
-     resetTouchControls();
-     resetEntityColorCycle();
-
-     syncCanvasResolutionAndUiBounds();
-     resetPlayerPosition();
-
-     setGameStarted(false);
-     setGamePaused(false);
-     setGameMenuOpen(true);
-     setMenuViewAndRefresh("effects");
-     setGameOver(false);
-     setGameWon(false);
-
-     clearGameOverlay();
-}
-
 export function dismissScreenWelcomeToOptionsMenu() {
      screenLayerActive = false;
      gameScreenMode = "screenWelcome";
@@ -931,12 +908,6 @@ export function dismissPausedToTipsMenu() {
      setGamePaused(true);
      setGameMenuOpen(true);
      setMenuViewAndRefresh("tips");
-}
-
-export function dismissPausedToEffectsMenu() {
-     setGamePaused(true);
-     setGameMenuOpen(true);
-     setMenuViewAndRefresh("effects");
 }
 
 export function dismissPausedToOptionsMenu() {

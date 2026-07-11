@@ -249,7 +249,6 @@ function getHoverableCanvasButtons() {
           buttons.push(
                screenActionUi.startButton,
                screenActionUi.tipsButton,
-               screenActionUi.effectsButton,
                screenActionUi.menuButton,
                screenActionUi.returnButton
           );
@@ -259,7 +258,6 @@ function getHoverableCanvasButtons() {
           buttons.push(
                pausedActionUi.resumeButton,
                pausedActionUi.tipsButton,
-               pausedActionUi.effectsButton,
                pausedActionUi.menuButton,
                pausedActionUi.returnButton
           );
@@ -444,13 +442,22 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
 
 function updatePauseButtonBounds(theme = getCanvasTheme()) {
      const button = touchControls.pauseButton;
-     const buttonStyle = getTextStyle(theme, "pauseButton");
+     const textStyle = getTextStyle(theme, "scoreReady");
      const canvasSpacing = getTextStyle(theme, "canvasSpacing");
-     const buttonSize = buttonStyle.buttonSize || (buttonStyle.fontSize + canvasSpacing.uiPadding);
+     const font = getTextFont(theme, "scoreReady", 400);
+     const buttonText = getHudPauseText();
+     let buttonWidth = buttonText.length * textStyle.fontSize * 0.7;
 
-     button.width = buttonSize;
-     button.height = buttonSize;
-     button.x = (miniGameWidth - button.width) / 2;
+     if (miniGameCtx) {
+          miniGameCtx.save();
+          miniGameCtx.font = font;
+          buttonWidth = miniGameCtx.measureText(buttonText).width;
+          miniGameCtx.restore();
+     }
+
+     button.width = buttonWidth;
+     button.height = textStyle.fontSize;
+     button.x = canvasSpacing.uiPadding;
      button.y = canvasSpacing.uiPadding;
 }
 
@@ -1129,6 +1136,10 @@ function getScoreBadgeText() {
      return `⭐ ${String(starScore).padStart(3, "0")}`;
 }
 
+function getHudPauseText() {
+     return `⏯️ ${gamePaused ? "PAUSED" : "Let's Play!"}`;
+}
+
 function getLevelProgressFilledUnits() {
      return Math.max(1, Math.min(maxLevelProgressUnits, getCurrentLevelNumber()));
 }
@@ -1136,8 +1147,10 @@ function getLevelProgressFilledUnits() {
 function getLevelProgressCircles(filledUnits = getLevelProgressFilledUnits()) {
 
      return Array.from({ length: maxLevelProgressUnits }, (_item, index) => (
-          index < filledUnits ? "●" : "○"
-     )).join("") + "🏆";
+          index === maxLevelProgressUnits - 1 && index < filledUnits ? "★" :
+          index < filledUnits ? "●" :
+          "○"
+     )).join("");
 }
 
 function getStatusTextLines() {
@@ -1190,56 +1203,9 @@ function drawHudPauseButton(theme) {
           return;
      }
 
-     const { colors } = theme;
      const button = touchControls.pauseButton;
-     const textStyle = getTextStyle(theme, "scoreReady");
-     const padding = Math.max(2, textStyle.fontSize * 0.15);
-     const labelMaxWidth = Math.max(1, button.width - (padding * 2));
-     const centerX = button.x + (button.width / 2);
-     const centerY = button.y + (button.height / 2);
-     const cornerRadius = getControlCornerRadius(theme, button.width, button.height);
-     const borderWidth = theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1;
-     const color = textStyle.color || colors.bodyText;
 
-     miniGameCtx.save();
-     strokeRoundedControlRect(
-          button.x,
-          button.y,
-          button.width,
-          button.height,
-          cornerRadius,
-          borderWidth,
-          color
-     );
-     miniGameCtx.restore();
-
-     drawGlowingCanvasText(
-          miniGameCtx,
-          "⏯️",
-          centerX,
-          centerY + 1,
-          color,
-          getFittedTextFont(
-               {
-                    ...theme,
-                    text: {
-                         ...theme.text,
-                         scoreReady: {
-                              ...textStyle,
-                              fontSize: textStyle.fontSize
-                         }
-                    }
-               },
-               "scoreReady",
-               "⏯️",
-               labelMaxWidth,
-               400
-          ),
-          "center",
-          "middle",
-          theme,
-          false
-     );
+     drawHudText(theme, getHudPauseText(), button.x, button.y, "left", "scoreReady", button.width);
 }
 
 function drawHudBadges(theme) {
@@ -1251,10 +1217,9 @@ function drawHudBadges(theme) {
      const statusLines = getStatusTextLines();
      const sideColumnWidth = Math.max(64, (miniGameWidth - (padding * 2)) * 0.3);
 
-     drawHudText(theme, getScoreBadgeText(), leftX, padding, "left", "scoreReady", sideColumnWidth);
-     drawHudText(theme, getHealthBadgeText(), leftX, padding + lineHeight, "left", "scoreReady", sideColumnWidth);
-
      drawHudPauseButton(theme);
+     drawHudText(theme, getScoreBadgeText(), leftX, padding + lineHeight, "left", "scoreReady", sideColumnWidth);
+     drawHudText(theme, getHealthBadgeText(), leftX, padding + (lineHeight * 2), "left", "scoreReady", sideColumnWidth);
 
      statusLines.forEach((statusText, index) => {
           drawHudText(
@@ -1674,18 +1639,7 @@ function drawTipsMenuScreen(theme) {
 
      const lines = [
           "TIPS",
-          ...getHowToPlayLines()
-     ];
-
-     drawScrollableInfoScreen(theme, lines);
-}
-
-function drawEffectsMenuScreen(theme) {
-     if (!miniGameCtx) {
-          return;
-     }
-
-     const lines = [
+          ...getHowToPlayLines(),
           "HELP",
           ...getHelpLines(),
           "HURT",
@@ -1742,7 +1696,7 @@ function drawMenuDetailLines(theme, lines, startY, options = {}) {
      const iconX = screenLayout.sidePadding + (iconGutterWidth * 0.25);
      const detailTextX = screenLayout.sidePadding + iconGutterWidth;
      const detailTextWidth = miniGameWidth - detailTextX - screenLayout.sidePadding;
-     const sectionHeadings = new Set(["TIPS", "EFFECTS", "HELP", "HURT"]);
+     const sectionHeadings = new Set(["TIPS", "HELP", "HURT"]);
      const shouldCenterContent = Boolean(options.centerContent);
      const getDetailLineColor = (line) => line.includes("{icon")
           ? getCssColor("--color-white", "#fff")
@@ -2340,10 +2294,6 @@ function drawSharedActionScreen(
                     setButtonBounds(actionUi.tipsButton, buttonX, buttonY, buttonWidth, buttonHeight);
                }
 
-               if (item.text === "EFFECTS" && actionUi.effectsButton) {
-                    setButtonBounds(actionUi.effectsButton, buttonX, buttonY, buttonWidth, buttonHeight);
-               }
-
                if (item.text === "OPTIONS") {
                     setButtonBounds(actionUi.menuButton, buttonX, buttonY, buttonWidth, buttonHeight);
                }
@@ -2383,9 +2333,8 @@ function drawGameWelcomeOverlay(theme) {
           {
                "NEW GAME": 0,
                "TIPS": 1,
-               "EFFECTS": 2,
-               "OPTIONS": 3,
-               "DEVELOPER": 4
+               "OPTIONS": 2,
+               "DEVELOPER": 3
           },
           alpha,
           !isWelcomeScreen,
@@ -2410,9 +2359,8 @@ function drawPausedOverlay(theme) {
                "RESUME": 0,
                "NEW GAME": 1,
                "TIPS": 2,
-               "EFFECTS": 3,
-               "OPTIONS": 4,
-               "DEVELOPER": 5
+               "OPTIONS": 3,
+               "DEVELOPER": 4
           },
           1,
           true
@@ -2643,8 +2591,11 @@ export function drawGame() {
           drawStrikes();
           drawHelphurtPickups();
           drawCollisionBursts();
-          drawPlayerTrail();
-          drawPlayer();
+
+          if (!isRoundIntroActive()) {
+               drawPlayerTrail();
+               drawPlayer();
+          }
 
           drawFogOverlay();
 
@@ -2659,8 +2610,6 @@ export function drawGame() {
      if (gameMenuOpen) {
           if (gameMenuView === "tips") {
                drawTipsMenuScreen(theme);
-          } else if (gameMenuView === "effects") {
-               drawEffectsMenuScreen(theme);
           } else if (gameMenuView === "options") {
                drawOptionsScreen(theme);
           }

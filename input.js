@@ -79,10 +79,8 @@ import {
 import {
      dismissScreenWelcomeToStart,
      dismissScreenWelcomeToTipsMenu,
-     dismissScreenWelcomeToEffectsMenu,
      dismissScreenWelcomeToOptionsMenu,
      dismissPausedToTipsMenu,
-     dismissPausedToEffectsMenu,
      dismissPausedToOptionsMenu,
      dismissMenuBackToPreviousScreen,
      showScreenWelcome,
@@ -231,7 +229,7 @@ function isOptionsDetailView() {
 }
 
 function isInfoMenuView() {
-     return gameMenuView === "tips" || gameMenuView === "effects";
+     return gameMenuView === "tips";
 }
 
 function isScrollableMenuView() {
@@ -408,20 +406,14 @@ function handleWelcomeOrResultPointerDown(x, y) {
           return true;
      }
 
-     if (isScreenWelcomeActive() && isPointInsideBox(x, y, screenActionUi.effectsButton)) {
-          dismissScreenWelcomeToEffectsMenu();
+     if (isScreenWelcomeActive() && isPointInsideBox(x, y, screenActionUi.menuButton)) {
+          dismissScreenWelcomeToOptionsMenu();
           setWelcomeSelectionIndex(2);
           return true;
      }
 
-     if (isScreenWelcomeActive() && isPointInsideBox(x, y, screenActionUi.menuButton)) {
-          dismissScreenWelcomeToOptionsMenu();
-          setWelcomeSelectionIndex(3);
-          return true;
-     }
-
      if (isScreenWelcomeActive() && isPointInsideBox(x, y, screenActionUi.returnButton)) {
-          setWelcomeSelectionIndex(4);
+          setWelcomeSelectionIndex(3);
           returnToWebsite();
           return true;
      }
@@ -453,20 +445,14 @@ function handlePausedOverlayPointerDown(x, y) {
           return true;
      }
 
-     if (isPointInsideBox(x, y, pausedActionUi.effectsButton)) {
-          setPausedSelectionIndex(3);
-          dismissPausedToEffectsMenu();
-          return true;
-     }
-
      if (isPointInsideBox(x, y, pausedActionUi.menuButton)) {
-          setPausedSelectionIndex(4);
+          setPausedSelectionIndex(3);
           dismissPausedToOptionsMenu();
           return true;
      }
 
      if (isPointInsideBox(x, y, pausedActionUi.returnButton)) {
-          setPausedSelectionIndex(5);
+          setPausedSelectionIndex(4);
           returnToWebsite();
           return true;
      }
@@ -779,16 +765,11 @@ function activateWelcomeSelection() {
      }
 
      if (selection === 2 && isScreenWelcomeActive()) {
-          dismissScreenWelcomeToEffectsMenu();
+          dismissScreenWelcomeToOptionsMenu();
           setWelcomeSelectionIndex(2);
      }
 
      if (selection === 3 && isScreenWelcomeActive()) {
-          dismissScreenWelcomeToOptionsMenu();
-          setWelcomeSelectionIndex(3);
-     }
-
-     if (selection === 4 && isScreenWelcomeActive()) {
           returnToWebsite();
      }
 }
@@ -808,14 +789,10 @@ function activatePausedSelection() {
      }
 
      if (pausedSelectionIndex === 3) {
-          dismissPausedToEffectsMenu();
-     }
-
-     if (pausedSelectionIndex === 4) {
           dismissPausedToOptionsMenu();
      }
 
-     if (pausedSelectionIndex === 5) {
+     if (pausedSelectionIndex === 4) {
           returnToWebsite();
      }
 }
@@ -894,14 +871,14 @@ function handleWelcomeNavigation(event) {
      if (isPreviousMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
-          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex - 1, 0, 4));
+          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex - 1, 0, 3));
           return true;
      }
 
      if (isNextMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
-          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex + 1, 0, 4));
+          setWelcomeSelectionIndex(clamp(welcomeSelectionIndex + 1, 0, 3));
           return true;
      }
 
@@ -929,14 +906,14 @@ function handlePausedNavigation(event) {
      if (isPreviousMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
-          setPausedSelectionIndex(clamp(pausedSelectionIndex - 1, 0, 5));
+          setPausedSelectionIndex(clamp(pausedSelectionIndex - 1, 0, 4));
           return true;
      }
 
      if (isNextMenuKey(event)) {
           event.preventDefault();
           showMenuKeyboardFocusForDirectionalArrow(event);
-          setPausedSelectionIndex(clamp(pausedSelectionIndex + 1, 0, 5));
+          setPausedSelectionIndex(clamp(pausedSelectionIndex + 1, 0, 4));
           return true;
      }
 
