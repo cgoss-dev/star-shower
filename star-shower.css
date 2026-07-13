@@ -162,6 +162,12 @@ body {
      }
 }
 
+@media (hover: none) and (pointer: coarse) {
+     :root {
+          --game-joystick-enabled: true;
+     }
+}
+
 .game-container::after {
      content: "";
      position: absolute;

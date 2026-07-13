@@ -538,15 +538,11 @@ export const startOverlayDuration = 120;
 export const overlayFadeFrames = 30;
 export const gameplayPopupDurationFrames = 180;
 const roundIntroFirstFadeFrames = 120;
-const roundIntroPauseFrames = 60;
 const roundIntroSecondFadeFrames = 120;
-const roundIntroSecondHoldFrames = 60;
 const roundIntroFadeFrames = 120;
 const roundIntroTotalFrames =
      roundIntroFirstFadeFrames +
-     roundIntroPauseFrames +
      roundIntroSecondFadeFrames +
-     roundIntroSecondHoldFrames +
      roundIntroFadeFrames;
 export const maxLevelProgressUnits = 10;
 export const progressUnitsPerCircle = 2;
@@ -848,7 +844,7 @@ export function getRoundIntroAlpha() {
 
 export function getRoundIntroLines() {
      const elapsedFrames = roundIntroTotalFrames - roundIntroTimer;
-     const secondMessageStart = roundIntroFirstFadeFrames + roundIntroPauseFrames;
+     const secondMessageStart = roundIntroFirstFadeFrames;
 
      if (elapsedFrames < secondMessageStart) {
           return roundIntroFirstLines;
@@ -869,7 +865,7 @@ export function getRoundIntroFirstAlpha() {
 
 export function getRoundIntroSecondAlpha() {
      const elapsedFrames = roundIntroTotalFrames - roundIntroTimer;
-     const secondMessageStart = roundIntroFirstFadeFrames + roundIntroPauseFrames;
+     const secondMessageStart = roundIntroFirstFadeFrames;
 
      if (elapsedFrames < secondMessageStart) {
           return 0;

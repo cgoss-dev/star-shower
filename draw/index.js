@@ -1088,9 +1088,7 @@ export function drawOptionStepper(
      const canDecrease = levelIndex > 0;
      const canIncrease = levelIndex < maxLevelIndex;
      const optionTextColor = optionsStyle.color || colors.controlText;
-     const labelTextColor = label.toUpperCase() === "DIFFICULTY"
-          ? getCssColor("--color-white", "#fff")
-          : optionTextColor;
+     const labelTextColor = getCssColor("--color-white", "#fff");
      const arrowScale = optionsStyle.arrowScale || 1;
      const arrowIconSize = Math.min(row.height * 0.5, optionsStyle.fontSize * arrowScale);
      const borderWidth = theme.sizes.borderWidthFocus || theme.sizes.borderWidth || 1;
