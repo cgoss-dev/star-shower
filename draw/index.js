@@ -456,7 +456,7 @@ function updatePauseButtonBounds(theme = getCanvasTheme()) {
 
      button.width = buttonWidth;
      button.height = textStyle.fontSize;
-     button.x = canvasSpacing.uiPadding;
+     button.x = miniGameWidth - canvasSpacing.uiPadding - buttonWidth;
      button.y = canvasSpacing.uiPadding;
 }
 
@@ -1081,6 +1081,7 @@ export function drawOptionStepper(
      const centerY = row.y + (row.height / 2);
      const titleY = row.y + (row.height * 0.25);
      const valueY = row.y + (row.height * 0.75);
+     const valueLines = String(value).split("\n");
      const arrowCenterY = titleY;
      const canDecrease = levelIndex > 0;
      const canIncrease = levelIndex < maxLevelIndex;
@@ -1150,18 +1151,22 @@ export function drawOptionStepper(
           false
      );
 
-     drawGlowingCanvasText(
-          miniGameCtx,
-          value,
-          row.x + (row.width / 2),
-          valueY,
-          optionTextColor,
-          getTextFont(theme, "buttonsOptions", 400),
-          "center",
-          "middle",
-          theme,
-          false
-     );
+     valueLines.forEach((valueLine, index) => {
+          const lineOffset = (index - ((valueLines.length - 1) / 2)) * optionsStyle.fontSize;
+
+          drawGlowingCanvasText(
+               miniGameCtx,
+               valueLine,
+               row.x + (row.width / 2),
+               valueY + lineOffset,
+               optionTextColor,
+               getTextFont(theme, "buttonsOptions", 400),
+               "center",
+               "middle",
+               theme,
+               false
+          );
+     });
 
      drawStepperArrow(increaseButton, stepperRightIcon, canIncrease, isIncreaseActive);
 }
@@ -1182,7 +1187,11 @@ function getScoreBadgeText() {
 }
 
 function getHudPauseText() {
-     return `⏯️ ${gamePaused ? "PAUSED" : "PAUSE"}`;
+     return gamePaused ? "▶️" : "⏸️";
+}
+
+function getLevelBadgeText() {
+     return `🏆 ${getCurrentLevelNumber()}/${maxLevelProgressUnits}`;
 }
 
 function getLevelProgressFilledUnits() {
@@ -1260,7 +1269,7 @@ function drawHudPauseButton(theme) {
 
      const button = touchControls.pauseButton;
 
-     drawHudText(theme, getHudPauseText(), button.x, button.y, "left", "scoreReady");
+     drawHudText(theme, getHudPauseText(), button.x + button.width, button.y, "right", "scoreReady");
 }
 
 function drawHudBadges(theme) {
@@ -1276,6 +1285,7 @@ function drawHudBadges(theme) {
      const sideColumnWidth = Math.max(80, measuredStatusWidth, (miniGameWidth - (padding * 2)) * 0.3);
 
      drawHudPauseButton(theme);
+     drawHudText(theme, getLevelBadgeText(), leftX, padding, "left", "scoreReady", sideColumnWidth);
      drawHudText(theme, getScoreBadgeText(), leftX, padding + lineHeight, "left", "scoreReady", sideColumnWidth);
      drawHudText(theme, getHealthBadgeText(), leftX, padding + (lineHeight * 2), "left", "scoreReady", sideColumnWidth);
 
@@ -1284,7 +1294,7 @@ function drawHudBadges(theme) {
                theme,
                getCompactStatusText(statusText, sideColumnWidth),
                rightX,
-               padding + (lineHeight * index),
+               padding + (lineHeight * (index + 1)),
                "right",
                "scoreReady",
                sideColumnWidth
@@ -2133,7 +2143,9 @@ function getOptionsCardMetrics(theme, showMovementOption = isJoystickEnabled()) 
      miniGameCtx.save();
      miniGameCtx.font = getTextFont(theme, "buttonsOptions", 400);
      labels.forEach((label) => {
-          maxTextWidth = Math.max(maxTextWidth, miniGameCtx.measureText(label).width);
+          String(label).split("\n").forEach((line) => {
+               maxTextWidth = Math.max(maxTextWidth, miniGameCtx.measureText(line).width);
+          });
      });
      miniGameCtx.restore();
 

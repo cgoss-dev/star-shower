@@ -48,9 +48,9 @@ export const configStorageKeys = {
 // OPTION DEFINITIONS
 // ==================================================
 
-export const difficultyOptionLabels = ["Min", "Med", "Max"];
+export const difficultyOptionLabels = ["Off", "Min", "Med", "Max"];
 export const maxDifficultyOptionIndex = difficultyOptionLabels.length - 1;
-export const defaultDifficultyOptionIndex = 1;
+export const defaultDifficultyOptionIndex = 2;
 export const movementOptionLabels = ["Touch/Click + WASD/Arrows", "Joystick"];
 export const movementOptionIndexes = {
      pointerKeyboard: 0,

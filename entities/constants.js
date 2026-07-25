@@ -15,7 +15,7 @@ export const framesPerSecond = 60;
 
 export const starSpawnDelay = 25;
 export const starSpawnCap = 50;
-export const strikeSpawnRatio = 0.3;
+export const strikeSpawnRatio = 0.25;
 export const openingStrikeGraceStarSpawns = 10;
 export const openingHelphurtGraceStarSpawns = 50;
 export const helphurtPickupCap = 12;
@@ -31,6 +31,7 @@ export const fallSpeedMaxScale = 1;
 export const fallingObjectSpeedStep = 0.25;
 
 export const helphurtSpawnIntervalsByDifficulty = [
+     0,
      15,
      10,
      5

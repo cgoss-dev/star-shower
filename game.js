@@ -692,9 +692,10 @@ export function getHurtLines() {
 
 export function getDifficultyOptionLines() {
      return [
-          "MIN: 1 pickup per 15 stars.",
-          "MED: 1 pickup per 10 stars.",
-          "MAX: 1 pickup per 5 stars."
+          "OFF: No pickups.",
+          "MIN: 1 pickup\nper 15 stars.",
+          "MED: 1 pickup\nper 10 stars.",
+          "MAX: 1 pickup\nper 5 stars."
      ];
 }
 
