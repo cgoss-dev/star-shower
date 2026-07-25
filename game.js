@@ -692,9 +692,9 @@ export function getHurtLines() {
 
 export function getDifficultyOptionLines() {
      return [
-          "OFF: No effects.",
-          "MED: 1x Effects.",
-          "MAX: 3x Effects."
+          "MIN: 1 pickup per 15 stars.",
+          "MED: 1 pickup per 10 stars.",
+          "MAX: 1 pickup per 5 stars."
      ];
 }
 
@@ -704,10 +704,7 @@ export function getMovementOptionLines() {
      ];
 
      if (isJoystickEnabled()) {
-          lines.push(
-               "Joystick Left: lower-left touch joystick.",
-               "Joystick Right: lower-right touch joystick."
-          );
+          lines.push("Joystick: lower-center touch joystick.");
      }
 
      return lines;

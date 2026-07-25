@@ -15,8 +15,8 @@ export const framesPerSecond = 60;
 
 export const starSpawnDelay = 25;
 export const starSpawnCap = 50;
-export const strikeSpawnRatio = 0.35;
-export const openingStrikeGraceStarSpawns = 15;
+export const strikeSpawnRatio = 0.3;
+export const openingStrikeGraceStarSpawns = 10;
 export const openingHelphurtGraceStarSpawns = 50;
 export const helphurtPickupCap = 12;
 export const collisionBurstParticleCount = 15;
@@ -30,23 +30,10 @@ export const fallSpeedMinScale = 0.7;
 export const fallSpeedMaxScale = 1;
 export const fallingObjectSpeedStep = 0.25;
 
-export const helphurtBaseSpawnStarsByLevel = [
-     8,
+export const helphurtSpawnIntervalsByDifficulty = [
+     15,
      10,
-     9,
-     8,
-     7,
-     6,
-     5,
-     4,
-     3,
-     2
-];
-
-export const helphurtDifficultyMultipliers = [
-     0,
-     1,
-     3
+     5
 ];
 
 export const helphurtFallSpeedMultipliersByLevel = [

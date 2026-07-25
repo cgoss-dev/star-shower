@@ -112,8 +112,7 @@ import {
      fallSpeedMinScale,
      fallSpeedMaxScale,
      fallingObjectSpeedStep,
-     helphurtBaseSpawnStarsByLevel,
-     helphurtDifficultyMultipliers,
+     helphurtSpawnIntervalsByDifficulty,
      helphurtFallSpeedMultipliersByLevel,
      playerTrailCountMax,
      playerTrailCountMin,
@@ -151,8 +150,7 @@ export {
      collisionBurstParticleCount,
      fallingObjectSpeedMin,
      fallingObjectSpeedMax,
-     helphurtBaseSpawnStarsByLevel,
-     helphurtDifficultyMultipliers,
+     helphurtSpawnIntervalsByDifficulty,
      helphurtFallSpeedMultipliersByLevel,
      playerTrailCountMax,
      playerTrailCountMin,
@@ -288,28 +286,14 @@ function getFallingObjectSpeed() {
      return randomNumber(speedMin, speedMax);
 }
 
-function getHelphurtSpawnChance() {
-     const levelIndex = Math.max(0, getCurrentLevelNumber() - 1);
-     const starsPerHelphurt = helphurtBaseSpawnStarsByLevel[levelIndex] ?? helphurtBaseSpawnStarsByLevel.at(-1);
-     const difficultyMultiplier = helphurtDifficultyMultipliers[hurtLevel] ?? 0;
-
-     if (!Number.isFinite(starsPerHelphurt) || starsPerHelphurt <= 0 || difficultyMultiplier <= 0) {
-          return 0;
-     }
-
-     return difficultyMultiplier / starsPerHelphurt;
-}
-
 function getHelphurtSpawnInterval() {
-     const levelIndex = Math.max(0, getCurrentLevelNumber() - 1);
-     const starsPerHelphurt = helphurtBaseSpawnStarsByLevel[levelIndex] ?? helphurtBaseSpawnStarsByLevel.at(-1);
-     const difficultyMultiplier = helphurtDifficultyMultipliers[hurtLevel] ?? 0;
+     const spawnInterval = helphurtSpawnIntervalsByDifficulty[hurtLevel];
 
-     if (!Number.isFinite(starsPerHelphurt) || starsPerHelphurt <= 0 || difficultyMultiplier <= 0) {
+     if (!Number.isFinite(spawnInterval) || spawnInterval <= 0) {
           return Infinity;
      }
 
-     return Math.max(2, Math.round(starsPerHelphurt / difficultyMultiplier));
+     return Math.round(spawnInterval);
 }
 
 // ====================================================================================================
@@ -721,10 +705,7 @@ function movePlayerFromKeyboard() {
 }
 
 function movePlayerFromJoystick() {
-     if (
-          movementLevel !== movementOptionIndexes.joystickLeft &&
-          movementLevel !== movementOptionIndexes.joystickRight
-     ) {
+     if (movementLevel !== movementOptionIndexes.joystick) {
           return false;
      }
 
@@ -1243,9 +1224,8 @@ function createRandomHelphurtPickup() {
 export function maybeCreateHelphurtPickupsFromStarSpawn() {
      // Help/hurt spawn pseudocode:
      // 1. Wait through the opening grace period.
-     // 2. Respect the on-screen pickup cap and disabled difficulty states.
-     // 3. Guarantee an early pickup after grace, then use interval/chance checks.
-     const helphurtSpawnChance = getHelphurtSpawnChance();
+     // 2. Respect the on-screen pickup cap.
+     // 3. Guarantee an early pickup after grace, then use the selected fixed interval.
      const helphurtSpawnInterval = getHelphurtSpawnInterval();
      const nextHelphurtPickupSpawnTimer = helphurtPickupSpawnTimer + 1;
 
@@ -1277,19 +1257,6 @@ export function maybeCreateHelphurtPickupsFromStarSpawn() {
           return;
      }
 
-     if (helphurtSpawnChance > 0 && Math.random() <= helphurtSpawnChance) {
-          createHelpPickup();
-          setHelphurtPickupSpawnTimer(0);
-     }
-
-     if (helphurtPickups.length >= getScaledHelphurtPickupCap()) {
-          return;
-     }
-
-     if (helphurtSpawnChance > 0 && Math.random() <= helphurtSpawnChance) {
-          createHurtPickup();
-          setHelphurtPickupSpawnTimer(0);
-     }
 }
 
 export function updateHelphurtPickups() {

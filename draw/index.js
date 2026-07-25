@@ -463,7 +463,6 @@ function updatePauseButtonBounds(theme = getCanvasTheme()) {
 function updateJoystickBounds(theme = getCanvasTheme()) {
      const joystick = touchControls.joystick;
      const joystickStyle = getTextStyle(theme, "joystick");
-     const isRightSide = movementLevel === movementOptionIndexes.joystickRight;
      const edgeGap = joystickStyle.edgeGap || 0;
      const canvasMin = Math.min(miniGameWidth, miniGameHeight);
      const baseRadius = Math.min(joystickStyle.baseRadius, canvasMin * 0.24);
@@ -473,9 +472,7 @@ function updateJoystickBounds(theme = getCanvasTheme()) {
      joystick.knobRadius = knobRadius;
      joystick.maxDistance = Math.max(1, baseRadius - knobRadius);
      joystick.deadZone = joystickStyle.deadZone;
-     joystick.x = isRightSide ?
-          miniGameWidth - baseRadius - edgeGap :
-          baseRadius + edgeGap;
+     joystick.x = miniGameWidth / 2;
      joystick.y = miniGameHeight - baseRadius - edgeGap - (joystickStyle.yOffset || 0);
 }
 
@@ -919,7 +916,7 @@ function getDifficultyOptionDescription(levelIndex) {
 }
 
 function getShortMovementOptionLabel(levelIndex) {
-     const labels = ["Click / Arrows", "Joystick Left", "Joystick Right"];
+     const labels = ["Click / Arrows", "Joystick"];
 
      return labels[levelIndex] || getMovementOptionLabel(levelIndex).toUpperCase();
 }
@@ -1652,10 +1649,7 @@ export function drawJoystick(theme) {
      if (
           !miniGameCtx ||
           !isJoystickEnabled() ||
-          (
-               movementLevel !== movementOptionIndexes.joystickLeft &&
-               movementLevel !== movementOptionIndexes.joystickRight
-          )
+          movementLevel !== movementOptionIndexes.joystick
      ) {
           return;
      }

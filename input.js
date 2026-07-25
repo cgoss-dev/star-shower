@@ -346,10 +346,7 @@ function clearPointerMove(pointerId = touchControls.touchMoveTarget.pointerId) {
 function isJoystickMovementMode() {
      return (
           isJoystickEnabled() &&
-          (
-               movementLevel === movementOptionIndexes.joystickLeft ||
-               movementLevel === movementOptionIndexes.joystickRight
-          )
+          movementLevel === movementOptionIndexes.joystick
      );
 }
 

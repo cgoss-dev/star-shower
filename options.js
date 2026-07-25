@@ -48,16 +48,15 @@ export const configStorageKeys = {
 // OPTION DEFINITIONS
 // ==================================================
 
-export const difficultyOptionLabels = ["Off", "Med", "Max"];
+export const difficultyOptionLabels = ["Min", "Med", "Max"];
 export const maxDifficultyOptionIndex = difficultyOptionLabels.length - 1;
 export const defaultDifficultyOptionIndex = 1;
-export const movementOptionLabels = ["Touch/Click + WASD/Arrows", "Joystick Left", "Joystick Right"];
+export const movementOptionLabels = ["Touch/Click + WASD/Arrows", "Joystick"];
 export const movementOptionIndexes = {
      pointerKeyboard: 0,
      touchClick: 0,
      keyboard: 0,
-     joystickLeft: 1,
-     joystickRight: 2
+     joystick: 1
 };
 export const maxMovementOptionIndex = movementOptionLabels.length - 1;
 export const defaultMovementOptionIndex = 0;
