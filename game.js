@@ -44,6 +44,8 @@ import {
      setWelcomeSelectionIndex,
      updateMenuKeyboardFocusTimer,
      updateGameMenuScrollVelocity,
+     updateVisualFeedback,
+     triggerLevelFeedback,
 
      resetUiActionBounds,
      resetGameState
@@ -1275,6 +1277,7 @@ export function updateGame() {
      }
 
      updatePlayerFaceState();
+     updateVisualFeedback();
 
      if (gamePaused || gameMenuOpen || gameOver || gameWon) {
           return;
@@ -1302,7 +1305,7 @@ export function updateGame() {
      const levelAfterCollections = getCurrentLevelNumber();
 
      if (levelAfterCollections > levelBeforeCollections) {
-          showGameplayPopup("Lvl Up!");
+          triggerLevelFeedback(levelAfterCollections);
      }
 
      if (playerHealth <= 0) {

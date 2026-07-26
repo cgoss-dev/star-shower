@@ -100,6 +100,50 @@ export const activeStatusUi = {
      duration: 0
 };
 
+export const visualFeedbackUi = {
+     damageTimer: 0,
+     healingTimer: 0,
+     levelTimer: 0,
+     levelNumber: 1,
+     statusPulseTimer: 0,
+     healthPulseTimer: 0
+};
+
+export function triggerDamageFeedback() {
+     visualFeedbackUi.damageTimer = 24;
+     visualFeedbackUi.healthPulseTimer = 24;
+}
+
+export function triggerHealingFeedback() {
+     visualFeedbackUi.healingTimer = 36;
+}
+
+export function triggerLevelFeedback(levelNumber) {
+     visualFeedbackUi.levelNumber = Math.max(1, Math.round(Number(levelNumber) || 1));
+     visualFeedbackUi.levelTimer = 60;
+}
+
+export function triggerStatusPulse() {
+     visualFeedbackUi.statusPulseTimer = 24;
+}
+
+export function updateVisualFeedback() {
+     Object.keys(visualFeedbackUi).forEach((key) => {
+          if (key.endsWith("Timer") && visualFeedbackUi[key] > 0) {
+               visualFeedbackUi[key] -= 1;
+          }
+     });
+}
+
+export function resetVisualFeedback() {
+     visualFeedbackUi.damageTimer = 0;
+     visualFeedbackUi.healingTimer = 0;
+     visualFeedbackUi.levelTimer = 0;
+     visualFeedbackUi.levelNumber = 1;
+     visualFeedbackUi.statusPulseTimer = 0;
+     visualFeedbackUi.healthPulseTimer = 0;
+}
+
 // ==================================================
 // GAME FLOW FLAGS
 // ==================================================
@@ -969,6 +1013,7 @@ export function resetGameState() {
      menuKeyboardFocus.timer = 0;
 
      resetHelphurtState();
+     resetVisualFeedback();
      resetUiActionBounds();
 
      touchControls.touchMoveTarget.x = 0;

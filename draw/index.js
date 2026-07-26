@@ -50,6 +50,7 @@ import {
      optionsSelection,
      gameMenuScroll,
      activeStatusUi,
+     visualFeedbackUi,
      getMenuKeyboardFocusAlpha,
      isHelphurtActive,
      hoverCanvasX,
@@ -1285,23 +1286,122 @@ function drawHudBadges(theme) {
           Math.max(width, getHudTextWidth(theme, statusText))
      ), 0);
      const sideColumnWidth = Math.max(80, measuredStatusWidth, (miniGameWidth - (padding * 2)) * 0.3);
+     const healthPulseProgress = 1 - (visualFeedbackUi.healthPulseTimer / 24);
+     const healthPulseScale = 1 + (Math.sin(Math.PI * healthPulseProgress) * 0.22);
+     const statusPulseProgress = 1 - (visualFeedbackUi.statusPulseTimer / 24);
+     const statusPulseScale = 1 + (Math.sin(Math.PI * statusPulseProgress) * 0.18);
+     const healthY = padding + (lineHeight * 2);
 
      drawHudPauseButton(theme);
      drawHudText(theme, getLevelBadgeText(), leftX, padding, "left", "scoreReady", sideColumnWidth);
      drawHudText(theme, getScoreBadgeText(), leftX, padding + lineHeight, "left", "scoreReady", sideColumnWidth);
-     drawHudText(theme, getHealthBadgeText(), leftX, padding + (lineHeight * 2), "left", "scoreReady", sideColumnWidth);
+
+     miniGameCtx.save();
+     miniGameCtx.translate(leftX, healthY);
+     miniGameCtx.scale(healthPulseScale, healthPulseScale);
+     drawHudText(theme, getHealthBadgeText(), 0, 0, "left", "scoreReady", sideColumnWidth);
+     miniGameCtx.restore();
 
      statusLines.forEach((statusText, index) => {
+          const statusY = padding + (lineHeight * (index + 1));
+
+          miniGameCtx.save();
+          miniGameCtx.translate(rightX, statusY);
+          miniGameCtx.scale(statusPulseScale, statusPulseScale);
           drawHudText(
                theme,
                getCompactStatusText(statusText, sideColumnWidth),
-               rightX,
-               padding + (lineHeight * (index + 1)),
+               0,
+               0,
                "right",
                "scoreReady",
                sideColumnWidth
           );
+          miniGameCtx.restore();
      });
+}
+
+function drawGameplayVisualFeedback(theme) {
+     if (!miniGameCtx) {
+          return;
+     }
+
+     if (visualFeedbackUi.healingTimer > 0) {
+          const progress = 1 - (visualFeedbackUi.healingTimer / 36);
+          const alpha = (1 - progress) * 0.55;
+          const radius = player.radius + 10 + (progress * 120);
+
+          miniGameCtx.save();
+          miniGameCtx.globalAlpha = alpha;
+          miniGameCtx.strokeStyle = "#a6e3a1";
+          miniGameCtx.shadowColor = "#a6e3a1";
+          miniGameCtx.shadowBlur = 16;
+          miniGameCtx.lineWidth = Math.max(2, 9 * (1 - progress));
+          miniGameCtx.beginPath();
+          miniGameCtx.arc(player.x, player.y, radius, 0, Math.PI * 2);
+          miniGameCtx.stroke();
+          miniGameCtx.restore();
+     }
+
+     if (visualFeedbackUi.damageTimer > 0) {
+          const alpha = (visualFeedbackUi.damageTimer / 24) * 0.48;
+          const edgeRadius = Math.min(miniGameWidth, miniGameHeight) * 0.68;
+          const vignette = miniGameCtx.createRadialGradient(
+               miniGameWidth / 2,
+               miniGameHeight / 2,
+               edgeRadius * 0.35,
+               miniGameWidth / 2,
+               miniGameHeight / 2,
+               edgeRadius
+          );
+
+          vignette.addColorStop(0, "rgba(243, 139, 168, 0)");
+          vignette.addColorStop(0.68, "rgba(243, 139, 168, 0)");
+          vignette.addColorStop(1, `rgba(243, 139, 168, ${alpha})`);
+          miniGameCtx.save();
+          miniGameCtx.fillStyle = vignette;
+          miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
+          miniGameCtx.restore();
+     }
+
+     if (visualFeedbackUi.levelTimer > 0) {
+          const progress = 1 - (visualFeedbackUi.levelTimer / 60);
+          const alpha = Math.sin(Math.PI * progress);
+          const ringRadius = player.radius + 15 + (progress * 150);
+          const rainbow = ["#f38ba8", "#fab387", "#f9e2af", "#a6e3a1", "#89dceb", "#89b4fa", "#cba6f7"];
+
+          miniGameCtx.save();
+          miniGameCtx.globalAlpha = alpha * 0.16;
+          miniGameCtx.fillStyle = "#ffffff";
+          miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
+
+          miniGameCtx.globalAlpha = alpha * 0.85;
+          miniGameCtx.lineWidth = Math.max(2, 8 * (1 - progress));
+          rainbow.forEach((color, index) => {
+               const startAngle = (Math.PI * 2 * index) / rainbow.length;
+               const endAngle = (Math.PI * 2 * (index + 1)) / rainbow.length;
+               miniGameCtx.strokeStyle = color;
+               miniGameCtx.shadowColor = color;
+               miniGameCtx.shadowBlur = 12;
+               miniGameCtx.beginPath();
+               miniGameCtx.arc(player.x, player.y, ringRadius, startAngle, endAngle);
+               miniGameCtx.stroke();
+          });
+          miniGameCtx.restore();
+
+          miniGameCtx.save();
+          miniGameCtx.globalAlpha = alpha;
+          drawHudText(
+               theme,
+               `🏆 ${visualFeedbackUi.levelNumber}/${maxLevelProgressUnits}`,
+               miniGameWidth / 2,
+               miniGameHeight * 0.32,
+               "center",
+               "hudProgress",
+               miniGameWidth * 0.8
+          );
+          miniGameCtx.restore();
+     }
 }
 
 function drawLevelProgressStars(theme) {
@@ -2953,6 +3053,7 @@ export function drawGame() {
           }
 
           drawFogOverlay();
+          drawGameplayVisualFeedback(theme);
 
           if (!gameMenuOpen && !isRoundIntroActive()) {
                drawHudBadges(theme);

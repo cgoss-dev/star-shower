@@ -54,6 +54,9 @@ import {
      decrementHelphurtTimers,
      setActiveStatusUi,
      clearActiveStatusUi,
+     triggerDamageFeedback,
+     triggerHealingFeedback,
+     triggerStatusPulse,
      clearTouchMoveTarget,
      randomItem,
      randomNumber,
@@ -971,13 +974,20 @@ export function updateHelphurtState() {
 
 function applyHelpPickup(type) {
      if (type.name === "health") {
+          const healthBeforePickup = playerHealth;
           addPlayerHealth(1);
           syncPlayerHealthState();
+
+          if (playerHealth > healthBeforePickup) {
+               triggerHealingFeedback();
+          }
+
           return;
      }
 
      setStackedTimedHelphurt(type.name, getHelphurtDurationFrames(type));
      syncActiveStatusUiFromHelphurts();
+     triggerStatusPulse();
 }
 
 function applyHurtPickup(type) {
@@ -985,6 +995,8 @@ function applyHurtPickup(type) {
      setStackedTimedHelphurt(type.name, getHelphurtDurationFrames(type));
      syncPlayerHealthState();
      syncActiveStatusUiFromHelphurts();
+     triggerDamageFeedback();
+     triggerStatusPulse();
 }
 
 function getObjectFallSpeedMultiplier() {
@@ -1175,6 +1187,7 @@ export function collectStrikes() {
 
           addPlayerHealth(-strikeHealthDamage);
           syncPlayerHealthState();
+          triggerDamageFeedback();
           applyTemporaryPlayerFace(playerFaces.hurt, 30);
           triggerPlayerFacePop(1.25);
      }
