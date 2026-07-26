@@ -456,8 +456,8 @@ function updateJoystickBounds(theme = getCanvasTheme()) {
      const joystickStyle = getTextStyle(theme, "joystick");
      const edgeGap = joystickStyle.edgeGap || 0;
      const canvasMin = Math.min(miniGameWidth, miniGameHeight);
-     const baseRadius = Math.min(joystickStyle.baseRadius, canvasMin * 0.24);
-     const knobRadius = Math.min(joystickStyle.knobRadius, baseRadius * 0.55);
+     const baseRadius = canvasMin * 0.35;
+     const knobRadius = baseRadius * 0.5;
 
      joystick.baseRadius = baseRadius;
      joystick.knobRadius = knobRadius;
@@ -1383,24 +1383,13 @@ function drawGameplayVisualFeedback(theme) {
 
                return getCssColor(variableName, "#fff");
           });
-          const levelFontSize = theme.sizes.uiFontMd || getTextStyle(theme, "buttonsOptions").fontSize;
-
           drawConcentricCircleFeedback(progress, rainbow);
 
           if (visualFeedbackUi.levelTextTimer > 0) {
                const textProgress = 1 - (visualFeedbackUi.levelTextTimer / 90);
                const textAlpha = Math.sin(Math.PI * textProgress);
 
-               drawCenteredMarqueeText(
-                    theme,
-                    "LVL UP!",
-                    miniGameWidth / 2,
-                    miniGameHeight / 2,
-                    levelFontSize,
-                    textAlpha,
-                    false,
-                    false
-               );
+               drawEffectText(theme, "LVL UP!", textAlpha);
           }
      }
 }
@@ -1724,7 +1713,7 @@ export function drawJoystick(theme) {
           return;
      }
 
-     const { colors, glow, sizes } = theme;
+     const { colors, glow } = theme;
      const joystick = touchControls.joystick;
      const joystickStyle = getTextStyle(theme, "joystick");
      const knobX = joystick.x + (joystick.dx * joystick.maxDistance);
@@ -1733,22 +1722,37 @@ export function drawJoystick(theme) {
      miniGameCtx.save();
 
      miniGameCtx.shadowColor = getCanvasGlowColor(colors.touchGlow);
-     miniGameCtx.shadowBlur = joystickStyle.glow ? glow.uiMediumGlow : 0;
+     miniGameCtx.shadowBlur = joystick.isActive && joystickStyle.glow ? glow.uiStrongGlow : 0;
      miniGameCtx.fillStyle = joystickStyle.fill || colors.touchFill;
      miniGameCtx.strokeStyle = joystickStyle.stroke || colors.touchStroke;
-     miniGameCtx.lineWidth = sizes.touchBorderWidth;
+     miniGameCtx.lineWidth = joystick.baseRadius * 0.025;
 
      miniGameCtx.beginPath();
      miniGameCtx.arc(joystick.x, joystick.y, joystick.baseRadius, 0, Math.PI * 2);
      miniGameCtx.fill();
      miniGameCtx.stroke();
 
+     miniGameCtx.shadowBlur = 0;
+     miniGameCtx.strokeStyle = joystickStyle.guideStroke || colors.touchStroke;
+     miniGameCtx.lineWidth = joystick.baseRadius * 0.0125;
+     miniGameCtx.beginPath();
+     miniGameCtx.arc(joystick.x, joystick.y, joystick.baseRadius * 0.55, 0, Math.PI * 2);
+     miniGameCtx.stroke();
+
+     miniGameCtx.fillStyle = joystickStyle.centerFill || colors.touchText;
+     miniGameCtx.beginPath();
+     miniGameCtx.arc(joystick.x, joystick.y, joystick.baseRadius * 0.045, 0, Math.PI * 2);
+     miniGameCtx.fill();
+
      miniGameCtx.shadowBlur = joystick.isActive && joystickStyle.glow ? glow.uiStrongGlow : 0;
      miniGameCtx.fillStyle = joystickStyle.knobFill || colors.touchText;
+     miniGameCtx.strokeStyle = joystickStyle.knobStroke || colors.touchStroke;
+     miniGameCtx.lineWidth = joystick.knobRadius * 0.04;
 
      miniGameCtx.beginPath();
      miniGameCtx.arc(knobX, knobY, joystick.knobRadius, 0, Math.PI * 2);
      miniGameCtx.fill();
+     miniGameCtx.stroke();
 
      miniGameCtx.restore();
 }
@@ -2915,6 +2919,24 @@ function drawCenteredMarqueeText(theme, text, x, y, fontSize, alpha, isRainbow =
      miniGameCtx.restore();
 }
 
+function drawEffectText(theme, text, alpha) {
+     const fontSize = theme.sizes.uiFontMd || getTextStyle(theme, "buttonsOptions").fontSize;
+     const spacing = getTextStyle(theme, "canvasSpacing");
+     const padding = spacing.uiPadding || 8;
+     const y = Math.max(fontSize, miniGameHeight - padding - (fontSize / 2));
+
+     drawCenteredMarqueeText(
+          theme,
+          text,
+          miniGameWidth / 2,
+          y,
+          fontSize,
+          alpha,
+          false,
+          false
+     );
+}
+
 function drawGameplayPopup(theme) {
      if (!miniGameCtx || !gameplayPopupText || gameMenuOpen || gameOver || gameWon) {
           return;
@@ -2926,13 +2948,7 @@ function drawGameplayPopup(theme) {
           return;
      }
 
-     const fontSize = theme.sizes.uiFontMd || getTextStyle(theme, "buttonsOptions").fontSize;
-     const spacing = getTextStyle(theme, "canvasSpacing");
-     const padding = spacing.uiPadding || 8;
-     const isLevelPopup = gameplayPopupText === "Lvl Up!";
-     const y = Math.max(fontSize, miniGameHeight - padding - (fontSize / 2));
-
-     drawCenteredMarqueeText(theme, gameplayPopupText, miniGameWidth / 2, y, fontSize, popupAlpha, isLevelPopup, false);
+     drawEffectText(theme, gameplayPopupText, popupAlpha);
 }
 
 // ==================================================

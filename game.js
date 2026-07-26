@@ -345,13 +345,14 @@ export function getCanvasTheme() {
           },
 
           joystick: {
-               baseRadius: uiFontLg * 2.5,
-               knobRadius: uiFontMd * 1.6,
                edgeGap: uiFontSm * 0.15,
                deadZone: 0.12,
-               fill: "rgba(0, 0, 0, 0)",
-               stroke: outlineFallback,
-               knobFill: bodyColor,
+               fill: "rgba(0, 0, 0, 0.22)",
+               stroke: "rgba(255, 255, 255, 0.35)",
+               guideStroke: "rgba(255, 255, 255, 0.18)",
+               centerFill: "rgba(255, 255, 255, 0.5)",
+               knobFill: "rgba(255, 255, 255, 0.72)",
+               knobStroke: "rgba(255, 255, 255, 0.9)",
                glow: true
           },
 
