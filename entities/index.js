@@ -46,6 +46,7 @@ import {
      addStarSpawnCount,
      setHelphurtPickupSpawnTimer,
      addStarScore,
+     setStarScore,
      setScoreMultiplier,
      addPlayerHealth,
      setPlayerHealth,
@@ -134,7 +135,7 @@ import {
      playerTrailPointDistance,
      playerTrailPointLife,
      playerTrailColorHoldPoints,
-     playerTrailAnchorYOffset,
+     playerTrailAnchorYRatio,
      starParticles,
      strikeParticles,
      strikeAssetSrc,
@@ -179,7 +180,7 @@ export {
      playerTrailPointDistance,
      playerTrailPointLife,
      playerTrailColorHoldPoints,
-     playerTrailAnchorYOffset,
+     playerTrailAnchorYRatio,
      starParticles,
      strikeParticles,
      strikeAssetSrc,
@@ -349,6 +350,7 @@ let pastelParticleColorIndex = 0;
 let healthParticleIndex = 0;
 let playerTrailColorPointIndex = 0;
 let playerTrailMovedThisFrame = false;
+const playerGlyphCenterOffsetCache = new Map();
 const healthParticleCycleMs = 500;
 
 function ensureParticleColorEngine() {
@@ -559,6 +561,40 @@ function createPlayerTrail(fromX, fromY, toX, toY) {
      if (playerTrail.length > playerTrailPointCountMax) {
           playerTrail.splice(0, playerTrail.length - playerTrailPointCountMax);
      }
+}
+
+export function getPlayerGlyphYOffset() {
+     return player.char === playerFaces.smile ? player.size * 0.046875 : 0;
+}
+
+function getMeasuredPlayerGlyphCenterOffset() {
+     const cacheKey = `${player.char}:${player.size}`;
+
+     if (playerGlyphCenterOffsetCache.has(cacheKey)) {
+          return playerGlyphCenterOffsetCache.get(cacheKey);
+     }
+
+     let centerOffset = player.size * playerTrailAnchorYRatio;
+
+     if (miniGameCtx) {
+          miniGameCtx.save();
+          miniGameCtx.font = `${player.size}px Arial, Helvetica, sans-serif`;
+          miniGameCtx.textAlign = "center";
+          miniGameCtx.textBaseline = "middle";
+
+          const metrics = miniGameCtx.measureText(player.char);
+          const ascent = metrics.actualBoundingBoxAscent;
+          const descent = metrics.actualBoundingBoxDescent;
+
+          if (Number.isFinite(ascent) && Number.isFinite(descent) && (ascent + descent) > 0) {
+               centerOffset = (descent - ascent) / 2;
+          }
+
+          miniGameCtx.restore();
+     }
+
+     playerGlyphCenterOffsetCache.set(cacheKey, centerOffset);
+     return centerOffset;
 }
 
 export function getDefaultPlayerFace() {
@@ -786,11 +822,15 @@ export function updatePlayer() {
      clampPlayerToCanvas();
 
      if (player.x !== previousX || player.y !== previousY) {
+          const responsiveTrailAnchorYOffset =
+               getPlayerGlyphYOffset() +
+               getMeasuredPlayerGlyphCenterOffset();
+
           createPlayerTrail(
                previousX,
-               previousY + playerTrailAnchorYOffset,
+               previousY + responsiveTrailAnchorYOffset,
                player.x,
-               player.y + playerTrailAnchorYOffset
+               player.y + responsiveTrailAnchorYOffset
           );
      }
 }
@@ -974,6 +1014,11 @@ export function updateHelphurtState() {
 
 function applyHelpPickup(type) {
      if (type.name === "health") {
+          if (playerHealth >= maxPlayerHealth) {
+               setStarScore(starScore + 1);
+               return;
+          }
+
           const healthBeforePickup = playerHealth;
           addPlayerHealth(1);
           syncPlayerHealthState();
@@ -1378,26 +1423,35 @@ export function collectHelphurtPickups() {
 
 export function createCollisionBurst(x, y, color, burstType, colorRole = null) {
      const rainbowPalette = getRainbowPalette();
+     const isCollectedStar = burstType === "star" && colorRole === null;
+     const particleCount = isCollectedStar
+          ? Math.round(collisionBurstParticleCount * 1.6)
+          : collisionBurstParticleCount;
 
-     for (let i = 0; i < collisionBurstParticleCount; i += 1) {
+     for (let i = 0; i < particleCount; i += 1) {
           const angle = randomNumber(0, Math.PI * 2);
           const speed = burstType === "hurt"
                ? randomNumber(1.1, 2.6)
-               : randomNumber(0.7, 2.1);
+               : isCollectedStar
+                    ? randomNumber(1.1, 3.2)
+                    : randomNumber(0.7, 2.1);
+          const life = isCollectedStar
+               ? randomNumber(48, 72)
+               : randomNumber(25, 50);
 
           collisionBursts.push({
                x,
                y,
                dx: Math.cos(angle) * speed,
                dy: Math.sin(angle) * speed,
-               life: randomNumber(25, 50),
-               maxLife: 50,
-               size: randomNumber(20, 30),
+               life,
+               maxLife: isCollectedStar ? life : 50,
+               size: isCollectedStar ? randomNumber(26, 40) : randomNumber(20, 30),
                particle: randomItem(burstChars),
                colorRole: "burst",
                colorIndex: Math.floor(randomNumber(0, 12)),
                color: randomItem(rainbowPalette) || color,
-               glowHelp: burstType === "hurt" ? 1.25 : 1
+               glowHelp: burstType === "hurt" ? 1.25 : isCollectedStar ? 1.5 : 1
           });
      }
 }

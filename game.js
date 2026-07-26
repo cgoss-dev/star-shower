@@ -321,15 +321,6 @@ export function getCanvasTheme() {
                glow: false
           },
 
-          hudProgress: {
-               font: "body",
-               fontSize: uiFontSm * 1.5,
-               letterSpacing: 0,
-               color: "#fff",
-               rainbow: false,
-               glow: false
-          },
-
           buttonsOptions: {
                font: "body",
                fontSize: uiFontSm,
@@ -547,42 +538,33 @@ const roundIntroTotalFrames =
      roundIntroSecondFadeFrames +
      roundIntroFadeFrames;
 export const maxLevelProgressUnits = 10;
-export const progressUnitsPerCircle = 2;
 const levelScoreMins = [
      0,
-     5,
-     65,
-     125,
-     185,
-     245,
-     305,
-     365,
-     430,
+     3,
+     19,
+     48,
+     90,
+     146,
+     215,
+     297,
+     392,
      500
 ];
 export const winScore = levelScoreMins.at(-1) ?? 0;
 
 const levelChallengeProgression = [
      {
-          introText: "HEALTH / FREEZE",
-          introDescription: "Health helps. Freeze hurts.",
-          introIcon: "iconHealth",
+          introText: "",
+          introDescription: "",
+          introIcon: "",
           strikesUnlocked: true,
-          helpNames: ["health"],
-          hurtNames: ["freeze"]
+          helpNames: [],
+          hurtNames: []
      },
      {
-          introText: "MAGNET / DAZE",
-          introDescription: "Magnet helps. Daze hurts.",
+          introText: "EFFECTS UNLOCKED",
+          introDescription: "Pickups can help or hurt.",
           introIcon: "iconMagnet",
-          strikesUnlocked: true,
-          helpNames: ["health", "magnet"],
-          hurtNames: ["freeze", "daze"]
-     },
-     {
-          introText: "DOUBLE / FOG",
-          introDescription: "Double helps. Fog hurts.",
-          introIcon: "iconDouble",
           strikesUnlocked: true,
           helpNames: ["health", "magnet", "double"],
           hurtNames: ["freeze", "daze", "fog"]

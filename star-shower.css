@@ -1,6 +1,7 @@
 /* NOTE: STAR SHOWER */
 
 :root {
+     --game-mobile-viewport-width: 100vw;
      /* GAME LAYOUT */
           --game-frame-outset: var(--border-md);
           --game-embed-margin: var(--border-md);
@@ -37,6 +38,12 @@
 
      /* GAME EFFECTS */
           --glow-particle-game-blur: 16;
+}
+
+@supports (width: 100dvw) {
+     :root {
+          --game-mobile-viewport-width: 100dvw;
+     }
 }
 
 html,
@@ -119,8 +126,8 @@ body {
      body,
      .body-ody,
      .main-squeeze {
-          width: 100%;
-          max-width: 100dvw;
+          width: var(--game-mobile-viewport-width);
+          max-width: var(--game-mobile-viewport-width);
           scrollbar-width: none;
           -ms-overflow-style: none;
      }
@@ -134,20 +141,20 @@ body {
 
      .body-ody {
           padding: 0;
-          width: min(100%, 100dvw);
-          max-width: 100dvw;
+          width: var(--game-mobile-viewport-width);
+          max-width: var(--game-mobile-viewport-width);
      }
 
      .main-squeeze {
           height: 100dvh;
-          width: min(100%, 100dvw);
-          max-width: 100dvw;
+          width: var(--game-mobile-viewport-width);
+          max-width: var(--game-mobile-viewport-width);
      }
 
      .hero-stack,
      .game-container {
-          width: min(100%, 100dvw);
-          max-width: 100dvw;
+          width: var(--game-mobile-viewport-width);
+          max-width: var(--game-mobile-viewport-width);
           border: 0;
           border-radius: 0;
           box-shadow: none;
@@ -158,6 +165,8 @@ body {
      }
 
      #miniGameCanvas {
+          width: var(--game-mobile-viewport-width);
+          max-width: var(--game-mobile-viewport-width);
           border-radius: 0;
      }
 }

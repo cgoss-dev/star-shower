@@ -104,23 +104,26 @@ export const visualFeedbackUi = {
      damageTimer: 0,
      healingTimer: 0,
      levelTimer: 0,
+     levelTextTimer: 0,
      levelNumber: 1,
      statusPulseTimer: 0,
      healthPulseTimer: 0
 };
 
 export function triggerDamageFeedback() {
-     visualFeedbackUi.damageTimer = 24;
-     visualFeedbackUi.healthPulseTimer = 24;
+     visualFeedbackUi.damageTimer = 180;
+     visualFeedbackUi.healthPulseTimer = 36;
 }
 
 export function triggerHealingFeedback() {
-     visualFeedbackUi.healingTimer = 36;
+     visualFeedbackUi.healingTimer = 180;
+     visualFeedbackUi.healthPulseTimer = 36;
 }
 
 export function triggerLevelFeedback(levelNumber) {
      visualFeedbackUi.levelNumber = Math.max(1, Math.round(Number(levelNumber) || 1));
-     visualFeedbackUi.levelTimer = 60;
+     visualFeedbackUi.levelTimer = 180;
+     visualFeedbackUi.levelTextTimer = 90;
 }
 
 export function triggerStatusPulse() {
@@ -139,6 +142,7 @@ export function resetVisualFeedback() {
      visualFeedbackUi.damageTimer = 0;
      visualFeedbackUi.healingTimer = 0;
      visualFeedbackUi.levelTimer = 0;
+     visualFeedbackUi.levelTextTimer = 0;
      visualFeedbackUi.levelNumber = 1;
      visualFeedbackUi.statusPulseTimer = 0;
      visualFeedbackUi.healthPulseTimer = 0;

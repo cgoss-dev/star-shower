@@ -111,7 +111,8 @@ import {
      applyTemporaryPlayerFace,
      triggerPlayerFacePop,
      updatePlayerSpeedFromHealth,
-     syncPlayerSize
+     syncPlayerSize,
+     getPlayerGlyphYOffset
 } from "../entities/index.js?v=20260711-50";
 
 import {
@@ -147,12 +148,7 @@ import {
 } from "./assets.js?v=20260711-50";
 
 const siteTheme = window.SiteTheme;
-const levelProgressPulseFrames = 18;
 const keyboardFocusFill = "rgba(255, 255, 255, 0.25)";
-
-let lastLevelProgressFilledUnits = null;
-let levelProgressPulseTimer = 0;
-let levelProgressPulseIndex = -1;
 
 // Re-export moved player/entity helpers so existing imports from this file keep working.
 export {
@@ -444,22 +440,14 @@ function updateMenuUiBounds(theme = getCanvasTheme()) {
 
 function updatePauseButtonBounds(theme = getCanvasTheme()) {
      const button = touchControls.pauseButton;
-     const textStyle = getTextStyle(theme, "scoreReady");
+     const textStyle = getTextStyle(theme, "pauseButton");
      const canvasSpacing = getTextStyle(theme, "canvasSpacing");
-     const font = getTextFont(theme, "scoreReady", 400);
-     const buttonText = getHudPauseText();
-     let buttonWidth = buttonText.length * textStyle.fontSize * 0.7;
+     const buttonSize = textStyle.buttonSize || (textStyle.fontSize * 1.5);
+     const edgePadding = canvasSpacing.uiPadding;
 
-     if (miniGameCtx) {
-          miniGameCtx.save();
-          miniGameCtx.font = font;
-          buttonWidth = miniGameCtx.measureText(buttonText).width;
-          miniGameCtx.restore();
-     }
-
-     button.width = buttonWidth;
-     button.height = textStyle.fontSize;
-     button.x = miniGameWidth - canvasSpacing.uiPadding - buttonWidth;
+     button.width = buttonSize;
+     button.height = buttonSize;
+     button.x = miniGameWidth - edgePadding - buttonSize;
      button.y = canvasSpacing.uiPadding;
 }
 
@@ -1197,18 +1185,6 @@ function getLevelBadgeText() {
      return `🏆 ${getCurrentLevelNumber()}/${maxLevelProgressUnits}`;
 }
 
-function getLevelProgressFilledUnits() {
-     return Math.max(1, Math.min(maxLevelProgressUnits, getCurrentLevelNumber()));
-}
-
-function getLevelProgressCircles(filledUnits = getLevelProgressFilledUnits()) {
-
-     return Array.from({ length: maxLevelProgressUnits }, (_item, index) => (
-          index < filledUnits ? "●" :
-          "○"
-     )).join("");
-}
-
 function getStatusTextLines() {
      if (activeStatusUi.text) {
           return activeStatusUi.text.split(/\s{2,}/).filter(Boolean);
@@ -1272,7 +1248,14 @@ function drawHudPauseButton(theme) {
 
      const button = touchControls.pauseButton;
 
-     drawHudText(theme, getHudPauseText(), button.x + button.width, button.y, "right", "scoreReady");
+     drawHudText(
+          theme,
+          getHudPauseText(),
+          button.x + (button.width / 2),
+          button.y,
+          "center",
+          "scoreReady"
+     );
 }
 
 function drawHudBadges(theme) {
@@ -1281,12 +1264,12 @@ function drawHudBadges(theme) {
      const lineHeight = getTextStyle(theme, "scoreReady").fontSize + spacing.hudRowGap;
      const leftX = padding;
      const rightX = miniGameWidth - padding;
-     const statusLines = getStatusTextLines();
+     const statusLines = gamePaused ? [] : getStatusTextLines();
      const measuredStatusWidth = statusLines.reduce((width, statusText) => (
           Math.max(width, getHudTextWidth(theme, statusText))
      ), 0);
      const sideColumnWidth = Math.max(80, measuredStatusWidth, (miniGameWidth - (padding * 2)) * 0.3);
-     const healthPulseProgress = 1 - (visualFeedbackUi.healthPulseTimer / 24);
+     const healthPulseProgress = 1 - (visualFeedbackUi.healthPulseTimer / 36);
      const healthPulseScale = 1 + (Math.sin(Math.PI * healthPulseProgress) * 0.22);
      const statusPulseProgress = 1 - (visualFeedbackUi.statusPulseTimer / 24);
      const statusPulseScale = 1 + (Math.sin(Math.PI * statusPulseProgress) * 0.18);
@@ -1326,160 +1309,100 @@ function drawGameplayVisualFeedback(theme) {
           return;
      }
 
-     if (visualFeedbackUi.healingTimer > 0) {
-          const progress = 1 - (visualFeedbackUi.healingTimer / 36);
-          const alpha = (1 - progress) * 0.55;
-          const radius = player.radius + 10 + (progress * 120);
+     function drawConcentricCircleFeedback(progress, colors) {
+          const canvasMin = Math.min(miniGameWidth, miniGameHeight);
+          const ringStartRadius = player.radius * 1.5;
+          const ringSpacing = player.radius * 0.8;
+          const ringExpansion = Math.min(canvasMin * 0.18, player.radius * 2);
+          const ringRadius = ringStartRadius + (progress * ringExpansion);
 
           miniGameCtx.save();
-          miniGameCtx.globalAlpha = alpha;
-          miniGameCtx.strokeStyle = "#a6e3a1";
-          miniGameCtx.shadowColor = "#a6e3a1";
-          miniGameCtx.shadowBlur = 16;
-          miniGameCtx.lineWidth = Math.max(2, 9 * (1 - progress));
-          miniGameCtx.beginPath();
-          miniGameCtx.arc(player.x, player.y, radius, 0, Math.PI * 2);
-          miniGameCtx.stroke();
+
+          for (let ringIndex = 0; ringIndex < 3; ringIndex += 1) {
+               const fadeOrder = 2 - ringIndex;
+               const fadeInStart = fadeOrder * 0.12;
+               const fadeInEnd = fadeInStart + 0.12;
+               const fadeInProgress = Math.max(0, Math.min(1, (progress - fadeInStart) / (fadeInEnd - fadeInStart)));
+               const smoothFadeIn = fadeInProgress * fadeInProgress * (3 - (2 * fadeInProgress));
+               const fadeStart = 0.48 + (fadeOrder * 0.16);
+               const fadeEnd = Math.min(1, fadeStart + 0.24);
+               const fadeProgress = Math.max(0, Math.min(1, (progress - fadeStart) / (fadeEnd - fadeStart)));
+               const smoothFade = fadeProgress * fadeProgress * (3 - (2 * fadeProgress));
+
+               miniGameCtx.globalAlpha = smoothFadeIn * (1 - smoothFade) * (0.85 - (ringIndex * 0.12));
+               miniGameCtx.lineWidth = Math.max(
+                    player.radius * 0.1,
+                    player.radius * (0.4 - (ringIndex * 0.05)) * (1 - progress)
+               );
+
+               colors.forEach((color, colorIndex) => {
+                    const startAngle = (Math.PI * 2 * colorIndex) / colors.length;
+                    const endAngle = (Math.PI * 2 * (colorIndex + 1)) / colors.length;
+
+                    miniGameCtx.strokeStyle = color;
+                    miniGameCtx.shadowColor = color;
+                    miniGameCtx.shadowBlur = player.radius * 0.4;
+                    miniGameCtx.beginPath();
+                    miniGameCtx.arc(
+                         player.x,
+                         player.y,
+                         ringRadius + (ringSpacing * ringIndex),
+                         startAngle,
+                         endAngle
+                    );
+                    miniGameCtx.stroke();
+               });
+          }
+
           miniGameCtx.restore();
      }
 
-     if (visualFeedbackUi.damageTimer > 0) {
-          const alpha = (visualFeedbackUi.damageTimer / 24) * 0.48;
-          const edgeRadius = Math.min(miniGameWidth, miniGameHeight) * 0.68;
-          const vignette = miniGameCtx.createRadialGradient(
-               miniGameWidth / 2,
-               miniGameHeight / 2,
-               edgeRadius * 0.35,
-               miniGameWidth / 2,
-               miniGameHeight / 2,
-               edgeRadius
-          );
+     function drawHealthChangeFeedback(timer, color) {
+          if (timer <= 0) {
+               return;
+          }
 
-          vignette.addColorStop(0, "rgba(243, 139, 168, 0)");
-          vignette.addColorStop(0.68, "rgba(243, 139, 168, 0)");
-          vignette.addColorStop(1, `rgba(243, 139, 168, ${alpha})`);
-          miniGameCtx.save();
-          miniGameCtx.fillStyle = vignette;
-          miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
-          miniGameCtx.restore();
+          const progress = 1 - (timer / 180);
+
+          drawConcentricCircleFeedback(progress, [color]);
      }
 
-     if (visualFeedbackUi.levelTimer > 0) {
-          const progress = 1 - (visualFeedbackUi.levelTimer / 60);
-          const alpha = Math.sin(Math.PI * progress);
-          const ringRadius = player.radius + 15 + (progress * 150);
-          const rainbow = ["#f38ba8", "#fab387", "#f9e2af", "#a6e3a1", "#89dceb", "#89b4fa", "#cba6f7"];
-
-          miniGameCtx.save();
-          miniGameCtx.globalAlpha = alpha * 0.16;
-          miniGameCtx.fillStyle = "#ffffff";
-          miniGameCtx.fillRect(0, 0, miniGameWidth, miniGameHeight);
-
-          miniGameCtx.globalAlpha = alpha * 0.85;
-          miniGameCtx.lineWidth = Math.max(2, 8 * (1 - progress));
-          rainbow.forEach((color, index) => {
-               const startAngle = (Math.PI * 2 * index) / rainbow.length;
-               const endAngle = (Math.PI * 2 * (index + 1)) / rainbow.length;
-               miniGameCtx.strokeStyle = color;
-               miniGameCtx.shadowColor = color;
-               miniGameCtx.shadowBlur = 12;
-               miniGameCtx.beginPath();
-               miniGameCtx.arc(player.x, player.y, ringRadius, startAngle, endAngle);
-               miniGameCtx.stroke();
-          });
-          miniGameCtx.restore();
-
-          miniGameCtx.save();
-          miniGameCtx.globalAlpha = alpha;
-          drawHudText(
-               theme,
-               `🏆 ${visualFeedbackUi.levelNumber}/${maxLevelProgressUnits}`,
-               miniGameWidth / 2,
-               miniGameHeight * 0.32,
-               "center",
-               "hudProgress",
-               miniGameWidth * 0.8
-          );
-          miniGameCtx.restore();
-     }
-}
-
-function drawLevelProgressStars(theme) {
-     const spacing = getTextStyle(theme, "canvasSpacing");
-     const padding = spacing.uiPadding || 8;
-     const progressStyle = getTextStyle(theme, "hudProgress");
-     const maxWidth = Math.max(80, miniGameWidth - (padding * 2));
-     const filledUnits = getLevelProgressFilledUnits();
-     const progressText = getLevelProgressCircles(filledUnits);
-     const y = Math.max(
-          padding,
-          miniGameHeight - padding - progressStyle.fontSize
+     drawHealthChangeFeedback(
+          visualFeedbackUi.healingTimer,
+          getCssColor("--tertiary-07", "#0f0")
+     );
+     drawHealthChangeFeedback(
+          visualFeedbackUi.damageTimer,
+          getCssColor("--tertiary-01", "#f00")
      );
 
-     if (lastLevelProgressFilledUnits === null) {
-          lastLevelProgressFilledUnits = filledUnits;
-     } else if (filledUnits > lastLevelProgressFilledUnits) {
-          levelProgressPulseTimer = levelProgressPulseFrames;
-          levelProgressPulseIndex = filledUnits - 1;
-          lastLevelProgressFilledUnits = filledUnits;
-     } else if (filledUnits < lastLevelProgressFilledUnits) {
-          levelProgressPulseIndex = -1;
-          lastLevelProgressFilledUnits = filledUnits;
+     if (visualFeedbackUi.levelTimer > 0) {
+          const progress = 1 - (visualFeedbackUi.levelTimer / 180);
+          const rainbow = Array.from({ length: 12 }, (_item, index) => {
+               const variableName = `--tertiary-${String(index + 1).padStart(2, "0")}`;
+
+               return getCssColor(variableName, "#fff");
+          });
+          const levelFontSize = theme.sizes.uiFontMd || getTextStyle(theme, "buttonsOptions").fontSize;
+
+          drawConcentricCircleFeedback(progress, rainbow);
+
+          if (visualFeedbackUi.levelTextTimer > 0) {
+               const textProgress = 1 - (visualFeedbackUi.levelTextTimer / 90);
+               const textAlpha = Math.sin(Math.PI * textProgress);
+
+               drawCenteredMarqueeText(
+                    theme,
+                    "LVL UP!",
+                    miniGameWidth / 2,
+                    miniGameHeight / 2,
+                    levelFontSize,
+                    textAlpha,
+                    false,
+                    false
+               );
+          }
      }
-
-     const pulseRatio = levelProgressPulseTimer / levelProgressPulseFrames;
-     const centerY = y + (progressStyle.fontSize / 2);
-     const textStyle = getTextStyle(theme, "hudProgress");
-     const textColor = textStyle.color || theme.colors.bodyText;
-     const font = getFittedTextFont(theme, "hudProgress", progressText, maxWidth, 400);
-     const circleGap = progressStyle.fontSize * 0.3;
-     const circles = Array.from(progressText);
-     const circleWidths = [];
-
-     miniGameCtx.save();
-     miniGameCtx.font = font;
-
-     circles.forEach((circle) => {
-          circleWidths.push(miniGameCtx.measureText(circle).width);
-     });
-
-     const totalWidth =
-          circleWidths.reduce((sum, width) => sum + width, 0) +
-          (circleGap * Math.max(0, circles.length - 1));
-     let circleX = (miniGameWidth - totalWidth) / 2;
-
-     if (levelProgressPulseTimer > 0) {
-          levelProgressPulseTimer -= 1;
-     }
-
-     circles.forEach((circle, index) => {
-          const circleCenterX = circleX + (circleWidths[index] / 2);
-          const shouldPulse =
-               index === levelProgressPulseIndex &&
-               levelProgressPulseTimer > 0;
-          const scale = shouldPulse ? 1 + (0.1 * pulseRatio) : 1;
-
-          miniGameCtx.save();
-          miniGameCtx.translate(circleCenterX, centerY);
-          miniGameCtx.scale(scale, scale);
-          drawGlowingCanvasText(
-               miniGameCtx,
-               circle,
-               0,
-               0,
-               textColor,
-               font,
-               "center",
-               "middle",
-               theme,
-               false
-          );
-          miniGameCtx.restore();
-
-          circleX += circleWidths[index] + circleGap;
-     });
-
-     miniGameCtx.restore();
 }
 
 // ==================================================
@@ -1572,11 +1495,7 @@ export function drawPlayer() {
      miniGameCtx.shadowColor = "rgba(255, 255, 255, 0.55)";
      miniGameCtx.shadowBlur = Math.min(10, getTrailGlowBlur() * 0.5);
 
-     let playerYOffset = 0;
-
-     if (player.char === playerFaces.smile) {
-          playerYOffset = 3;
-     }
+     const playerYOffset = getPlayerGlyphYOffset();
 
      miniGameCtx.fillText(player.char, player.x, player.y + playerYOffset);
      miniGameCtx.restore();
@@ -3009,11 +2928,9 @@ function drawGameplayPopup(theme) {
 
      const fontSize = theme.sizes.uiFontMd || getTextStyle(theme, "buttonsOptions").fontSize;
      const spacing = getTextStyle(theme, "canvasSpacing");
-     const progressStyle = getTextStyle(theme, "hudProgress");
      const padding = spacing.uiPadding || 8;
-     const progressCenterY = miniGameHeight - padding - (progressStyle.fontSize / 2);
      const isLevelPopup = gameplayPopupText === "Lvl Up!";
-     const y = Math.max(fontSize, progressCenterY - (fontSize * 1.35));
+     const y = Math.max(fontSize, miniGameHeight - padding - (fontSize / 2));
 
      drawCenteredMarqueeText(theme, gameplayPopupText, miniGameWidth / 2, y, fontSize, popupAlpha, isLevelPopup, false);
 }
@@ -3057,7 +2974,6 @@ export function drawGame() {
 
           if (!gameMenuOpen && !isRoundIntroActive()) {
                drawHudBadges(theme);
-               drawLevelProgressStars(theme);
           }
      }
 

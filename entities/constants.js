@@ -19,7 +19,7 @@ export const strikeSpawnRatio = 0.25;
 export const strikeSpawnIntervalMin = 3;
 export const strikeSpawnIntervalMax = 5;
 export const openingStrikeGraceStarSpawns = 10;
-export const openingHelphurtGraceStarSpawns = 50;
+export const openingHelphurtGraceStarSpawns = 0;
 export const helphurtPickupCap = 12;
 export const collisionBurstParticleCount = 15;
 export const fallingObjectSpeedMin = 0.75;
@@ -67,10 +67,10 @@ export const playerTrailPointCountMax = 36;
 export const playerTrailPointDistance = 6;
 export const playerTrailPointLife = 216;
 export const playerTrailColorHoldPoints = 6;
-export const playerTrailAnchorYOffset = -10;
+export const playerTrailAnchorYRatio = -0.25;
 
 export const starParticles = ["⭐️"];
 export const strikeParticles = ["❌"];
 export const strikeAssetSrc = "";
 
-export const burstChars = ["✦", "✧", "·", "•"];
+export const burstChars = ["\u2605\uFE0E", "\u2606\uFE0E", "·", "•"];
