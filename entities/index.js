@@ -647,13 +647,15 @@ export function syncPlayerHealthState() {
      refreshPlayerFaceFromHealth();
 }
 
-export function applyTemporaryPlayerFace(face, duration) {
+export function applyTemporaryPlayerFace(face, duration, overrideHealthFace = false) {
      if (
           playerHealth <= 0 ||
-          playerHealth === maxPlayerHealth ||
-          playerHealth <= 2 ||
-          isHelphurtActive("freeze") ||
-          isHelphurtActive("daze")
+          (!overrideHealthFace && (
+               playerHealth === maxPlayerHealth ||
+               playerHealth <= 2 ||
+               isHelphurtActive("freeze") ||
+               isHelphurtActive("daze")
+          ))
      ) {
           player.starFaceTimer = 0;
           refreshPlayerFaceFromHealth();
@@ -1233,7 +1235,7 @@ export function collectStrikes() {
           addPlayerHealth(-strikeHealthDamage);
           syncPlayerHealthState();
           triggerDamageFeedback();
-          applyTemporaryPlayerFace(playerFaces.hurt, 30);
+          applyTemporaryPlayerFace(playerFaces.hurt, 45, true);
           triggerPlayerFacePop(1.25);
      }
 }
@@ -1397,7 +1399,7 @@ function collectHurtPickup(pickup, index) {
 
      applyHurtPickup(pickup.type);
      showGameplayPopup(`${pickup.type?.particle || "😵"} ${pickup.type?.label || "HURT"}`);
-     applyTemporaryPlayerFace(playerFaces.hurt, 30);
+     applyTemporaryPlayerFace(playerFaces.hurt, 45, true);
      triggerPlayerFacePop(1.25);
 }
 
@@ -1435,9 +1437,9 @@ export function createCollisionBurst(x, y, color, burstType, colorRole = null) {
                : isCollectedStar
                     ? randomNumber(1, 2.8)
                     : randomNumber(0.7, 2.1);
-          const life = isCollectedStar
+          const life = (isCollectedStar
                ? randomNumber(42, 60)
-               : randomNumber(25, 50);
+               : randomNumber(25, 50)) * 0.75;
 
           collisionBursts.push({
                x,
@@ -1445,8 +1447,8 @@ export function createCollisionBurst(x, y, color, burstType, colorRole = null) {
                dx: Math.cos(angle) * speed,
                dy: Math.sin(angle) * speed,
                life,
-               maxLife: isCollectedStar ? life : 50,
-               size: isCollectedStar ? randomNumber(24, 36) : randomNumber(20, 30),
+               maxLife: isCollectedStar ? life : 37.5,
+               size: (isCollectedStar ? randomNumber(24, 36) : randomNumber(20, 30)) * (2 / 3),
                particle: randomItem(burstChars),
                colorRole: "burst",
                colorIndex: Math.floor(randomNumber(0, 12)),

@@ -1269,7 +1269,7 @@ function drawHudBadges(theme) {
           Math.max(width, getHudTextWidth(theme, statusText))
      ), 0);
      const sideColumnWidth = Math.max(80, measuredStatusWidth, (miniGameWidth - (padding * 2)) * 0.3);
-     const healthPulseProgress = 1 - (visualFeedbackUi.healthPulseTimer / 36);
+     const healthPulseProgress = 1 - (visualFeedbackUi.healthPulseTimer / 45);
      const healthPulseScale = 1 + (Math.sin(Math.PI * healthPulseProgress) * 0.22);
      const statusPulseProgress = 1 - (visualFeedbackUi.statusPulseTimer / 24);
      const statusPulseScale = 1 + (Math.sin(Math.PI * statusPulseProgress) * 0.18);
@@ -1362,7 +1362,7 @@ function drawGameplayVisualFeedback(theme) {
                return;
           }
 
-          const progress = 1 - (timer / 60);
+          const progress = 1 - (timer / 45);
 
           drawConcentricCircleFeedback(progress, [color]);
      }
