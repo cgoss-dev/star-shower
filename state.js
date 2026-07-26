@@ -111,12 +111,12 @@ export const visualFeedbackUi = {
 };
 
 export function triggerDamageFeedback() {
-     visualFeedbackUi.damageTimer = 180;
+     visualFeedbackUi.damageTimer = 60;
      visualFeedbackUi.healthPulseTimer = 36;
 }
 
 export function triggerHealingFeedback() {
-     visualFeedbackUi.healingTimer = 180;
+     visualFeedbackUi.healingTimer = 60;
      visualFeedbackUi.healthPulseTimer = 36;
 }
 

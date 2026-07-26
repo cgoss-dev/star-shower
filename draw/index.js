@@ -1319,7 +1319,7 @@ function drawGameplayVisualFeedback(theme) {
           miniGameCtx.save();
 
           for (let ringIndex = 0; ringIndex < 3; ringIndex += 1) {
-               const fadeOrder = 2 - ringIndex;
+               const fadeOrder = ringIndex;
                const fadeInStart = fadeOrder * 0.12;
                const fadeInEnd = fadeInStart + 0.12;
                const fadeInProgress = Math.max(0, Math.min(1, (progress - fadeInStart) / (fadeInEnd - fadeInStart)));
@@ -1341,7 +1341,7 @@ function drawGameplayVisualFeedback(theme) {
 
                     miniGameCtx.strokeStyle = color;
                     miniGameCtx.shadowColor = color;
-                    miniGameCtx.shadowBlur = player.radius * 0.4;
+                    miniGameCtx.shadowBlur = getTrailGlowBlur();
                     miniGameCtx.beginPath();
                     miniGameCtx.arc(
                          player.x,
@@ -1362,7 +1362,7 @@ function drawGameplayVisualFeedback(theme) {
                return;
           }
 
-          const progress = 1 - (timer / 180);
+          const progress = 1 - (timer / 60);
 
           drawConcentricCircleFeedback(progress, [color]);
      }
@@ -1462,7 +1462,7 @@ export function drawPlayerTrail() {
           miniGameCtx.lineJoin = "round";
 
           // Glow follows the same proportional relationship and peaks near 5.1%.
-          miniGameCtx.shadowBlur = glowBlur * 1.15;
+          miniGameCtx.shadowBlur = glowBlur;
           miniGameCtx.globalAlpha = Math.max(0, lifeRatio * glowOpacity);
           miniGameCtx.lineWidth = trailWidth;
           traceTrailSegment();
@@ -1493,7 +1493,7 @@ export function drawPlayer() {
      miniGameCtx.textBaseline = "middle";
      miniGameCtx.fillStyle = "#ffffff";
      miniGameCtx.shadowColor = "rgba(255, 255, 255, 0.55)";
-     miniGameCtx.shadowBlur = Math.min(10, getTrailGlowBlur() * 0.5);
+     miniGameCtx.shadowBlur = getTrailGlowBlur();
 
      const playerYOffset = getPlayerGlyphYOffset();
 

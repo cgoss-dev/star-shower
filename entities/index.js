@@ -1425,7 +1425,7 @@ export function createCollisionBurst(x, y, color, burstType, colorRole = null) {
      const rainbowPalette = getRainbowPalette();
      const isCollectedStar = burstType === "star" && colorRole === null;
      const particleCount = isCollectedStar
-          ? Math.round(collisionBurstParticleCount * 1.6)
+          ? Math.round(collisionBurstParticleCount * 1.35)
           : collisionBurstParticleCount;
 
      for (let i = 0; i < particleCount; i += 1) {
@@ -1433,10 +1433,10 @@ export function createCollisionBurst(x, y, color, burstType, colorRole = null) {
           const speed = burstType === "hurt"
                ? randomNumber(1.1, 2.6)
                : isCollectedStar
-                    ? randomNumber(1.1, 3.2)
+                    ? randomNumber(1, 2.8)
                     : randomNumber(0.7, 2.1);
           const life = isCollectedStar
-               ? randomNumber(48, 72)
+               ? randomNumber(42, 60)
                : randomNumber(25, 50);
 
           collisionBursts.push({
@@ -1446,12 +1446,11 @@ export function createCollisionBurst(x, y, color, burstType, colorRole = null) {
                dy: Math.sin(angle) * speed,
                life,
                maxLife: isCollectedStar ? life : 50,
-               size: isCollectedStar ? randomNumber(26, 40) : randomNumber(20, 30),
+               size: isCollectedStar ? randomNumber(24, 36) : randomNumber(20, 30),
                particle: randomItem(burstChars),
                colorRole: "burst",
                colorIndex: Math.floor(randomNumber(0, 12)),
-               color: randomItem(rainbowPalette) || color,
-               glowHelp: burstType === "hurt" ? 1.25 : isCollectedStar ? 1.5 : 1
+               color: randomItem(rainbowPalette) || color
           });
      }
 }
@@ -1657,7 +1656,7 @@ export function drawCollisionBursts() {
           miniGameCtx.font = `${burstSize}px Arial, Helvetica, sans-serif`;
           miniGameCtx.fillStyle = fillColor;
           miniGameCtx.shadowColor = getParticleGlowColor(fillColor);
-          miniGameCtx.shadowBlur = glowBlur * burst.glowHelp * lifeRatio;
+          miniGameCtx.shadowBlur = glowBlur;
 
           miniGameCtx.globalAlpha = Math.max(0, lifeRatio * 0.95);
           miniGameCtx.fillText(burst.particle, burst.x, burst.y);
