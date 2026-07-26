@@ -13,15 +13,15 @@ export const playerBaseRadius = 30;
 
 export const framesPerSecond = 60;
 
-export const starSpawnDelay = 25;
+export const starSpawnDelay = 35;
 export const starSpawnCap = 50;
 export const strikeSpawnRatio = 0.25;
 export const openingStrikeGraceStarSpawns = 10;
 export const openingHelphurtGraceStarSpawns = 50;
 export const helphurtPickupCap = 12;
 export const collisionBurstParticleCount = 15;
-export const fallingObjectSpeedMin = 0.25;
-export const fallingObjectSpeedMax = 0.75;
+export const fallingObjectSpeedMin = 0.75;
+export const fallingObjectSpeedMax = 1.25;
 
 export const spawnDensityBaselineArea = 960 * 640;
 export const spawnDensityMinScale = 0.45;
