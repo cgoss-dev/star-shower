@@ -537,9 +537,9 @@ export function getCssPixelSize(variableName, fallback = 10) {
 export const startOverlayDuration = 120;
 export const overlayFadeFrames = 30;
 export const gameplayPopupDurationFrames = 180;
-const roundIntroFirstFadeFrames = 120;
-const roundIntroSecondFadeFrames = 120;
-const roundIntroFadeFrames = 120;
+const roundIntroFirstFadeFrames = 60;
+const roundIntroSecondFadeFrames = 60;
+const roundIntroFadeFrames = 60;
 const roundIntroTotalFrames =
      roundIntroFirstFadeFrames +
      roundIntroSecondFadeFrames +

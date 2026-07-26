@@ -86,7 +86,9 @@ import {
 } from "../options.js?v=20260711-50";
 
 import {
-     spawnDensityBaselineArea
+     spawnDensityBaselineArea,
+     playerTrailWidthMin,
+     playerTrailWidthMax
 } from "../entities/constants.js?v=20260711-50";
 
 import {
@@ -1385,31 +1387,70 @@ function drawLevelProgressStars(theme) {
 // ==================================================
 
 export function drawPlayerTrail() {
-     if (!miniGameCtx) {
+     if (!miniGameCtx || playerTrail.length < 2) {
           return;
      }
 
      const glowBlur = getTrailGlowBlur();
+     const segmentCount = playerTrail.length - 1;
 
-     for (let i = playerTrail.length - 1; i >= 0; i -= 1) {
-          const trail = playerTrail[i];
-          const lifeRatio = trail.life / trail.maxLife;
-          const trailColor = getParticleFillColor(trail);
+     for (let pointIndex = 0; pointIndex < segmentCount; pointIndex += 1) {
+          const previousPoint = playerTrail[Math.max(0, pointIndex - 1)];
+          const startPoint = playerTrail[pointIndex];
+          const endPoint = playerTrail[pointIndex + 1];
+          const nextPoint = playerTrail[Math.min(playerTrail.length - 1, pointIndex + 2)];
+          const lifeRatio = Math.min(startPoint.life, endPoint.life) / endPoint.maxLife;
+          const segmentPosition = (pointIndex + 0.5) / segmentCount;
+          const widthProgress = segmentPosition * segmentPosition * (3 - (2 * segmentPosition));
+          const trailWidth = playerTrailWidthMin + (
+               (playerTrailWidthMax - playerTrailWidthMin) * widthProgress
+          );
+          const coreOpacity =
+               segmentPosition < 0.2 ? 0 :
+               segmentPosition < 0.4 ? 0.02 :
+               segmentPosition < 0.6 ? 0.04 :
+               segmentPosition < 0.8 ? 0.06 :
+               0.08;
+          const glowOpacity = coreOpacity * (0.16 / 0.25);
+          const trailColor = getParticleFillColor(endPoint);
           const trailGlowColor = getParticleGlowColor(trailColor);
+          const controlOneX = startPoint.x + ((endPoint.x - previousPoint.x) / 6);
+          const controlOneY = startPoint.y + ((endPoint.y - previousPoint.y) / 6);
+          const controlTwoX = endPoint.x - ((nextPoint.x - startPoint.x) / 6);
+          const controlTwoY = endPoint.y - ((nextPoint.y - startPoint.y) / 6);
+
+          function traceTrailSegment() {
+               miniGameCtx.beginPath();
+               miniGameCtx.moveTo(startPoint.x, startPoint.y);
+               miniGameCtx.bezierCurveTo(
+                    controlOneX,
+                    controlOneY,
+                    controlTwoX,
+                    controlTwoY,
+                    endPoint.x,
+                    endPoint.y
+               );
+          }
 
           miniGameCtx.save();
-          miniGameCtx.globalAlpha = Math.max(0, lifeRatio * 0.75);
           miniGameCtx.strokeStyle = trailColor;
           miniGameCtx.shadowColor = getCanvasGlowColor(trailGlowColor);
-          miniGameCtx.shadowBlur = glowBlur;
-          miniGameCtx.lineWidth = Math.max(1, trail.width * lifeRatio);
           miniGameCtx.lineCap = "round";
+          miniGameCtx.lineJoin = "round";
 
-          miniGameCtx.beginPath();
-          miniGameCtx.moveTo(trail.fromX, trail.fromY);
-          miniGameCtx.lineTo(trail.toX, trail.toY);
+          // Glow follows the same proportional relationship and peaks near 5.1%.
+          miniGameCtx.shadowBlur = glowBlur * 1.15;
+          miniGameCtx.globalAlpha = Math.max(0, lifeRatio * glowOpacity);
+          miniGameCtx.lineWidth = trailWidth;
+          traceTrailSegment();
           miniGameCtx.stroke();
 
+          // A shallow width change shapes the ribbon while opacity keeps the tail soft.
+          miniGameCtx.shadowBlur = 0;
+          miniGameCtx.globalAlpha = Math.max(0, lifeRatio * coreOpacity);
+          miniGameCtx.lineWidth = trailWidth;
+          traceTrailSegment();
+          miniGameCtx.stroke();
           miniGameCtx.restore();
      }
 }
@@ -1428,8 +1469,8 @@ export function drawPlayer() {
      miniGameCtx.textAlign = "center";
      miniGameCtx.textBaseline = "middle";
      miniGameCtx.fillStyle = "#ffffff";
-     miniGameCtx.shadowColor = "transparent";
-     miniGameCtx.shadowBlur = 0;
+     miniGameCtx.shadowColor = "rgba(255, 255, 255, 0.55)";
+     miniGameCtx.shadowBlur = Math.min(10, getTrailGlowBlur() * 0.5);
 
      let playerYOffset = 0;
 

@@ -4,7 +4,7 @@ import {
 
 export const playerBaseHealth = gameplayStartingHealth;
 export const playerBaseSpeed = 3;
-export const playerSpeedPerHeart = 1;
+export const playerSpeedPerHeart = 0.5;
 export const playerMinimumSpeed = 1;
 export const playerSpeedMinScale = 1;
 export const playerSpeedMaxScale = 2;
@@ -16,6 +16,8 @@ export const framesPerSecond = 60;
 export const starSpawnDelay = 35;
 export const starSpawnCap = 50;
 export const strikeSpawnRatio = 0.25;
+export const strikeSpawnIntervalMin = 3;
+export const strikeSpawnIntervalMax = 5;
 export const openingStrikeGraceStarSpawns = 10;
 export const openingHelphurtGraceStarSpawns = 50;
 export const helphurtPickupCap = 12;
@@ -50,17 +52,22 @@ export const helphurtFallSpeedMultipliersByLevel = [
      2
 ];
 
-export const playerTrailCountMax = 2;
+export const playerTrailCountMax = 1;
 export const playerTrailCountMin = 0;
-export const playerTrailLifeMax = 64;
+export const playerTrailActiveCountMax = 4;
+export const playerTrailLifeMax = 96;
 export const playerTrailLifeMin = 12;
-export const playerTrailWidthMax = 10;
-export const playerTrailWidthMin = 2;
+export const playerTrailWidthMax = 50;
+export const playerTrailWidthMin = 38;
 export const playerTrailOffsetMax = 25;
 export const playerTrailOffsetMin = -25;
 export const playerTrailLengthMax = 32;
 export const playerTrailLengthMin = 2;
-export const playerTrailAnchorYOffset = -4;
+export const playerTrailPointCountMax = 36;
+export const playerTrailPointDistance = 6;
+export const playerTrailPointLife = 216;
+export const playerTrailColorHoldPoints = 6;
+export const playerTrailAnchorYOffset = -10;
 
 export const starParticles = ["⭐️"];
 export const strikeParticles = ["❌"];

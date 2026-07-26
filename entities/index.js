@@ -100,6 +100,8 @@ import {
      starSpawnDelay,
      starSpawnCap,
      strikeSpawnRatio,
+     strikeSpawnIntervalMin,
+     strikeSpawnIntervalMax,
      openingStrikeGraceStarSpawns,
      openingHelphurtGraceStarSpawns,
      helphurtPickupCap,
@@ -116,6 +118,7 @@ import {
      helphurtFallSpeedMultipliersByLevel,
      playerTrailCountMax,
      playerTrailCountMin,
+     playerTrailActiveCountMax,
      playerTrailLifeMax,
      playerTrailLifeMin,
      playerTrailWidthMax,
@@ -124,6 +127,10 @@ import {
      playerTrailOffsetMin,
      playerTrailLengthMax,
      playerTrailLengthMin,
+     playerTrailPointCountMax,
+     playerTrailPointDistance,
+     playerTrailPointLife,
+     playerTrailColorHoldPoints,
      playerTrailAnchorYOffset,
      starParticles,
      strikeParticles,
@@ -144,6 +151,8 @@ export {
      starSpawnDelay,
      starSpawnCap,
      strikeSpawnRatio,
+     strikeSpawnIntervalMin,
+     strikeSpawnIntervalMax,
      openingStrikeGraceStarSpawns,
      openingHelphurtGraceStarSpawns,
      helphurtPickupCap,
@@ -154,6 +163,7 @@ export {
      helphurtFallSpeedMultipliersByLevel,
      playerTrailCountMax,
      playerTrailCountMin,
+     playerTrailActiveCountMax,
      playerTrailLifeMax,
      playerTrailLifeMin,
      playerTrailWidthMax,
@@ -162,6 +172,10 @@ export {
      playerTrailOffsetMin,
      playerTrailLengthMax,
      playerTrailLengthMin,
+     playerTrailPointCountMax,
+     playerTrailPointDistance,
+     playerTrailPointLife,
+     playerTrailColorHoldPoints,
      playerTrailAnchorYOffset,
      starParticles,
      strikeParticles,
@@ -178,6 +192,8 @@ const siteTheme = window.SiteTheme;
 export const playerFaces = {
      neutral: "😐",
      smile: "🙂",
+     healthTwo: "😟",
+     healthFour: "😁",
      star: "😁",
      hurt: "😫",
      maxHealth: "🤩",
@@ -328,6 +344,8 @@ const particleColorEngine = {
 
 let pastelParticleColorIndex = 0;
 let healthParticleIndex = 0;
+let playerTrailColorPointIndex = 0;
+let playerTrailMovedThisFrame = false;
 const healthParticleCycleMs = 500;
 
 function ensureParticleColorEngine() {
@@ -423,6 +441,10 @@ export function getModeParticleColor(colorRole, fallback = "#ffffff", colorIndex
      }
 
      if (colorLevel === 2) {
+          if (colorRole === "burst") {
+               return getCssColor("--color-gray2", "#666");
+          }
+
           if (colorRole === "star") {
                return getCssColor("--color-gray2", "#666");
           }
@@ -455,6 +477,7 @@ export function resetEntityColorCycle() {
 
      pastelParticleColorIndex = 0;
      healthParticleIndex = 0;
+     playerTrailColorPointIndex = 0;
      particleColorEngine.engine = null;
 }
 
@@ -492,43 +515,46 @@ function hasKeyboardMovementInput() {
 }
 
 function createPlayerTrail(fromX, fromY, toX, toY) {
-     const dx = toX - fromX;
-     const dy = toY - fromY;
-     const distance = Math.hypot(dx, dy);
+     playerTrailMovedThisFrame = true;
 
-     if (distance < 0.5) {
+     function createTrailPoint(x, y) {
+          const palette = getRainbowPalette();
+          const colorBandIndex = Math.floor(playerTrailColorPointIndex / playerTrailColorHoldPoints);
+          const color = palette[colorBandIndex % Math.max(1, palette.length)] || "#ffffff";
+          playerTrailColorPointIndex += 1;
+
+          return {
+               x,
+               y,
+               colorRole: "trail",
+               colorIndex: colorBandIndex % 12,
+               color,
+               life: playerTrailPointLife,
+               maxLife: playerTrailPointLife
+          };
+     }
+
+     if (!playerTrail.length) {
+          playerTrail.push(createTrailPoint(fromX, fromY));
+     }
+
+     const lastPoint = playerTrail.at(-1);
+     const previousPoint = playerTrail.at(-2);
+
+     if (
+          previousPoint &&
+          Math.hypot(toX - previousPoint.x, toY - previousPoint.y) < playerTrailPointDistance
+     ) {
+          lastPoint.x = toX;
+          lastPoint.y = toY;
+          lastPoint.life = playerTrailPointLife;
           return;
      }
 
-     const directionX = dx / distance;
-     const directionY = dy / distance;
-     const normalX = -directionY;
-     const normalY = directionX;
-     const trailCount =
-          Math.floor(Math.random() * (playerTrailCountMax - playerTrailCountMin + 1)) +
-          playerTrailCountMin;
+     playerTrail.push(createTrailPoint(toX, toY));
 
-     for (let i = 0; i < trailCount; i += 1) {
-          const life = Math.random() * (playerTrailLifeMax - playerTrailLifeMin) + playerTrailLifeMin;
-          const width = Math.random() * (playerTrailWidthMax - playerTrailWidthMin) + playerTrailWidthMin;
-          const offset = Math.random() * (playerTrailOffsetMax - playerTrailOffsetMin) + playerTrailOffsetMin;
-          const length = Math.random() * (playerTrailLengthMax - playerTrailLengthMin) + playerTrailLengthMin;
-
-          const trailFromX = toX - (directionX * length);
-          const trailFromY = toY - (directionY * length);
-
-          playerTrail.push({
-               fromX: trailFromX + (normalX * offset),
-               fromY: trailFromY + (normalY * offset),
-               toX: toX + (normalX * offset),
-               toY: toY + (normalY * offset),
-               colorRole: "trail",
-               colorIndex: getNextPastelColorIndex(),
-               color: getNextParticleColor(),
-               life,
-               maxLife: life,
-               width
-          });
+     if (playerTrail.length > playerTrailPointCountMax) {
+          playerTrail.splice(0, playerTrail.length - playerTrailPointCountMax);
      }
 }
 
@@ -549,8 +575,16 @@ export function getDefaultPlayerFace() {
           return playerFaces.maxHealth;
      }
 
-     if (playerHealth <= 2) {
+     if (playerHealth <= 1) {
           return playerFaces.lowHealth;
+     }
+
+     if (playerHealth === 2) {
+          return playerFaces.healthTwo;
+     }
+
+     if (playerHealth === 4) {
+          return playerFaces.healthFour;
      }
 
      return playerFaces.smile;
@@ -611,6 +645,8 @@ export function resetPlayerPosition() {
      player.hitScale = 1;
      player.lowHealthPulseTime = 0;
      playerTrail.length = 0;
+     playerTrailColorPointIndex = 0;
+     playerTrailMovedThisFrame = false;
 
      if (particleColorEngine.engine?.reset) {
           particleColorEngine.engine.reset();
@@ -789,15 +825,17 @@ export function updatePlayerFaceState() {
 }
 
 export function updatePlayerTrail() {
+     const lifeDecay = playerTrailMovedThisFrame ? 1 : 6;
+
      for (let i = playerTrail.length - 1; i >= 0; i -= 1) {
-          const trail = playerTrail[i];
+          playerTrail[i].life -= lifeDecay;
 
-          trail.life -= 1;
-
-          if (trail.life <= 0) {
+          if (playerTrail[i].life <= 0) {
                playerTrail.splice(i, 1);
           }
      }
+
+     playerTrailMovedThisFrame = false;
 }
 
 // ==================================================
@@ -1022,8 +1060,15 @@ function createStrike() {
      });
 }
 
+function getNextStrikeSpawnInterval() {
+     return Math.floor(randomNumber(strikeSpawnIntervalMin, strikeSpawnIntervalMax + 1));
+}
+
+let strikeSpawnsUntilNext = getNextStrikeSpawnInterval();
+
 function createMatchingStrikeFromStarSpawn() {
      if (starSpawnCount <= openingStrikeGraceStarSpawns) {
+          strikeSpawnsUntilNext = getNextStrikeSpawnInterval();
           return;
      }
 
@@ -1031,7 +1076,9 @@ function createMatchingStrikeFromStarSpawn() {
           return;
      }
 
-     if (Math.random() > strikeSpawnRatio) {
+     strikeSpawnsUntilNext -= 1;
+
+     if (strikeSpawnsUntilNext > 0) {
           return;
      }
 
@@ -1040,6 +1087,7 @@ function createMatchingStrikeFromStarSpawn() {
      }
 
      createStrike();
+     strikeSpawnsUntilNext = getNextStrikeSpawnInterval();
 }
 
 export function updateStarSpawns() {
@@ -1316,6 +1364,8 @@ export function collectHelphurtPickups() {
 // ==================================================
 
 export function createCollisionBurst(x, y, color, burstType, colorRole = null) {
+     const rainbowPalette = getRainbowPalette();
+
      for (let i = 0; i < collisionBurstParticleCount; i += 1) {
           const angle = randomNumber(0, Math.PI * 2);
           const speed = burstType === "hurt"
@@ -1331,9 +1381,9 @@ export function createCollisionBurst(x, y, color, burstType, colorRole = null) {
                maxLife: 50,
                size: randomNumber(20, 30),
                particle: randomItem(burstChars),
-               colorRole: colorRole || (burstType === "hurt" ? "strike" : "star"),
-               colorIndex: getNextPastelColorIndex(),
-               color,
+               colorRole: "burst",
+               colorIndex: Math.floor(randomNumber(0, 12)),
+               color: randomItem(rainbowPalette) || color,
                glowHelp: burstType === "hurt" ? 1.25 : 1
           });
      }
